@@ -10,4 +10,5 @@ export type CountOffersParams = {
   templateKey?: string;
   clientId?: number;
   search?: string;
+  legalEntityId?: number;
 };

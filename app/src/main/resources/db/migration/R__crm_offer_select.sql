@@ -10,11 +10,14 @@ BEGIN
            u.display_name AS author_name, u.role AS author_role, u.job_title AS author_job_title,
            u.phone AS author_phone, u.email AS author_email, o.sent_at, o.decided_at, o.created_at, o.updated_at,
            ISNULL(x.item_count, 0) AS item_count, ISNULL(x.net, 0) AS total_net, ISNULL(x.vat, 0) AS total_vat,
-           ISNULL(x.net, 0) + ISNULL(x.vat, 0) AS total_gross, o.row_version
+           ISNULL(x.net, 0) + ISNULL(x.vat, 0) AS total_gross, o.row_version,
+           -- The signing company (ADR-0016), last so that INSERT ... EXEC lists keep their order.
+           o.legal_entity_id, e.name AS legal_entity_name
     FROM crm.offers AS o
     JOIN crm.clients AS c ON c.id = o.client_id
     JOIN crm.offer_templates AS t ON t.template_key = o.template_key
     JOIN crm.users AS u ON u.id = o.author_user_id
+    JOIN crm.legal_entities AS e ON e.id = o.legal_entity_id
     OUTER APPLY (
         SELECT COUNT(*) AS item_count, SUM(l.net) AS net, SUM(ROUND(l.net * i.vat_rate / 100.0, 2)) AS vat
         FROM crm.offer_items AS i

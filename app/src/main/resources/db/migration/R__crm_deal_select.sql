@@ -6,7 +6,8 @@ BEGIN
     SET NOCOUNT ON;
     SELECT d.id, d.title, d.client_id, c.name AS client_name, d.owner_user_id, o.display_name AS owner_name, d.stage,
            s.probability, s.is_closed, d.value, d.currency, d.expected_close, d.offer_id, f.number AS offer_number,
-           d.lost_reason, d.stage_changed_at, d.closed_at, d.created_at, d.updated_at, d.row_version
+           d.lost_reason, d.stage_changed_at, d.closed_at, d.created_at, d.updated_at, d.row_version,
+           d.next_step, d.next_step_at, d.last_activity_at, d.last_activity_type
     FROM crm.deals AS d
     JOIN crm.clients AS c ON c.id = d.client_id
     JOIN crm.users AS o ON o.id = d.owner_user_id

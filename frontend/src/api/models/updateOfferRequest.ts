@@ -45,4 +45,6 @@ export interface UpdateOfferRequest {
      * @pattern ^[0-9a-fA-F]{16}$
      */
   rowVersion: string | null;
+  /** @nullable */
+  legalEntityId?: number | null;
 }

@@ -9,15 +9,19 @@ CREATE OR ALTER PROCEDURE app.task_update
     @end_date         date,
     @client_id        bigint = NULL,
     @project_id       bigint = NULL,
-    @row_version      binary(8)
+    @row_version      binary(8),
+    @deal_id          bigint = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
     EXEC crm.task_require_editor @actor_id, @task_id;
-    EXEC crm.task_check @title OUTPUT, @description OUTPUT, @assignee_user_id, @start_date, @end_date, @client_id, @project_id;
+    IF @deal_id IS NOT NULL
+        EXEC crm.deal_require_visible @actor_id, @deal_id;
+    EXEC crm.task_check @title OUTPUT, @description OUTPUT, @assignee_user_id, @start_date, @end_date, @client_id, @project_id,
+         @deal_id, @client_id OUTPUT;
     UPDATE crm.tasks
     SET title = @title, description = @description, assignee_user_id = @assignee_user_id, start_date = @start_date,
-        end_date = @end_date, client_id = @client_id, project_id = @project_id, updated_at = SYSUTCDATETIME(),
+        end_date = @end_date, client_id = @client_id, project_id = @project_id, deal_id = @deal_id, updated_at = SYSUTCDATETIME(),
         updated_by = @actor_id
     WHERE id = @task_id AND row_version = @row_version;
     IF @@ROWCOUNT = 0

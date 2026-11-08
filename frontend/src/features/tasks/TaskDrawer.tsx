@@ -20,11 +20,16 @@ type Ref = { id: number; name: string };
 
 export interface TaskDrawerCommand {
 	/** A new task from `start` (a clicked day), for `assignee` (a clicked row) or the user. */
-	create: (from?: { start?: Day; assignee?: Ref }) => void;
+	create: (from?: { start?: Day; assignee?: Ref; deal?: { id: number; title: string } }) => void;
 	edit: (task: TaskResponse) => void;
 }
 
-type Target = { task?: TaskResponse; start?: Day; assignee?: Ref };
+type Target = {
+	task?: TaskResponse;
+	start?: Day;
+	assignee?: Ref;
+	deal?: { id: number; title: string };
+};
 
 /**
  * A task in a drawer: what, who, from which day to which day, optionally for a client. There are no statuses
@@ -35,7 +40,8 @@ export const TaskDrawer = forwardRef<TaskDrawerCommand>((_, ref) => {
 	useImperativeHandle(
 		ref,
 		() => ({
-			create: (from) => setTarget({ start: from?.start, assignee: from?.assignee }),
+			create: (from) =>
+				setTarget({ start: from?.start, assignee: from?.assignee, deal: from?.deal }),
 			edit: (task) => setTarget({ task }),
 		}),
 		[],
@@ -58,6 +64,8 @@ function Content({ target, onClose }: { target: Target; onClose: () => void }) {
 		task?.clientId ? { id: task.clientId, name: task.clientName ?? "" } : undefined,
 	);
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	// A task of a deal (ADR-0017) keeps its deal; the deal brings the client.
+	const deal = task?.dealId ? { id: task.dealId, title: task.dealTitle ?? "" } : target.deal;
 	const start = task?.startDate ?? target.start ?? today();
 
 	const schema = useMemo(
@@ -113,7 +121,8 @@ function Content({ target, onClose }: { target: Target; onClose: () => void }) {
 				startDate: value.startDate,
 				endDate: value.endDate,
 				assigneeUserId: assignee.id,
-				clientId: client?.id ?? null,
+				clientId: deal ? null : (client?.id ?? null),
+				dealId: deal?.id ?? null,
 				projectId: task?.projectId ?? null,
 				rowVersion: task?.rowVersion ?? null,
 			}),
@@ -188,14 +197,21 @@ function Content({ target, onClose }: { target: Target; onClose: () => void }) {
 								},
 							}}
 						>
-							{(f) => <f.FormInput label={t("Od", "From")} type="date" />}
+							{(f) => <f.FormDate label={t("Od", "From")} />}
 						</form.AppField>
 						<form.AppField name="endDate">
-							{(f) => <f.FormInput label={t("Do", "To")} type="date" />}
+							{(f) => <f.FormDate label={t("Do", "To")} />}
 						</form.AppField>
 					</div>
 					<PersonPicker value={assignee} onChange={setAssignee} />
-					<ClientPicker value={client} onChange={setClient} />
+					{deal ? (
+						<p className="text-sm">
+							<span className="text-muted">{t("Szansa sprzedaży: ", "Deal: ")}</span>
+							<span className="font-medium">{deal.title}</span>
+						</p>
+					) : (
+						<ClientPicker value={client} onChange={setClient} />
+					)}
 					<form.AppField name="description">
 						{(f) => <f.FormTextArea label={t("Opis", "Description")} rows={4} />}
 					</form.AppField>

@@ -433,11 +433,14 @@ export function Heatmap({
 export function DataTable({ head, rows }: { head: string[]; rows: (string | number)[][] }) {
 	return (
 		<div className="overflow-x-auto">
-			<table className="w-full text-xs">
+			<table className="w-full border-separate border-spacing-0 text-xs">
 				<thead className="text-muted">
 					<tr>
-						{head.map((h) => (
-							<th key={h} className="border-b border-separator px-2 py-1.5 text-left font-medium">
+						{head.map((h, j) => (
+							<th
+								key={h}
+								className={`border-b border-separator px-2 py-1.5 text-left font-medium ${j === 0 ? "sticky left-0 z-[2] bg-surface shadow-[inset_-1px_0_0_var(--obs-border)]" : ""}`}
+							>
 								{h}
 							</th>
 						))}
@@ -445,11 +448,11 @@ export function DataTable({ head, rows }: { head: string[]; rows: (string | numb
 				</thead>
 				<tbody>
 					{rows.map((row, i) => (
-						<tr key={`${row[0]}-${i}`} className="border-b border-separator/60">
+						<tr key={`${row[0]}-${i}`}>
 							{row.map((cell, j) => (
 								<td
 									key={`${head[j]}`}
-									className={`px-2 py-1.5 ${typeof cell === "number" ? "figures text-right" : ""}`}
+									className={`border-b border-separator/60 px-2 py-1.5 ${typeof cell === "number" ? "figures text-right" : ""} ${j === 0 ? "sticky left-0 z-[1] bg-surface shadow-[inset_-1px_0_0_var(--obs-border)]" : ""}`}
 								>
 									{cell}
 								</td>

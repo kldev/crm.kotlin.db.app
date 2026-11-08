@@ -14,4 +14,9 @@ export type DealBoardParams = {
    * @maximum 365
    */
   closedDays?: number;
+  /**
+   * @minimum 1
+   * @maximum 500
+   */
+  perStage?: number;
 };

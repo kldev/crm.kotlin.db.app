@@ -31,6 +31,9 @@ data class ProjectResponse(
     val ownerUserId: Int,
     val ownerLogin: String,
     val ownerDisplayName: String,
+    /** The group's company that delivers the project (ADR-0016). */
+    val legalEntityId: Int,
+    val legalEntityName: String,
     val updatedAt: LocalDateTime,
     val rowVersion: String,
 )
@@ -43,6 +46,7 @@ data class CreateProjectRequest(
     @field:NotNull val startDate: LocalDate?,
     @field:NotNull val dueDate: LocalDate?,
     @field:NotNull @field:DecimalMin("0") @field:Digits(integer = 17, fraction = 2) val budget: BigDecimal?,
+    @field:NotNull val legalEntityId: Int?,
 )
 
 data class UpdateProjectRequest(
@@ -52,6 +56,8 @@ data class UpdateProjectRequest(
     @field:NotNull val startDate: LocalDate?,
     @field:NotNull val dueDate: LocalDate?,
     @field:NotNull @field:DecimalMin("0") @field:Digits(integer = 17, fraction = 2) val budget: BigDecimal?,
+    /** Changes only while the project is NEW (51908). */
+    @field:NotNull val legalEntityId: Int?,
     @field:NotBlank @field:Pattern(regexp = RowVersion.PATTERN) val rowVersion: String?,
 )
 

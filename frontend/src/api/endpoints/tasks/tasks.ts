@@ -10,6 +10,7 @@ import type {
   ListTasksParams,
   SetDepartmentRequest,
   SetDoneRequest,
+  TaskAgendaParams,
   TaskRequest,
   TaskResponse,
   UserDepartmentResponse
@@ -114,6 +115,18 @@ export const setTaskDone = (
       options);
     }
   /**
+ * @summary My agenda: my open tasks started by `until` (overdue first, by their last day) and the ones I finished since `doneSince`.
+ */
+export const taskAgenda = (
+    params: TaskAgendaParams,
+ options?: SecondParameter<typeof customInstance<TaskResponse[]>>,) => {
+      return customInstance<TaskResponse[]>(
+      {url: `/api/tasks/agenda`, method: 'GET',
+        params
+    },
+      options);
+    }
+  /**
  * @summary Departments with their active users.
  */
 export const listDepartments = (
@@ -131,4 +144,5 @@ export type DeleteTaskResult = NonNullable<Awaited<ReturnType<typeof deleteTask>
 export type ListTasksResult = NonNullable<Awaited<ReturnType<typeof listTasks>>>
 export type CreateTaskResult = NonNullable<Awaited<ReturnType<typeof createTask>>>
 export type SetTaskDoneResult = NonNullable<Awaited<ReturnType<typeof setTaskDone>>>
+export type TaskAgendaResult = NonNullable<Awaited<ReturnType<typeof taskAgenda>>>
 export type ListDepartmentsResult = NonNullable<Awaited<ReturnType<typeof listDepartments>>>

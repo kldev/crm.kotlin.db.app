@@ -5,12 +5,18 @@
  * OpenAPI spec version: v0
  */
 import type {
+  ActivityRequest,
+  ActivityResponse,
+  ActivityTypeResponse,
   CreateDealRequest,
   DealBoardParams,
+  DealBoardSummaryParams,
   DealResponse,
   DealStageResponse,
+  DealStageTotal,
   DeleteDealParams,
   MoveDealRequest,
+  NextStepRequest,
   UpdateDealRequest
 } from '../../models';
 
@@ -60,6 +66,20 @@ export const deleteDeal = (
       options);
     }
   /**
+ * @summary Set or clear the deal's next step (follow-up). rowVersion required.
+ */
+export const setDealNextStep = (
+    id: number,
+    nextStepRequest: BodyType<NextStepRequest>,
+ options?: SecondParameter<typeof customInstance<DealResponse>>,) => {
+      return customInstance<DealResponse>(
+      {url: `/api/deals/${id}/next-step`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: nextStepRequest
+    },
+      options);
+    }
+  /**
  * @summary The board: open deals and the ones closed in the last closedDays days. scope MINE or ALL, ownerUserId (one salesperson), search (title or client prefix).
  */
 export const dealBoard = (
@@ -99,6 +119,43 @@ export const moveDeal = (
       options);
     }
   /**
+ * @summary A deal's activities, newest first.
+ */
+export const listDealActivities = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<ActivityResponse[]>>,) => {
+      return customInstance<ActivityResponse[]>(
+      {url: `/api/deals/${id}/activities`, method: 'GET'
+    },
+      options);
+    }
+  /**
+ * @summary Log a call, e-mail, meeting... on a deal (append-only).
+ */
+export const addDealActivity = (
+    id: number,
+    activityRequest: BodyType<ActivityRequest>,
+ options?: SecondParameter<typeof customInstance<ActivityResponse>>,) => {
+      return customInstance<ActivityResponse>(
+      {url: `/api/deals/${id}/activities`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: activityRequest
+    },
+      options);
+    }
+  /**
+ * @summary The board's totals per stage and currency, over every deal the same filters match.
+ */
+export const dealBoardSummary = (
+    params?: DealBoardSummaryParams,
+ options?: SecondParameter<typeof customInstance<DealStageTotal[]>>,) => {
+      return customInstance<DealStageTotal[]>(
+      {url: `/api/deals/summary`, method: 'GET',
+        params
+    },
+      options);
+    }
+  /**
  * @summary The stages of the pipeline, in order, with their probability.
  */
 export const listDealStages = (
@@ -109,10 +166,26 @@ export const listDealStages = (
     },
       options);
     }
+  /**
+ * @summary The kinds of activity (ADR-0017).
+ */
+export const listActivityTypes = (
+
+ options?: SecondParameter<typeof customInstance<ActivityTypeResponse[]>>,) => {
+      return customInstance<ActivityTypeResponse[]>(
+      {url: `/api/deals/activity-types`, method: 'GET'
+    },
+      options);
+    }
   export type GetDealResult = NonNullable<Awaited<ReturnType<typeof getDeal>>>
 export type UpdateDealResult = NonNullable<Awaited<ReturnType<typeof updateDeal>>>
 export type DeleteDealResult = NonNullable<Awaited<ReturnType<typeof deleteDeal>>>
+export type SetDealNextStepResult = NonNullable<Awaited<ReturnType<typeof setDealNextStep>>>
 export type DealBoardResult = NonNullable<Awaited<ReturnType<typeof dealBoard>>>
 export type CreateDealResult = NonNullable<Awaited<ReturnType<typeof createDeal>>>
 export type MoveDealResult = NonNullable<Awaited<ReturnType<typeof moveDeal>>>
+export type ListDealActivitiesResult = NonNullable<Awaited<ReturnType<typeof listDealActivities>>>
+export type AddDealActivityResult = NonNullable<Awaited<ReturnType<typeof addDealActivity>>>
+export type DealBoardSummaryResult = NonNullable<Awaited<ReturnType<typeof dealBoardSummary>>>
 export type ListDealStagesResult = NonNullable<Awaited<ReturnType<typeof listDealStages>>>
+export type ListActivityTypesResult = NonNullable<Awaited<ReturnType<typeof listActivityTypes>>>

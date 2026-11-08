@@ -14,6 +14,7 @@ CREATE OR ALTER PROCEDURE app.project_search
     @stage          varchar(12) = NULL,
     @team_id        int         = NULL,
     @client_id      bigint      = NULL,
+    @legal_entity_id int = NULL,
     @owner_user_id  int         = NULL,
     @overdue_only   bit         = 0,
     @due_from       date        = NULL,
@@ -61,6 +62,7 @@ BEGIN
             WHERE p.owner_user_id = @actor_id
               AND (@stage IS NULL OR p.stage = @stage)
               AND (@team_id IS NULL OR p.team_id = @team_id)
+              AND (@legal_entity_id IS NULL OR p.legal_entity_id = @legal_entity_id)
               AND (@client_id IS NULL OR p.client_id = @client_id)
               AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
               AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
@@ -79,6 +81,7 @@ BEGIN
             WHERE p.team_id = tm.team_id
               AND (@stage IS NULL OR p.stage = @stage)
               AND (@team_id IS NULL OR p.team_id = @team_id)
+              AND (@legal_entity_id IS NULL OR p.legal_entity_id = @legal_entity_id)
               AND (@client_id IS NULL OR p.client_id = @client_id)
               AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
               AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
@@ -98,6 +101,7 @@ BEGIN
             WHERE p.client_id = c.id
               AND (@stage IS NULL OR p.stage = @stage)
               AND (@team_id IS NULL OR p.team_id = @team_id)
+              AND (@legal_entity_id IS NULL OR p.legal_entity_id = @legal_entity_id)
               AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
               AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
               AND (@due_from IS NULL OR p.due_date >= @due_from)
@@ -112,7 +116,7 @@ BEGIN
 
         SELECT v.id, v.name, v.stage, v.start_date, v.due_date, v.budget, v.is_overdue, v.stage_changed_at,
                v.client_id, v.client_name, v.client_city, v.team_id, v.team_name, v.owner_user_id, v.owner_login,
-               v.owner_display_name, v.updated_at, v.row_version
+               v.owner_display_name, v.legal_entity_id, v.legal_entity_name, v.updated_at, v.row_version
         FROM (SELECT TOP (@n) id, due_date FROM @candidates ORDER BY due_date, id) AS page
         JOIN crm.v_projects AS v ON v.id = page.id
         ORDER BY v.due_date, v.id;
@@ -125,11 +129,12 @@ BEGIN
         SELECT TOP (@page_size + 1)
                v.id, v.name, v.stage, v.start_date, v.due_date, v.budget, v.is_overdue, v.stage_changed_at,
                v.client_id, v.client_name, v.client_city, v.team_id, v.team_name, v.owner_user_id, v.owner_login,
-               v.owner_display_name, v.updated_at, v.row_version
+               v.owner_display_name, v.legal_entity_id, v.legal_entity_name, v.updated_at, v.row_version
         FROM crm.v_projects AS v
         WHERE v.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD')
           AND (@stage IS NULL OR v.stage = @stage)
           AND (@team_id IS NULL OR v.team_id = @team_id)
+          AND (@legal_entity_id IS NULL OR v.legal_entity_id = @legal_entity_id)
           AND (@client_id IS NULL OR v.client_id = @client_id)
           AND (@owner_user_id IS NULL OR v.owner_user_id = @owner_user_id)
           AND (@due_from IS NULL OR v.due_date >= @due_from)
@@ -144,10 +149,11 @@ BEGIN
     SELECT TOP (@page_size + 1)
            v.id, v.name, v.stage, v.start_date, v.due_date, v.budget, v.is_overdue, v.stage_changed_at,
            v.client_id, v.client_name, v.client_city, v.team_id, v.team_name, v.owner_user_id, v.owner_login,
-           v.owner_display_name, v.updated_at, v.row_version
+           v.owner_display_name, v.legal_entity_id, v.legal_entity_name, v.updated_at, v.row_version
     FROM crm.v_projects AS v
     WHERE (@stage IS NULL OR v.stage = @stage)
       AND (@team_id IS NULL OR v.team_id = @team_id)
+      AND (@legal_entity_id IS NULL OR v.legal_entity_id = @legal_entity_id)
       AND (@client_id IS NULL OR v.client_id = @client_id)
       AND (@owner_user_id IS NULL OR v.owner_user_id = @owner_user_id)
       AND (@due_from IS NULL OR v.due_date >= @due_from)

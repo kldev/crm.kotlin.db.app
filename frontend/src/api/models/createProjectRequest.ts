@@ -27,4 +27,6 @@ export interface CreateProjectRequest {
      * @nullable
      */
   budget: number | null;
+  /** @nullable */
+  legalEntityId: number | null;
 }

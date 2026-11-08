@@ -24,4 +24,6 @@ export interface CreateOfferRequest {
      * @pattern pl|en
      */
   lang?: string | null;
+  /** @nullable */
+  legalEntityId?: number | null;
 }

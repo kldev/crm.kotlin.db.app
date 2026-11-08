@@ -23,6 +23,8 @@ export interface ProjectResponse {
   ownerUserId: number;
   ownerLogin: string;
   ownerDisplayName: string;
+  legalEntityId: number;
+  legalEntityName: string;
   updatedAt: string;
   rowVersion: string;
 }

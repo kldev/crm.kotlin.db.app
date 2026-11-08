@@ -20,6 +20,8 @@ data class OfferTemplateResponse(
     val titleEn: String,
     val validityDays: Int,
     val itemCount: Int,
+    /** The company the template signs with by default (ADR-0016). */
+    val legalEntityId: Int,
 )
 
 /** An offer with its client, author (whose contact closes the PDF when they sell) and totals. */
@@ -56,6 +58,9 @@ data class OfferResponse(
     val totalVat: BigDecimal,
     val totalGross: BigDecimal,
     val rowVersion: String,
+    /** The signing company (ADR-0016). */
+    val legalEntityId: Int,
+    val legalEntityName: String,
 )
 
 data class OfferItemResponse(
@@ -76,6 +81,8 @@ data class CreateOfferRequest(
     @field:Size(max = 200) val title: String?,
     /** The language of the template texts copied into the offer: pl or en. */
     @field:Pattern(regexp = "pl|en") val lang: String? = "pl",
+    /** The signing company; the template's when empty. */
+    val legalEntityId: Int? = null,
 )
 
 data class OfferItemRequest(
@@ -94,6 +101,8 @@ data class UpdateOfferRequest(
     @field:NotNull val validUntil: LocalDate?,
     @field:NotNull @field:Size(max = 100) val items: List<@Valid OfferItemRequest>?,
     @field:NotBlank @field:Pattern(regexp = RowVersion.PATTERN) val rowVersion: String?,
+    /** Another signing company; empty keeps it. */
+    val legalEntityId: Int? = null,
 )
 
 data class ChangeOfferStatusRequest(

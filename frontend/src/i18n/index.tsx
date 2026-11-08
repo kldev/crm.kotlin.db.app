@@ -1,3 +1,4 @@
+import { I18nProvider } from "@heroui/react";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { catalogEn } from "./catalogEn";
 
@@ -43,7 +44,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 		setLangState(value);
 	}, []);
 	const state = useMemo(() => ({ lang, setLang }), [lang, setLang]);
-	return <LangContext.Provider value={state}>{children}</LangContext.Provider>;
+	// React Aria formats dates and numbers in its controls (the date pickers) in the same language as the texts.
+	return (
+		<LangContext.Provider value={state}>
+			<I18nProvider locale={state.lang === "pl" ? "pl-PL" : "en-GB"}>{children}</I18nProvider>
+		</LangContext.Provider>
+	);
 }
 
 export interface I18n {

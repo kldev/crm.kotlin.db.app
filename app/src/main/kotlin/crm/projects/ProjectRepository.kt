@@ -19,6 +19,7 @@ data class ProjectFilter(
     val overdueOnly: Boolean,
     val dueFrom: LocalDate?,
     val dueTo: LocalDate?,
+    val legalEntityId: Int? = null,
 )
 
 /** Projects, their stage history and comments. Every method is one `EXEC app.<procedure>`. */
@@ -43,6 +44,8 @@ class ProjectRepository(private val jdbc: JdbcClient) {
             ownerUserId = rs.getInt("owner_user_id"),
             ownerLogin = rs.getString("owner_login"),
             ownerDisplayName = rs.getString("owner_display_name"),
+            legalEntityId = rs.getInt("legal_entity_id"),
+            legalEntityName = rs.getString("legal_entity_name"),
             updatedAt = rs.getLocalDateTime("updated_at"),
             rowVersion = rs.getRowVersion(),
         )
@@ -75,7 +78,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.project_search @actor_id = :actorId, @stage = :stage, @team_id = :teamId, " +
                 "@client_id = :clientId, @owner_user_id = :ownerUserId, @overdue_only = :overdueOnly, " +
-                "@due_from = :dueFrom, @due_to = :dueTo, @after_due_date = :afterDueDate, @after_id = :afterId, " +
+                "@due_from = :dueFrom, @due_to = :dueTo, @legal_entity_id = :legalEntityId, @after_due_date = :afterDueDate, @after_id = :afterId, " +
                 "@page_size = :pageSize",
         )
             .param("actorId", actorId, Types.INTEGER)
@@ -86,6 +89,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
             .param("overdueOnly", filter.overdueOnly, Types.BIT)
             .param("dueFrom", filter.dueFrom, Types.DATE)
             .param("dueTo", filter.dueTo, Types.DATE)
+            .param("legalEntityId", filter.legalEntityId, Types.INTEGER)
             .param("afterDueDate", afterDueDate, Types.DATE)
             .param("afterId", afterId, Types.BIGINT)
             .param("pageSize", pageSize, Types.INTEGER)
@@ -96,7 +100,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.project_count @actor_id = :actorId, @stage = :stage, @team_id = :teamId, " +
                 "@client_id = :clientId, @owner_user_id = :ownerUserId, @overdue_only = :overdueOnly, " +
-                "@due_from = :dueFrom, @due_to = :dueTo",
+                "@due_from = :dueFrom, @due_to = :dueTo, @legal_entity_id = :legalEntityId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("stage", filter.stage, Types.VARCHAR)
@@ -106,6 +110,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
             .param("overdueOnly", filter.overdueOnly, Types.BIT)
             .param("dueFrom", filter.dueFrom, Types.DATE)
             .param("dueTo", filter.dueTo, Types.DATE)
+            .param("legalEntityId", filter.legalEntityId, Types.INTEGER)
             .query { rs, _ -> rs.getLong("total") }
             .single()
 
@@ -120,7 +125,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.project_create @actor_id = :actorId, @client_id = :clientId, @team_id = :teamId, " +
                 "@owner_user_id = :ownerUserId, @name = :name, @start_date = :startDate, @due_date = :dueDate, " +
-                "@budget = :budget",
+                "@budget = :budget, @legal_entity_id = :legalEntityId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("clientId", body.clientId, Types.BIGINT)
@@ -130,6 +135,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
             .param("startDate", body.startDate, Types.DATE)
             .param("dueDate", body.dueDate, Types.DATE)
             .param("budget", body.budget, Types.DECIMAL)
+            .param("legalEntityId", body.legalEntityId, Types.INTEGER)
             .query(projectRow)
             .single()
 
@@ -137,7 +143,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.project_update @actor_id = :actorId, @id = :id, @team_id = :teamId, " +
                 "@owner_user_id = :ownerUserId, @name = :name, @start_date = :startDate, @due_date = :dueDate, " +
-                "@budget = :budget, @row_version = :rowVersion",
+                "@budget = :budget, @legal_entity_id = :legalEntityId, @row_version = :rowVersion",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("id", id, Types.BIGINT)
@@ -147,6 +153,7 @@ class ProjectRepository(private val jdbc: JdbcClient) {
             .param("startDate", body.startDate, Types.DATE)
             .param("dueDate", body.dueDate, Types.DATE)
             .param("budget", body.budget, Types.DECIMAL)
+            .param("legalEntityId", body.legalEntityId, Types.INTEGER)
             .param("rowVersion", RowVersion.parse(body.rowVersion!!), Types.BINARY)
             .query(projectRow)
             .single()

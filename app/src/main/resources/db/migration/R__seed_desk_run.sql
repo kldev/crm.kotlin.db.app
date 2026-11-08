@@ -95,4 +95,10 @@ BEGIN
     EXEC seed.tasks_run;
     -- A pipeline for the sales board (ADR-0015).
     EXEC seed.deals_run;
+    -- Activities, next steps and tasks of the deals: a salesperson's day (ADR-0017).
+    EXEC seed.sales_run;
+    -- Offers of the deals' clients from the three templates (ADR-0013).
+    EXEC seed.offers_run;
+    -- The group's companies on the projects seeded before them (ADR-0016).
+    EXEC seed.legal_entities_run;
 END;

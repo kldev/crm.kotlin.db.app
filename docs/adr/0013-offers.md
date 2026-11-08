@@ -28,7 +28,7 @@ see whom to call.
   the client and details, the introduction, the lines with a linen head, the contact next to the totals (one block,
   never split), the terms, a footer with "page x of y" - in Polish or English (`lang`). Cormorant Garamond SemiBold is a
   static instance of the OFL variable font; the text is Lato (ADR-0010). The company's name, address, tax id, phone,
-  e-mail and website are settings (`CRM_OFFER_COMPANY_*`, default "Halycon Inc.").
+  e-mail and website were settings (`CRM_OFFER_COMPANY_*`); since ADR-0016 they are the signing company's data.
 
 ## Consequences
 

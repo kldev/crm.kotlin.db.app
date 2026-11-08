@@ -13,4 +13,5 @@ export interface OfferTemplateResponse {
   titleEn: string;
   validityDays: number;
   itemCount: number;
+  legalEntityId: number;
 }

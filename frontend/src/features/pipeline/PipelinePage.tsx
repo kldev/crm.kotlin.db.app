@@ -7,7 +7,7 @@ import {
 	toast,
 } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { CircleDollarSign, Plus, Scale, Trophy, XCircle } from "lucide-react";
 import { type DragEvent, useRef, useState } from "react";
 import type { DealResponse, DealStageResponse } from "#/api/models";
@@ -19,11 +19,11 @@ import { useDebouncedValue } from "#/hooks/useDebouncedValue";
 import { useI18n } from "#/i18n";
 import { problemText } from "#/i18n/problems";
 import { DealDrawer, type DealDrawerCommand } from "./DealDrawer";
-import { dealBoardQuery, dealStagesQuery, useMoveDeal } from "./hooks";
+import { dealBoardQuery, dealStagesQuery, dealSummaryQuery, useMoveDeal } from "./hooks";
 import { LostReasonDialog } from "./LostReasonDialog";
-import { amount, type DealScope, stageAccent, stageName, totals } from "./types";
+import { amount, countOf, type DealScope, stageAccent, stageName, summed } from "./types";
 
-const route = getRouteApi("/_app/pipeline");
+const route = getRouteApi("/_app/pipeline/");
 
 const DRAG_TYPE = "application/x-crm-deal";
 
@@ -39,6 +39,7 @@ export function PipelinePage() {
 	const search = route.useSearch();
 	const navigate = route.useNavigate();
 	const drawer = useRef<DealDrawerCommand>(null);
+	const goTo = useNavigate();
 	// A salesperson starts with their own deals; managers see the whole team.
 	const scope: DealScope = search.scope ?? (me.role === "SALES" ? "MINE" : "ALL");
 	const [text, setText] = useState(search.q ?? "");
@@ -55,10 +56,15 @@ export function PipelinePage() {
 	const [losing, setLosing] = useState<DealResponse | null>(null);
 	const move = useMoveDeal(board);
 
-	const open = deals.filter((d) => !d.closed);
-	const won = deals.filter((d) => d.stage === "WON");
-	const lost = deals.filter((d) => d.stage === "LOST");
-	const winRate = won.length + lost.length === 0 ? null : won.length / (won.length + lost.length);
+	// The tiles and the column heads count every matching deal (app.deal_board_summary), the columns show the first cards.
+	const summary = useQuery(dealSummaryQuery(board)).data ?? [];
+	const closedStages = new Set((stages.data ?? []).filter((s) => s.closed).map((s) => s.stage));
+	const open = summary.filter((r) => !closedStages.has(r.stage));
+	const won = summary.filter((r) => r.stage === "WON");
+	const lost = summary.filter((r) => r.stage === "LOST");
+	const wonCount = countOf(won);
+	const lostCount = countOf(lost);
+	const winRate = wonCount + lostCount === 0 ? null : wonCount / (wonCount + lostCount);
 
 	const drop = (stage: DealStageResponse, event: DragEvent) => {
 		event.preventDefault();
@@ -100,20 +106,20 @@ export function PipelinePage() {
 				<StatTile
 					icon={CircleDollarSign}
 					label={t("W lejku", "In the pipeline")}
-					value={totals(open, locale)}
-					note={t(`${open.length} otwartych szans`, `${open.length} open deals`)}
+					value={summed(open, locale)}
+					note={t(`${countOf(open)} otwartych szans`, `${countOf(open)} open deals`)}
 				/>
 				<StatTile
 					icon={Scale}
 					label={t("Prognoza ważona", "Weighted forecast")}
-					value={totals(open, locale, true)}
+					value={summed(open, locale, true)}
 					note={t("wartość × prawdopodobieństwo etapu", "value × the stage's probability")}
 				/>
 				<StatTile
 					icon={Trophy}
 					label={t("Wygrane (30 dni)", "Won (30 days)")}
-					value={totals(won, locale)}
-					note={t(`${won.length} szans`, `${won.length} deals`)}
+					value={summed(won, locale)}
+					note={t(`${wonCount} szans`, `${wonCount} deals`)}
 				/>
 				<StatTile
 					icon={XCircle}
@@ -121,8 +127,8 @@ export function PipelinePage() {
 					label={t("Skuteczność (30 dni)", "Win rate (30 days)")}
 					value={winRate == null ? "—" : `${Math.round(winRate * 100)}%`}
 					note={t(
-						`${won.length} wygr. · ${lost.length} przegr.`,
-						`${won.length} won · ${lost.length} lost`,
+						`${wonCount} wygr. · ${lostCount} przegr.`,
+						`${wonCount} won · ${lostCount} lost`,
 					)}
 				/>
 			</div>
@@ -174,6 +180,8 @@ export function PipelinePage() {
 					>
 						{stages.data.map((stage) => {
 							const cards = deals.filter((d) => d.stage === stage.stage);
+							const rows = summary.filter((r) => r.stage === stage.stage);
+							const total = Math.max(countOf(rows), cards.length);
 							const isOver = over === stage.stage && dragging != null;
 							return (
 								<section
@@ -200,18 +208,18 @@ export function PipelinePage() {
 												{stageName(stage, i18n)}
 											</h2>
 											<span className="rounded-full bg-[var(--obs-surface)] px-2 py-0.5 text-[11px] tabular-nums text-muted">
-												{cards.length}
+												{total}
 											</span>
 										</div>
 										<p className="mt-1 text-xs tabular-nums text-[var(--obs-text-secondary)]">
-											{totals(cards, locale)}
+											{summed(rows, locale)}
 										</p>
 										<p className="text-[11px] text-muted">
 											{stage.closed
 												? t("ostatnie 30 dni", "last 30 days")
 												: t(
-														`${stage.probability}% · prognoza ${totals(cards, locale, true)}`,
-														`${stage.probability}% · forecast ${totals(cards, locale, true)}`,
+														`${stage.probability}% · prognoza ${summed(rows, locale, true)}`,
+														`${stage.probability}% · forecast ${summed(rows, locale, true)}`,
 													)}
 										</p>
 									</header>
@@ -222,7 +230,9 @@ export function PipelinePage() {
 												deal={deal}
 												showOwner={scope === "ALL" && me.role !== "SALES"}
 												isDragging={dragging === deal.id}
-												onOpen={() => drawer.current?.edit(deal)}
+												onOpen={() =>
+													void goTo({ to: "/pipeline/$dealId", params: { dealId: deal.id } })
+												}
 												onDragStart={(e) => {
 													e.dataTransfer.setData(DRAG_TYPE, String(deal.id));
 													e.dataTransfer.effectAllowed = "move";
@@ -234,6 +244,14 @@ export function PipelinePage() {
 												}}
 											/>
 										))}
+										{total > cards.length ? (
+											<p className="py-1 text-center text-[11px] text-muted">
+												{t(
+													`Pokazano ${cards.length} z ${total} - zawęź wyszukiwaniem`,
+													`Showing ${cards.length} of ${total} - narrow it with the search`,
+												)}
+											</p>
+										) : null}
 										{!stage.closed ? (
 											<button
 												type="button"

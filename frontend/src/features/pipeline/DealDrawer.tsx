@@ -251,9 +251,7 @@ function Content({
 						</form.AppField>
 					</div>
 					<form.AppField name="expectedClose">
-						{(f) => (
-							<f.FormInput label={t("Przewidywane zamknięcie", "Expected close")} type="date" />
-						)}
+						{(f) => <f.FormDate label={t("Przewidywane zamknięcie", "Expected close")} />}
 					</form.AppField>
 					{deal ? (
 						<Button

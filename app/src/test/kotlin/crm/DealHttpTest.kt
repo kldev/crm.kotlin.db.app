@@ -110,9 +110,13 @@ class DealHttpTest : IntegrationTest() {
     }
 
     @Test
-    fun `the seed fills the board`() {
-        val board = loggedIn("perf.manager.0001").get("/api/deals").body!!.list()
-        assertTrue(board.size >= 50, "seeded pipeline: ${board.size}")
+    fun `the seed fills the board, every column, and the summary counts all deals`() {
+        val manager = loggedIn("perf.manager.0001")
+        val board = manager.get("/api/deals?perStage=5").body!!.list()
+        assertTrue(board.groupBy { it["stage"].asString() }.values.all { it.size <= 5 }, "at most perStage cards per column")
+        val summary = manager.get("/api/deals/summary").body!!.list()
+        assertTrue(summary.sumOf { it["deals"].asInt() } >= board.size)
+        assertTrue(summary.sumOf { it["deals"].asInt() } >= 50, "seeded pipeline")
         assertTrue(board.map { it["stage"].asString() }.toSet().containsAll(listOf("LEAD", "QUALIFIED", "PROPOSAL", "NEGOTIATION")))
         assertNull(board.firstOrNull { !it["closed"].asBoolean() && !it["closedAt"].isNull })
     }

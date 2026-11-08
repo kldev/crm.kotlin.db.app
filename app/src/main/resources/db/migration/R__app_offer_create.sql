@@ -1,14 +1,16 @@
 /*
   A new offer for a client from a template (ADR-0013): a draft with the template's title, introduction, terms and
   default lines, valid for the template's number of days, numbered OF/<year>/<nnnn> for the year in Warsaw time. The
-  author is the actor; SALES only for their own clients. @lang chooses the template texts (pl / en).
+  author is the actor; SALES only for their own clients. @lang chooses the template texts (pl / en). The signing
+  company (ADR-0016) is @legal_entity_id or the template's, trading today (51205).
 */
 CREATE OR ALTER PROCEDURE app.offer_create
     @actor_id     int,
     @client_id    bigint,
     @template_key varchar(20),
     @title        nvarchar(400) = NULL,
-    @lang         char(2)       = 'pl'
+    @lang         char(2)       = 'pl',
+    @legal_entity_id int        = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
@@ -23,6 +25,8 @@ BEGIN
         THROW 51170, N'The title can have at most 200 characters.', 1;
 
     DECLARE @today date = CAST((SYSUTCDATETIME() AT TIME ZONE 'UTC') AT TIME ZONE 'Central European Standard Time' AS date);
+    SET @legal_entity_id = ISNULL(@legal_entity_id, (SELECT legal_entity_id FROM crm.offer_templates WHERE template_key = @template_key));
+    EXEC crm.legal_entity_require_active @legal_entity_id, @today;
     DECLARE @year smallint = YEAR(@today), @seq int, @offer_id bigint;
 
     BEGIN TRANSACTION;
@@ -34,10 +38,10 @@ BEGIN
     END;
 
     INSERT crm.offers (number, client_id, template_key, title, intro, terms, currency, valid_until, status,
-                       author_user_id, updated_by)
+                       author_user_id, updated_by, legal_entity_id)
     SELECT CONCAT('OF/', @year, '/', RIGHT(CONCAT('000', @seq), IIF(@seq > 9999, LEN(@seq), 4))), @client_id,
            @template_key, ISNULL(@title, IIF(@lang = 'en', t.title_en, t.title_pl)), IIF(@lang = 'en', t.intro_en, t.intro_pl),
-           IIF(@lang = 'en', t.terms_en, t.terms_pl), 'PLN', DATEADD(DAY, t.validity_days, @today), 'DRAFT', @actor_id, @actor_id
+           IIF(@lang = 'en', t.terms_en, t.terms_pl), 'PLN', DATEADD(DAY, t.validity_days, @today), 'DRAFT', @actor_id, @actor_id, @legal_entity_id
     FROM crm.offer_templates AS t
     WHERE t.template_key = @template_key;
     SET @offer_id = SCOPE_IDENTITY();

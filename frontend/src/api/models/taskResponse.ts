@@ -31,4 +31,8 @@ export interface TaskResponse {
   createdAt: string;
   updatedAt: string;
   rowVersion: string;
+  /** @nullable */
+  dealId?: number | null;
+  /** @nullable */
+  dealTitle?: string | null;
 }

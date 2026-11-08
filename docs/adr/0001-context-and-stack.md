@@ -16,7 +16,8 @@ platform-owner role above the application administrator.
 - SQL Server 2025 **Express** (`MSSQL_PID=Express`), not Developer: the limits of the free edition are part of
   the experiment (50 GB per database, buffer pool about 1.4 GB, at most 4 cores / 1 socket).
 - One Docker image with three modes (`CRM_MODE=app|migrate|seed`); docker compose for the local stack.
-- Flyway for migrations: versioned files for tables, repeatable `R__` files (`CREATE OR ALTER`) for procedures.
+- Flyway for migrations: versioned files for tables, numbered with four digits (`V0001__…`) so they sort by name in
+  the same order Flyway runs them; repeatable `R__` files (`CREATE OR ALTER`) for procedures.
 - REST API with OpenAPI from controller annotations (springdoc), no frontend.
 
 ## Consequences

@@ -10,6 +10,7 @@ export type SearchOffersParams = {
   templateKey?: string;
   clientId?: number;
   search?: string;
+  legalEntityId?: number;
   cursor?: string;
   /**
    * @minimum 1

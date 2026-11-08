@@ -20,11 +20,12 @@ export function ProjectsTable({
 	return (
 		<Table className="rounded-none shadow-none">
 			<Table.ScrollContainer>
-				<Table.Content aria-label={label ?? t("Projekty", "Projects")} className="min-w-[760px]">
+				<Table.Content aria-label={label ?? t("Projekty", "Projects")} className="min-w-[880px]">
 					<Table.Header>
 						<Table.Column isRowHeader>{t("Projekt", "Project")}</Table.Column>
 						{hide.includes("client") ? null : <Table.Column>{t("Klient", "Client")}</Table.Column>}
 						{hide.includes("team") ? null : <Table.Column>{t("Zespół", "Team")}</Table.Column>}
+						<Table.Column>{t("Spółka", "Company")}</Table.Column>
 						{hide.includes("owner") ? null : (
 							<Table.Column>{t("Właściciel", "Owner")}</Table.Column>
 						)}
@@ -54,6 +55,9 @@ export function ProjectsTable({
 									</Table.Cell>
 								)}
 								{hide.includes("team") ? null : <Table.Cell>{p.teamName}</Table.Cell>}
+								<Table.Cell>
+									<span className="text-xs">{p.legalEntityName}</span>
+								</Table.Cell>
 								{hide.includes("owner") ? null : (
 									<Table.Cell>
 										<span className="font-mono text-xs text-muted">{p.ownerLogin}</span>

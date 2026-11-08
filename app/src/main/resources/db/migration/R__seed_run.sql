@@ -172,6 +172,8 @@ BEGIN
     FROM STRING_SPLIT(N'Wdrożenie CRM,Migracja danych,Audyt procesów,Szkolenie zespołu,Integracja ERP,Raportowanie,'
                     + N'Kampania marketingowa,Serwis posprzedażowy,Rozbudowa sklepu,Optymalizacja kosztów', N',', 1);
     DECLARE @kind_count int = (SELECT COUNT(*) FROM @project_kinds);
+    DECLARE @first_entity_id int = (SELECT MIN(id) FROM crm.legal_entities),
+            @entity_count int = (SELECT COUNT(*) FROM crm.legal_entities);
     DECLARE @first_project_id bigint = NULL;
     DECLARE @project_from bigint;
 
@@ -182,7 +184,7 @@ BEGIN
         SET @project_from = ISNULL((SELECT MAX(id) FROM crm.projects), 0);
 
         INSERT crm.projects WITH (TABLOCK)
-            (client_id, team_id, owner_user_id, name, stage, start_date, due_date, budget,
+            (client_id, team_id, owner_user_id, name, stage, start_date, due_date, budget, legal_entity_id,
              stage_changed_at, created_at, updated_at)
         SELECT @first_client_id + x.client_n - 1,
                @first_team_id + x.sales_k % @team_count,
@@ -197,6 +199,8 @@ BEGIN
                x.start_date,
                DATEADD(DAY, 14 + h.h4 % 350, x.start_date),
                CAST(1000 + h.h5 % 499000 AS decimal(19, 2)) + CAST(h.h6 % 100 AS decimal(19, 2)) / 100,
+               -- The group's companies (ADR-0016) in turn; each traded by 2024, when the seeded projects start.
+               @first_entity_id + h.h4 % @entity_count,
                @started, @started, @started
         FROM GENERATE_SERIES(@done + 1, @batch_end) AS s
         CROSS APPLY (SELECT HASHBYTES('SHA2_256', CONCAT(@random_seed, ':p:', s.value)) AS b) AS hb

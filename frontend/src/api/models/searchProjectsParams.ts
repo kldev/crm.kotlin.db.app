@@ -13,6 +13,7 @@ export type SearchProjectsParams = {
   overdue?: boolean;
   dueFrom?: string;
   dueTo?: string;
+  legalEntityId?: number;
   cursor?: string;
   /**
    * @minimum 1

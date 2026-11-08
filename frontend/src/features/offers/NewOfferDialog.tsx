@@ -6,6 +6,7 @@ import { searchClients } from "#/api/endpoints/clients/clients";
 import type { OfferResponse } from "#/api/models";
 import { clientKeys } from "#/api/query-keys";
 import { ApiError } from "#/components/ui";
+import { CompanySelect } from "#/features/companies/CompanySelect";
 import { useDebouncedValue } from "#/hooks/useDebouncedValue";
 import { useI18n } from "#/i18n";
 import { offerTemplatesQuery, useCreateOffer } from "./hooks";
@@ -59,6 +60,9 @@ function Content({
 	const templates = useQuery(offerTemplatesQuery());
 	const [client, setClient] = useState(initialClient);
 	const [template, setTemplate] = useState<string>("IT");
+	// The signing company follows the template until the user picks another one (ADR-0016).
+	const [company, setCompany] = useState<number | undefined>();
+	const signing = company ?? templates.data?.find((tpl) => tpl.key === template)?.legalEntityId;
 	const [text, setText] = useState("");
 	const prefix = useDebouncedValue(text.trim(), 300);
 	const clients = useQuery({
@@ -158,6 +162,12 @@ function Content({
 										})}
 									</div>
 								</section>
+								<CompanySelect
+									label={t("Spółka podpisująca", "Signing company")}
+									className="sm:max-w-sm"
+									value={signing}
+									onChange={setCompany}
+								/>
 								<ApiError error={create.error} />
 							</div>
 						</Modal.Body>
@@ -169,7 +179,13 @@ function Content({
 								isDisabled={!client}
 								isPending={create.isPending}
 								onPress={() =>
-									client && create.mutate({ clientId: client.id, templateKey: template, lang })
+									client &&
+									create.mutate({
+										clientId: client.id,
+										templateKey: template,
+										lang,
+										legalEntityId: signing ?? null,
+									})
 								}
 							>
 								{t("Utwórz szkic", "Create a draft")}

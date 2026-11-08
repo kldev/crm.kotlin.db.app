@@ -30,4 +30,12 @@ export interface DealResponse {
   createdAt: string;
   updatedAt: string;
   rowVersion: string;
+  /** @nullable */
+  nextStep?: string | null;
+  /** @nullable */
+  nextStepAt?: string | null;
+  /** @nullable */
+  lastActivityAt?: string | null;
+  /** @nullable */
+  lastActivityType?: string | null;
 }

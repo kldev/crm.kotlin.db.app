@@ -137,6 +137,14 @@ export function ProjectDetailsPage() {
 									),
 								},
 								{
+									label: t("Spółka realizująca", "Delivering company"),
+									value: (
+										<Link to="/companies" className="hover:underline">
+											{p.legalEntityName}
+										</Link>
+									),
+								},
+								{
 									label: t("Zespół", "Team"),
 									value: (
 										<Link

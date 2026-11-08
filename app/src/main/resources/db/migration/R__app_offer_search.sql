@@ -6,6 +6,7 @@ CREATE OR ALTER PROCEDURE app.offer_search
     @actor_id     int,
     @status       varchar(10)   = NULL,
     @template_key varchar(20)   = NULL,
+    @legal_entity_id int        = NULL,
     @client_id    bigint        = NULL,
     @search       nvarchar(200) = NULL,
     @after_id     bigint        = NULL,
@@ -30,6 +31,7 @@ BEGIN
     WHERE (@role <> 'SALES' OR c.assigned_user_id = @actor_id)
       AND (@status IS NULL OR o.status = @status)
       AND (@template_key IS NULL OR o.template_key = @template_key)
+      AND (@legal_entity_id IS NULL OR o.legal_entity_id = @legal_entity_id)
       AND (@client_id IS NULL OR o.client_id = @client_id)
       AND (@search IS NULL OR o.number = @search OR o.title LIKE @pattern)
       AND (@after_id IS NULL OR o.id < @after_id)
@@ -45,14 +47,16 @@ BEGIN
         author_name nvarchar(200), author_role varchar(10), author_job_title nvarchar(100), author_phone varchar(30),
         author_email varchar(254), sent_at datetime2(3), decided_at datetime2(3), created_at datetime2(3),
         updated_at datetime2(3), item_count int, total_net decimal(18, 2), total_vat decimal(18, 2),
-        total_gross decimal(18, 2), row_version binary(8));
+        total_gross decimal(18, 2), row_version binary(8), legal_entity_id int,
+        legal_entity_name nvarchar(100));
     WHILE @i <= @n
     BEGIN
         SELECT @id = id FROM @page WHERE ord = @i;
         INSERT @rows (id, number, client_id, client_name, client_nip, client_city, client_email, template_key,
                       template_name_pl, template_name_en, title, intro, terms, currency, valid_until, status,
                       author_user_id, author_name, author_role, author_job_title, author_phone, author_email, sent_at,
-                      decided_at, created_at, updated_at, item_count, total_net, total_vat, total_gross, row_version)
+                      decided_at, created_at, updated_at, item_count, total_net, total_vat, total_gross, row_version,
+                      legal_entity_id, legal_entity_name)
         EXEC crm.offer_select @id;
         UPDATE @rows SET ord = @i WHERE id = @id;
         SET @i += 1;
@@ -60,6 +64,6 @@ BEGIN
     SELECT id, number, client_id, client_name, client_nip, client_city, client_email, template_key, template_name_pl,
            template_name_en, title, intro, terms, currency, valid_until, status, author_user_id, author_name,
            author_role, author_job_title, author_phone, author_email, sent_at, decided_at, created_at, updated_at,
-           item_count, total_net, total_vat, total_gross, row_version
+           item_count, total_net, total_vat, total_gross, row_version, legal_entity_id, legal_entity_name
     FROM @rows ORDER BY ord;
 END;

@@ -13,4 +13,5 @@ export type CountProjectsParams = {
   overdue?: boolean;
   dueFrom?: string;
   dueTo?: string;
+  legalEntityId?: number;
 };

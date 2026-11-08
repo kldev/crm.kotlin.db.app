@@ -1,6 +1,7 @@
 /*
   Edit a draft offer (ADR-0013): title, introduction, terms, currency, validity and the whole list of lines. Only a
-  draft (51906); `@row_version` from the last read (51901 when someone changed it meanwhile).
+  draft (51906); `@row_version` from the last read (51901 when someone changed it meanwhile). The signing company
+  (ADR-0016) may change too while it trades (51205); NULL keeps it.
 */
 CREATE OR ALTER PROCEDURE app.offer_update
     @actor_id    int,
@@ -11,7 +12,8 @@ CREATE OR ALTER PROCEDURE app.offer_update
     @currency    char(3),
     @valid_until date,
     @items       nvarchar(max),
-    @row_version binary(8)
+    @row_version binary(8),
+    @legal_entity_id int = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
@@ -29,6 +31,8 @@ BEGIN
     DECLARE @today date = CAST((SYSUTCDATETIME() AT TIME ZONE 'UTC') AT TIME ZONE 'Central European Standard Time' AS date);
     IF @valid_until IS NULL OR @valid_until < @today OR @valid_until > DATEADD(YEAR, 1, @today)
         THROW 51172, N'The offer must be valid from today up to a year.', 1;
+    IF @legal_entity_id IS NOT NULL
+        EXEC crm.legal_entity_require_active @legal_entity_id, @today;
 
     BEGIN TRANSACTION;
     DECLARE @status varchar(10), @current binary(8);
@@ -41,6 +45,7 @@ BEGIN
     EXEC crm.offer_items_save @offer_id, @items;
     UPDATE crm.offers
     SET title = @title, intro = @intro, terms = @terms, currency = @currency, valid_until = @valid_until,
+        legal_entity_id = ISNULL(@legal_entity_id, legal_entity_id),
         updated_at = SYSUTCDATETIME(), updated_by = @actor_id
     WHERE id = @offer_id;
     COMMIT;

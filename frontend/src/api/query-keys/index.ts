@@ -103,6 +103,7 @@ export const taskKeys = {
 	window: (filters: object) => [...taskKeys.all, "window", filters] as const,
 	detail: (id: number) => [...taskKeys.all, "detail", id] as const,
 	departments: () => [...taskKeys.all, "departments"] as const,
+	agenda: (filters: object) => [...taskKeys.all, "agenda", filters] as const,
 };
 
 /** The sales pipeline (ADR-0015): the board for its filters and the stages. A write invalidates the area. */
@@ -110,4 +111,17 @@ export const dealKeys = {
 	all: ["deals"] as const,
 	stages: () => [...dealKeys.all, "stages"] as const,
 	board: (filters: object) => [...dealKeys.all, "board", filters] as const,
+	summary: (filters: object) => [...dealKeys.all, "summary", filters] as const,
+	detail: (id: number) => [...dealKeys.all, "detail", id] as const,
+	activityTypes: () => [...dealKeys.all, "activity-types"] as const,
+	activities: (id: number) => [...dealKeys.all, "activities", id] as const,
+	/** "My day" (ADR-0017): follow-ups and deals without a next step live with the deals, so a write refreshes them. */
+	followUps: (filters: object) => [...dealKeys.all, "follow-ups", filters] as const,
+	withoutNextStep: (scope: string) => [...dealKeys.all, "without-next-step", scope] as const,
+};
+
+/** The group's companies (ADR-0016): one small list every picker reads. */
+export const legalEntityKeys = {
+	all: ["legal-entities"] as const,
+	list: () => [...legalEntityKeys.all, "list"] as const,
 };

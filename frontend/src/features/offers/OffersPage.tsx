@@ -5,6 +5,7 @@ import { FileText, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, LoadMore, SelectFilter, TableSkeleton } from "#/components/ui";
+import { legalEntitiesQuery } from "#/features/companies/hooks";
 import { useDebouncedValue } from "#/hooks/useDebouncedValue";
 import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
 import { useI18n } from "#/i18n";
@@ -35,7 +36,13 @@ export function OffersPage() {
 	if ((search.q ?? "") !== q)
 		void navigate({ search: (s) => ({ ...s, q: q || undefined }), replace: true });
 
-	const filters = { status: search.status, templateKey: search.template, search: search.q };
+	const entities = useQuery(legalEntitiesQuery());
+	const filters = {
+		status: search.status,
+		templateKey: search.template,
+		search: search.q,
+		legalEntityId: search.company,
+	};
 	const query = useInfiniteQuery(offersQuery(filters));
 	const total = useOnDemandTotal(offersCountQuery(filters));
 	const offers = query.data?.pages.flatMap((p) => p.items) ?? [];
@@ -92,6 +99,17 @@ export function OffersPage() {
 						}))}
 						onChange={(template) => void navigate({ search: (s) => ({ ...s, template }) })}
 					/>
+					<SelectFilter
+						label={t("Spółka", "Company")}
+						className="w-full sm:w-56"
+						value={search.company ? String(search.company) : undefined}
+						options={(entities.data ?? []).map((e) => ({ id: String(e.id), label: e.name }))}
+						onChange={(company) =>
+							void navigate({
+								search: (s) => ({ ...s, company: company ? Number(company) : undefined }),
+							})
+						}
+					/>
 				</div>
 				{query.isPending ? (
 					<TableSkeleton />
@@ -117,6 +135,7 @@ export function OffersPage() {
 										<Table.Column isRowHeader>{t("Oferta", "Offer")}</Table.Column>
 										<Table.Column>{t("Klient", "Client")}</Table.Column>
 										<Table.Column>{t("Szablon", "Template")}</Table.Column>
+										<Table.Column>{t("Spółka", "Company")}</Table.Column>
 										<Table.Column>{t("Status", "Status")}</Table.Column>
 										<Table.Column>{t("Ważna do", "Valid until")}</Table.Column>
 										<Table.Column className="text-right">{t("Brutto", "Gross")}</Table.Column>
@@ -141,6 +160,9 @@ export function OffersPage() {
 												</Table.Cell>
 												<Table.Cell>{o.clientName}</Table.Cell>
 												<Table.Cell>{templateName(o, i18n)}</Table.Cell>
+												<Table.Cell>
+													<span className="text-xs">{o.legalEntityName}</span>
+												</Table.Cell>
 												<Table.Cell>
 													<Chip
 														size="sm"

@@ -29,7 +29,7 @@ class ProjectHttpTest : IntegrationTest() {
             mapOf(
                 "clientId" to client["id"].asLong(), "teamId" to teamOf(login), "ownerUserId" to userId(login),
                 "name" to "Test projekt", "startDate" to due.minusDays(30).toString(), "dueDate" to due.toString(),
-                "budget" to 1234.56,
+                "budget" to 1234.56, "legalEntityId" to 1,
             ),
         )
         assertEquals(201, response.status, response.body.toString())
@@ -101,7 +101,7 @@ class ProjectHttpTest : IntegrationTest() {
             mapOf(
                 "teamId" to p["teamId"].asInt(), "ownerUserId" to p["ownerUserId"].asInt(), "name" to "Test changed",
                 "startDate" to p["startDate"].asString(), "dueDate" to p["dueDate"].asString(),
-                "budget" to 1, "rowVersion" to p["rowVersion"].asString(),
+                "budget" to 1, "legalEntityId" to p["legalEntityId"].asInt(), "rowVersion" to p["rowVersion"].asString(),
             ),
         )
         assertEquals(409, response.status)
@@ -117,7 +117,7 @@ class ProjectHttpTest : IntegrationTest() {
             "/api/projects",
             mapOf(
                 "clientId" to client, "teamId" to otherTeam, "ownerUserId" to userId("perf.sales.0001"),
-                "name" to "Test", "startDate" to "2026-01-01", "dueDate" to "2026-02-01", "budget" to 10,
+                "name" to "Test", "startDate" to "2026-01-01", "dueDate" to "2026-02-01", "budget" to 10, "legalEntityId" to 1,
             ),
         )
         assertEquals(400, response.status)

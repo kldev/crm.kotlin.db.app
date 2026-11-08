@@ -17,5 +17,7 @@
 | [0013](0013-offers.md) | Offers from templates, printed in the Obsidian look | Accepted |
 | [0014](0014-tasks-calendar-and-timeline.md) | Tasks on a calendar and a timeline, without statuses | Accepted |
 | [0015](0015-sales-pipeline-kanban.md) | The sales pipeline as a kanban board | Accepted |
+| [0016](0016-multi-company.md) | The group's companies deliver projects and sign offers | Accepted |
+| [0017](0017-salesperson-day.md) | A salesperson's day: activities, the next step, tasks of a deal | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

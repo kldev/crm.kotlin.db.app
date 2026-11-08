@@ -11,7 +11,13 @@ import org.springframework.stereotype.Repository
 import tools.jackson.databind.json.JsonMapper
 import java.sql.Types
 
-data class OfferFilter(val status: String?, val templateKey: String?, val clientId: Long?, val search: String?)
+data class OfferFilter(
+    val status: String?,
+    val templateKey: String?,
+    val clientId: Long?,
+    val search: String?,
+    val legalEntityId: Int? = null,
+)
 
 /** Offers (ADR-0013): one `EXEC app.offer_*` (or `app.user_contact_*`) per method. */
 @Repository
@@ -50,6 +56,8 @@ class OfferRepository(private val jdbc: JdbcClient, private val json: JsonMapper
             totalVat = rs.getBigDecimal("total_vat"),
             totalGross = rs.getBigDecimal("total_gross"),
             rowVersion = rs.getRowVersion(),
+            legalEntityId = rs.getInt("legal_entity_id"),
+            legalEntityName = rs.getString("legal_entity_name"),
         )
     }
 
@@ -64,6 +72,7 @@ class OfferRepository(private val jdbc: JdbcClient, private val json: JsonMapper
                 OfferTemplateResponse(
                     rs.getString("template_key"), rs.getString("name_pl"), rs.getString("name_en"), rs.getString("title_pl"),
                     rs.getString("title_en"), rs.getInt("validity_days"), rs.getInt("item_count"),
+                    rs.getInt("legal_entity_id"),
                 )
             }
             .list()
@@ -71,13 +80,14 @@ class OfferRepository(private val jdbc: JdbcClient, private val json: JsonMapper
     fun search(actorId: Int, filter: OfferFilter, afterId: Long?, size: Int): List<OfferResponse> =
         jdbc.sql(
             "EXEC app.offer_search @actor_id = :actorId, @status = :status, @template_key = :templateKey, " +
-                "@client_id = :clientId, @search = :search, @after_id = :afterId, @page_size = :size",
+                "@client_id = :clientId, @search = :search, @legal_entity_id = :legalEntityId, @after_id = :afterId, @page_size = :size",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("status", filter.status, Types.VARCHAR)
             .param("templateKey", filter.templateKey, Types.VARCHAR)
             .param("clientId", filter.clientId, Types.BIGINT)
             .param("search", filter.search, Types.NVARCHAR)
+            .param("legalEntityId", filter.legalEntityId, Types.INTEGER)
             .param("afterId", afterId, Types.BIGINT)
             .param("size", size, Types.INTEGER)
             .query(offerRow)
@@ -86,13 +96,14 @@ class OfferRepository(private val jdbc: JdbcClient, private val json: JsonMapper
     fun count(actorId: Int, filter: OfferFilter): Long =
         jdbc.sql(
             "EXEC app.offer_count @actor_id = :actorId, @status = :status, @template_key = :templateKey, " +
-                "@client_id = :clientId, @search = :search",
+                "@client_id = :clientId, @search = :search, @legal_entity_id = :legalEntityId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("status", filter.status, Types.VARCHAR)
             .param("templateKey", filter.templateKey, Types.VARCHAR)
             .param("clientId", filter.clientId, Types.BIGINT)
             .param("search", filter.search, Types.NVARCHAR)
+            .param("legalEntityId", filter.legalEntityId, Types.INTEGER)
             .query { rs, _ -> rs.getLong("total") }
             .single()
 
@@ -119,13 +130,14 @@ class OfferRepository(private val jdbc: JdbcClient, private val json: JsonMapper
     fun create(actorId: Int, body: CreateOfferRequest): OfferResponse =
         jdbc.sql(
             "EXEC app.offer_create @actor_id = :actorId, @client_id = :clientId, @template_key = :templateKey, " +
-                "@title = :title, @lang = :lang",
+                "@title = :title, @lang = :lang, @legal_entity_id = :legalEntityId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("clientId", body.clientId, Types.BIGINT)
             .param("templateKey", body.templateKey, Types.VARCHAR)
             .param("title", body.title, Types.NVARCHAR)
             .param("lang", body.lang ?: "pl", Types.CHAR)
+            .param("legalEntityId", body.legalEntityId, Types.INTEGER)
             .query(offerRow)
             .single()
 
@@ -133,10 +145,11 @@ class OfferRepository(private val jdbc: JdbcClient, private val json: JsonMapper
         jdbc.sql(
             "EXEC app.offer_update @actor_id = :actorId, @offer_id = :offerId, @title = :title, @intro = :intro, " +
                 "@terms = :terms, @currency = :currency, @valid_until = :validUntil, @items = :items, " +
-                "@row_version = :rowVersion",
+                "@row_version = :rowVersion, @legal_entity_id = :legalEntityId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("offerId", offerId, Types.BIGINT)
+            .param("legalEntityId", body.legalEntityId, Types.INTEGER)
             .param("title", body.title, Types.NVARCHAR)
             .param("intro", body.intro, Types.NVARCHAR)
             .param("terms", body.terms, Types.NVARCHAR)

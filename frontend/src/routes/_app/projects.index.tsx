@@ -7,6 +7,7 @@ export const Route = createFileRoute("/_app/projects/")({
 	validateSearch: z.object({
 		stage: z.enum(STAGES).optional(),
 		teamId: z.coerce.number().int().optional(),
+		company: z.coerce.number().int().optional(),
 		overdue: z.boolean().optional(),
 	}),
 	component: ProjectsPage,

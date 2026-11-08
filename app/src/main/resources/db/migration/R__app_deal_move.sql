@@ -22,6 +22,8 @@ BEGIN
     SET stage_changed_at = IIF(stage = @stage, stage_changed_at, SYSUTCDATETIME()),
         closed_at = IIF(@closed = 1, IIF(stage = @stage, closed_at, SYSUTCDATETIME()), NULL),
         stage = @stage, lost_reason = IIF(@stage = 'LOST', @lost_reason, NULL),
+        -- A closed deal has no next step (ADR-0017).
+        next_step = IIF(@closed = 1, NULL, next_step), next_step_at = IIF(@closed = 1, NULL, next_step_at),
         updated_at = SYSUTCDATETIME(), updated_by = @actor_id
     WHERE id = @deal_id AND row_version = @row_version;
     IF @@ROWCOUNT = 0

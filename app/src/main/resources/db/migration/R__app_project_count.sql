@@ -8,6 +8,7 @@ CREATE OR ALTER PROCEDURE app.project_count
     @stage         varchar(12) = NULL,
     @team_id       int         = NULL,
     @client_id     bigint      = NULL,
+    @legal_entity_id int = NULL,
     @owner_user_id int         = NULL,
     @overdue_only  bit         = 0,
     @due_from      date        = NULL,
@@ -49,6 +50,7 @@ BEGIN
         JOIN crm.projects AS p ON p.id = visible.id
         WHERE (@stage IS NULL OR p.stage = @stage)
           AND (@team_id IS NULL OR p.team_id = @team_id)
+          AND (@legal_entity_id IS NULL OR p.legal_entity_id = @legal_entity_id)
           AND (@client_id IS NULL OR p.client_id = @client_id)
           AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
           AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
@@ -62,6 +64,7 @@ BEGIN
     FROM crm.projects AS p
     WHERE (@stage IS NULL OR p.stage = @stage)
       AND (@team_id IS NULL OR p.team_id = @team_id)
+      AND (@legal_entity_id IS NULL OR p.legal_entity_id = @legal_entity_id)
       AND (@client_id IS NULL OR p.client_id = @client_id)
       AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
       AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))

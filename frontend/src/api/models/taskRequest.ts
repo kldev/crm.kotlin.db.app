@@ -28,6 +28,8 @@ export interface TaskRequest {
   clientId?: number | null;
   /** @nullable */
   projectId?: number | null;
+  /** @nullable */
+  dealId?: number | null;
   /**
      * @nullable
      * @pattern ^[0-9a-fA-F]{16}$

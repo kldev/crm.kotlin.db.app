@@ -1,4 +1,4 @@
-import type { DealResponse, DealStageResponse } from "#/api/models";
+import type { DealResponse, DealStageResponse, DealStageTotal } from "#/api/models";
 import type { I18n } from "#/i18n";
 
 export const DEAL_SCOPES = ["MINE", "ALL"] as const;
@@ -22,6 +22,20 @@ export function totals(deals: DealResponse[], locale: string, weight = false): s
 		.map(([c, v]) => `${Math.round(v).toLocaleString(locale)} ${c}`)
 		.join(" · ");
 }
+
+/** Sums of summary rows per currency, "120 000 PLN · 8 000 EUR"; weighted by the stages' probability on request. */
+export function summed(rows: DealStageTotal[], locale: string, weighted = false): string {
+	const sums = new Map<string, number>();
+	for (const r of rows)
+		sums.set(r.currency, (sums.get(r.currency) ?? 0) + Number(weighted ? r.weighted : r.value));
+	if (sums.size === 0) return "0 PLN";
+	return [...sums.entries()]
+		.sort(([a], [b]) => (a === "PLN" ? -1 : b === "PLN" ? 1 : a.localeCompare(b)))
+		.map(([c, v]) => `${Math.round(v).toLocaleString(locale)} ${c}`)
+		.join(" · ");
+}
+
+export const countOf = (rows: DealStageTotal[]) => rows.reduce((n, r) => n + r.deals, 0);
 
 export const amount = (d: Pick<DealResponse, "value" | "currency">, locale: string) =>
 	`${Math.round(Number(d.value)).toLocaleString(locale)} ${d.currency}`;

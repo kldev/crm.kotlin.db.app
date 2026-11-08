@@ -1,5 +1,6 @@
 package crm.offers
 
+import crm.companies.LegalEntityResponse
 import crm.desk.reports.Lang
 import org.openpdf.text.Chunk
 import org.openpdf.text.Document
@@ -30,10 +31,10 @@ import java.util.Locale
  * The offer as a PDF in the Obsidian look (ADR-0013): an obsidian band with the company in Cormorant Garamond and a
  * champagne rule, linen surfaces for the table head and the totals, Lato for the text. The closing contact is the
  * author's when they are a salesperson (name, job title, phone, e-mail), otherwise the company's. Every page carries a
- * footer with the company line and "page x of y".
+ * footer with the company line and "page x of y". The company is the one that signs the offer (ADR-0016).
  */
 @Component
-class OfferPdf(private val company: OfferProperties) {
+class OfferPdf {
     private val obsidian = Color(0x17, 0x1a, 0x21)
     private val champagne = Color(0xc4, 0xa5, 0x74)
     private val champagneSoft = Color(0xf3, 0xeb, 0xdc)
@@ -56,7 +57,7 @@ class OfferPdf(private val company: OfferProperties) {
 
     fun fileName(offer: OfferResponse) = "oferta-${offer.number.replace('/', '-')}.pdf"
 
-    fun write(offer: OfferResponse, items: List<OfferItemResponse>, lang: Lang, out: OutputStream) {
+    fun write(offer: OfferResponse, items: List<OfferItemResponse>, company: LegalEntityResponse, lang: Lang, out: OutputStream) {
         val locale = if (lang == Lang.PL) Locale.forLanguageTag("pl-PL") else Locale.UK
         val money = DecimalFormat("#,##0.00", DecimalFormatSymbols(locale))
         val qty = DecimalFormat("#,##0.###", DecimalFormatSymbols(locale))
@@ -65,9 +66,9 @@ class OfferPdf(private val company: OfferProperties) {
 
         val document = Document(PageSize.A4, 42f, 42f, 150f, 64f)
         val writer = PdfWriter.getInstance(document, out)
-        writer.pageEvent = Frame(offer, lang, date)
+        writer.pageEvent = Frame(offer, company, lang, date)
         document.addTitle("${offer.number} ${offer.title}")
-        document.addAuthor(company.companyName)
+        document.addAuthor(company.legalName)
         document.open()
 
         // Title block.
@@ -183,13 +184,15 @@ class OfferPdf(private val company: OfferProperties) {
                     offer.authorEmail?.let { "E-mail" to it },
                 ).forEach { (k, v) -> addElement(detailParagraph(k, v)) }
                 if (offer.authorPhone == null && offer.authorEmail == null) {
-                    addElement(detailParagraph(lang.t("Telefon", "Phone"), company.companyPhone))
+                    company.phone?.let { addElement(detailParagraph(lang.t("Telefon", "Phone"), it)) }
                 }
             } else {
-                addElement(Paragraph(company.companyName, Font(serif, 16f, Font.NORMAL, text)))
-                addElement(detailParagraph(lang.t("Telefon", "Phone"), company.companyPhone))
-                addElement(detailParagraph("E-mail", company.companyEmail))
-                addElement(detailParagraph("WWW", company.companyWebsite))
+                addElement(Paragraph(company.name, Font(serif, 16f, Font.NORMAL, text)))
+                listOfNotNull(
+                    company.phone?.let { lang.t("Telefon", "Phone") to it },
+                    company.email?.let { "E-mail" to it },
+                    company.website?.let { "WWW" to it },
+                ).forEach { (k, v) -> addElement(detailParagraph(k, v)) }
             }
         })
         // The contact on the left, the totals on the right: one block that is never split between pages.
@@ -244,7 +247,12 @@ class OfferPdf(private val company: OfferProperties) {
     }
 
     /** The band on top of every page and the footer with "page x of y" (the total is filled in when the document closes). */
-    private inner class Frame(private val offer: OfferResponse, private val lang: Lang, private val date: DateTimeFormatter) :
+    private inner class Frame(
+        private val offer: OfferResponse,
+        private val company: LegalEntityResponse,
+        private val lang: Lang,
+        private val date: DateTimeFormatter,
+    ) :
         PdfPageEventHelper() {
         private lateinit var total: PdfTemplate
 
@@ -266,9 +274,9 @@ class OfferPdf(private val company: OfferProperties) {
             cb.restoreState()
             val left = document.leftMargin()
             val right = page.width - document.rightMargin()
-            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase(company.companyName, Font(serif, 26f, Font.NORMAL, Color.WHITE)), left, page.height - 58f, 0f)
-            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase(company.companyAddress, Font(sans, 8f, Font.NORMAL, bandMuted)), left, page.height - 76f, 0f)
-            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase("${company.companyTaxId}  ·  ${company.companyWebsite}", Font(sans, 8f, Font.NORMAL, bandMuted)), left, page.height - 88f, 0f)
+            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase(company.name, Font(serif, 26f, Font.NORMAL, Color.WHITE)), left, page.height - 58f, 0f)
+            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase("${company.legalName}  ·  ${company.address}", Font(sans, 8f, Font.NORMAL, bandMuted)), left, page.height - 76f, 0f)
+            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase(listOfNotNull("NIP ${company.taxIdFormatted}", company.website).joinToString("  ·  "), Font(sans, 8f, Font.NORMAL, bandMuted)), left, page.height - 88f, 0f)
             ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT, Phrase(lang.t("OFERTA", "OFFER"), Font(sansBold, 7.5f, Font.NORMAL, champagne)), right, page.height - 44f, 0f)
             ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT, Phrase(offer.number, Font(serif, 18f, Font.NORMAL, Color.WHITE)), right, page.height - 64f, 0f)
             ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT, Phrase("${lang.t("ważna do", "valid until")} ${date.format(offer.validUntil)}", Font(sans, 8f, Font.NORMAL, bandText)), right, page.height - 80f, 0f)
@@ -282,7 +290,7 @@ class OfferPdf(private val company: OfferProperties) {
             cb.stroke()
             cb.restoreState()
             val footer = Font(sans, 7.5f, Font.NORMAL, muted)
-            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase("${company.companyName}  ·  ${company.companyAddress}  ·  ${company.companyEmail}", footer), left, 32f, 0f)
+            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase(listOfNotNull(company.legalName, company.address, company.email).joinToString("  ·  "), footer), left, 32f, 0f)
             val label = "${lang.t("Strona", "Page")} ${writer.pageNumber} ${lang.t("z", "of")} "
             val width = sans.getWidthPoint(label, 7.5f)
             ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, Phrase(label, footer), right - width - 12f, 32f, 0f)

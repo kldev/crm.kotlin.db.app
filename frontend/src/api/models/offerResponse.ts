@@ -45,4 +45,6 @@ export interface OfferResponse {
   totalVat: number;
   totalGross: number;
   rowVersion: string;
+  legalEntityId: number;
+  legalEntityName: string;
 }

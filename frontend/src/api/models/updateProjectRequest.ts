@@ -25,6 +25,8 @@ export interface UpdateProjectRequest {
      * @nullable
      */
   budget: number | null;
+  /** @nullable */
+  legalEntityId: number | null;
   /**
      * @minLength 1
      * @nullable

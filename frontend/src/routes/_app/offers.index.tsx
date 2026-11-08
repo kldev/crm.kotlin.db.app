@@ -8,6 +8,7 @@ export const Route = createFileRoute("/_app/offers/")({
 		q: z.string().optional(),
 		status: z.enum(OFFER_STATUSES).optional(),
 		template: z.string().optional(),
+		company: z.coerce.number().int().optional(),
 	}),
 	component: OffersPage,
 });

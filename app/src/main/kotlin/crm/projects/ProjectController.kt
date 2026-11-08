@@ -44,6 +44,7 @@ class ProjectController(private val projects: ProjectRepository) {
         @RequestParam(defaultValue = "false") overdue: Boolean,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dueFrom: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dueTo: LocalDate?,
+        @RequestParam(required = false) legalEntityId: Int?,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "50") @Min(1) @Max(200) size: Int,
     ): PageResponse<ProjectResponse> {
@@ -55,7 +56,7 @@ class ProjectController(private val projects: ProjectRepository) {
         } catch (_: NumberFormatException) {
             throw InvalidCursorException("Invalid cursor.")
         }
-        val filter = ProjectFilter(stage, teamId, clientId, ownerUserId, overdue, dueFrom, dueTo)
+        val filter = ProjectFilter(stage, teamId, clientId, ownerUserId, overdue, dueFrom, dueTo, legalEntityId)
         val rows = projects.search(actor.id, filter, afterDueDate, afterId, size)
         return Cursor.page(rows, size) { Cursor.encode(it.dueDate, it.id) }
     }
@@ -74,8 +75,9 @@ class ProjectController(private val projects: ProjectRepository) {
         @RequestParam(defaultValue = "false") overdue: Boolean,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dueFrom: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dueTo: LocalDate?,
+        @RequestParam(required = false) legalEntityId: Int?,
     ): TotalResponse =
-        TotalResponse(projects.count(actor.id, ProjectFilter(stage, teamId, clientId, ownerUserId, overdue, dueFrom, dueTo)))
+        TotalResponse(projects.count(actor.id, ProjectFilter(stage, teamId, clientId, ownerUserId, overdue, dueFrom, dueTo, legalEntityId)))
 
     @Operation(summary = "Project details.")
     @GetMapping("/{id}")

@@ -8,6 +8,7 @@ import {
 	TextArea,
 	TextField,
 } from "@heroui/react";
+import { DateInput } from "#/components/ui/DateInput";
 import { useI18n } from "#/i18n";
 import { useFieldContext } from "./context";
 
@@ -147,5 +148,37 @@ export function FormSelect({
 				</ListBox>
 			</Select.Popover>
 		</Select>
+	);
+}
+
+/** A day as "yyyy-mm-dd" ("" when empty) in the app's own picker instead of the browser's. */
+export function FormDate({
+	label,
+	description,
+	minValue,
+	maxValue,
+	isDisabled,
+}: {
+	label: string;
+	description?: string;
+	minValue?: string;
+	maxValue?: string;
+	isDisabled?: boolean;
+}) {
+	const { field, message } = useFieldState<string>();
+	return (
+		<DateInput
+			label={label}
+			name={field.name}
+			value={field.state.value}
+			onChange={field.handleChange}
+			onBlur={field.handleBlur}
+			isInvalid={Boolean(message)}
+			errorMessage={message}
+			description={description}
+			minValue={minValue}
+			maxValue={maxValue}
+			isDisabled={isDisabled}
+		/>
 	);
 }

@@ -20,9 +20,10 @@ kanban board is the natural view.
   `closed_at`, leaving it clears it. Every change carries the `rowversion`.
 - **Visibility**: SALES see and change the deals of their own clients (51407 / 51401), MANAGER and ADMIN all - the
   client's rule.
-- **The board** (`app.deal_board`, `/pipeline`) reads all open deals and those closed in the last 30 days in one call
-  (at most 1 000), scope MINE / ALL and a name prefix. The page sums each column and shows four tiles: the pipeline,
-  the weighted forecast, won in 30 days and the win rate. Amounts in different currencies are never added together.
+- **The board** (`app.deal_board`, `/pipeline`) reads the open deals and those closed in the last 30 days - the first
+  100 cards of each column by close date, so a long column never pushes the others off - with scope MINE / ALL and a
+  name prefix. The column heads and four tiles (the pipeline, the weighted forecast, won in 30 days, the win rate) come
+  from `app.deal_board_summary` over every matching deal. Amounts in different currencies are never added together.
 - **Moving a card** is native HTML drag and drop with an optimistic update (the card jumps at once, a refused move puts
   it back); the drawer has the same stages as buttons for the keyboard. Dropping on Lost asks for the reason.
 - **Seed**: `seed.deals_run` (called by `seed.desk_run`) gives the first twelve salespeople ten deals each across the

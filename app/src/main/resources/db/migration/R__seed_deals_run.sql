@@ -1,59 +1,62 @@
 /*
-  Seed (ADR-0015): a pipeline for the board - for the first twelve salespeople with clients, ten deals each across the
-  stages, open ones closing from ten days back to three months ahead, closed ones in the last four weeks. Only into an
-  empty pipeline; deterministic for one @random_seed. Called by seed.desk_run.
+  Seed (ADR-0015): a pipeline of up to @deals deals (10 000 by default) for up to 500 salespeople with clients, one
+  deal on each of their first twenty clients, across the stages - open ones closing from ten days back to three months ahead, closed ones in the last four
+  weeks. Set-based; only into an empty pipeline; deterministic for one @random_seed. Called by seed.desk_run.
 */
 CREATE OR ALTER PROCEDURE seed.deals_run
-    @random_seed int = 2026
+    @random_seed int = 2026,
+    @deals       int = 10000
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
     IF EXISTS (SELECT 1 FROM crm.deals)
         RETURN;
 
-    DECLARE @titles TABLE (n int IDENTITY (0, 1) PRIMARY KEY, title nvarchar(200));
-    INSERT @titles (title)
-    VALUES (N'Wdrożenie CRM'), (N'Dostawa laptopów dla biura'), (N'Outsourcing 5 spawaczy MIG/MAG'),
-           (N'Modernizacja hali magazynowej'), (N'Audyt bezpieczeństwa IT'), (N'Licencje Microsoft 365 na rok'),
-           (N'Utrzymanie systemu - umowa roczna'), (N'Rekrutacja zespołu programistów'), (N'Remont biura - II piętro'),
-           (N'Migracja serwerów do chmury'), (N'Monterzy instalacji na budowę'), (N'Fundamenty pod nową halę');
-    DECLARE @lost TABLE (n int IDENTITY (0, 1) PRIMARY KEY, reason nvarchar(400));
-    INSERT @lost (reason)
-    VALUES (N'Wybrali tańszą ofertę konkurencji.'), (N'Projekt przesunięty na przyszły rok.'),
-           (N'Brak budżetu po stronie klienta.');
+    DECLARE @titles TABLE (n int PRIMARY KEY, title nvarchar(200));
+    INSERT @titles (n, title)
+    VALUES (0, N'Wdrożenie CRM'), (1, N'Dostawa laptopów dla biura'), (2, N'Outsourcing 5 spawaczy MIG/MAG'),
+           (3, N'Modernizacja hali magazynowej'), (4, N'Audyt bezpieczeństwa IT'), (5, N'Licencje Microsoft 365 na rok'),
+           (6, N'Utrzymanie systemu - umowa roczna'), (7, N'Rekrutacja zespołu programistów'), (8, N'Remont biura - II piętro'),
+           (9, N'Migracja serwerów do chmury'), (10, N'Monterzy instalacji na budowę'), (11, N'Fundamenty pod nową halę');
+    DECLARE @lost TABLE (n int PRIMARY KEY, reason nvarchar(400));
+    INSERT @lost (n, reason)
+    VALUES (0, N'Wybrali tańszą ofertę konkurencji.'), (1, N'Projekt przesunięty na przyszły rok.'),
+           (2, N'Brak budżetu po stronie klienta.');
 
-    DECLARE @deals TABLE (n int IDENTITY (0, 1) PRIMARY KEY, client_id bigint, owner int);
-    INSERT @deals (client_id, owner)
+    -- Salespeople with clients and twenty clients of each: the pool the deals are drawn from.
+    DECLARE @pool TABLE (n int IDENTITY (0, 1) PRIMARY KEY, client_id bigint, owner int);
+    INSERT @pool (client_id, owner)
     SELECT c.id, s.id
-    FROM (SELECT TOP (12) u.id FROM crm.users AS u
+    FROM (SELECT TOP (500) u.id FROM crm.users AS u
           WHERE u.role = 'SALES' AND u.is_active = 1
             AND EXISTS (SELECT 1 FROM crm.clients AS x WHERE x.assigned_user_id = u.id)
           ORDER BY u.login) AS s
-    CROSS APPLY (SELECT TOP (10) id FROM crm.clients WHERE assigned_user_id = s.id ORDER BY id) AS c
+    CROSS APPLY (SELECT TOP (20) id FROM crm.clients WHERE assigned_user_id = s.id ORDER BY id) AS c
     ORDER BY s.id, c.id;
+    DECLARE @pool_count int = (SELECT COUNT(*) FROM @pool);
+    IF @pool_count = 0
+        RETURN;
 
-    DECLARE @today date = CAST((SYSUTCDATETIME() AT TIME ZONE 'UTC') AT TIME ZONE 'Central European Standard Time' AS date);
-    DECLARE @title_count int = (SELECT COUNT(*) FROM @titles), @i int = (SELECT MIN(n) FROM @deals),
-            @last int = (SELECT MAX(n) FROM @deals);
-    WHILE @i <= @last
-    BEGIN
-        DECLARE @h varbinary(32) = HASHBYTES('SHA2_256', CONCAT(@random_seed, ':deal:', @i));
-        DECLARE @r1 int = CAST(SUBSTRING(@h, 1, 4) AS int) & 0x7FFFFFFF, @r2 int = CAST(SUBSTRING(@h, 5, 4) AS int) & 0x7FFFFFFF,
-                @r3 int = CAST(SUBSTRING(@h, 9, 4) AS int) & 0x7FFFFFFF;
-        -- More deals early in the funnel than late: 30% lead, 20% qualified, 20% proposal, 15% negotiation, 10% won, 5% lost.
-        DECLARE @p int = @r1 % 100;
-        DECLARE @stage varchar(12) = CASE WHEN @p < 30 THEN 'LEAD' WHEN @p < 50 THEN 'QUALIFIED' WHEN @p < 70 THEN 'PROPOSAL'
-                                          WHEN @p < 85 THEN 'NEGOTIATION' WHEN @p < 95 THEN 'WON' ELSE 'LOST' END;
-        DECLARE @closed bit = IIF(@stage IN ('WON', 'LOST'), 1, 0);
-        DECLARE @closed_at datetime2(3) = IIF(@closed = 1, DATEADD(DAY, -(@r3 % 28), SYSUTCDATETIME()), NULL);
-        INSERT crm.deals (title, client_id, owner_user_id, stage, value, currency, expected_close, lost_reason,
-                          stage_changed_at, closed_at, created_by, updated_by)
-        SELECT (SELECT title FROM @titles WHERE n = @r2 % @title_count), d.client_id, d.owner, @stage,
-               (5 + @r2 % 496) * 1000, 'PLN',
-               IIF(@closed = 1, CAST(@closed_at AS date), DATEADD(DAY, -10 + @r3 % 100, @today)),
-               IIF(@stage = 'LOST', (SELECT reason FROM @lost WHERE n = @r3 % 3), NULL),
-               ISNULL(@closed_at, DATEADD(DAY, -(@r3 % 20), SYSUTCDATETIME())), @closed_at, d.owner, d.owner
-        FROM @deals AS d WHERE d.n = @i;
-        SET @i += 1;
-    END;
+    DECLARE @now datetime2(3) = SYSUTCDATETIME();
+    DECLARE @today date = CAST((@now AT TIME ZONE 'UTC') AT TIME ZONE 'Central European Standard Time' AS date);
+    INSERT crm.deals (title, client_id, owner_user_id, stage, value, currency, expected_close, lost_reason,
+                      stage_changed_at, closed_at, created_by, updated_by)
+    SELECT ti.title, p.client_id, p.owner, x.stage, (5 + h.h2 % 496) * 1000, IIF(h.h4 % 20 = 0, 'EUR', 'PLN'),
+           IIF(x.closed = 1, CAST(x.closed_at AS date), DATEADD(DAY, -10 + h.h3 % 100, @today)),
+           IIF(x.stage = 'LOST', l.reason, NULL),
+           ISNULL(x.closed_at, DATEADD(DAY, -(h.h3 % 20), @now)), x.closed_at, p.owner, p.owner
+    -- One deal per client of the pool: twenty per salesperson at most, a realistic book of open business.
+    FROM GENERATE_SERIES(0, IIF(@deals < @pool_count, @deals, @pool_count) - 1) AS s
+    JOIN @pool AS p ON p.n = s.value % @pool_count
+    CROSS APPLY (SELECT HASHBYTES('SHA2_256', CONCAT(@random_seed, ':deal:', s.value)) AS b) AS hb
+    CROSS APPLY (SELECT CAST(SUBSTRING(hb.b, 1, 4) AS int) & 0x7FFFFFFF AS h1, CAST(SUBSTRING(hb.b, 5, 4) AS int) & 0x7FFFFFFF AS h2,
+                        CAST(SUBSTRING(hb.b, 9, 4) AS int) & 0x7FFFFFFF AS h3, CAST(SUBSTRING(hb.b, 13, 4) AS int) & 0x7FFFFFFF AS h4) AS h
+    -- More deals early in the funnel than late: 30% lead, 20% qualified, 20% proposal, 15% negotiation, 10% won, 5% lost.
+    CROSS APPLY (SELECT CASE WHEN h.h1 % 100 < 30 THEN 'LEAD' WHEN h.h1 % 100 < 50 THEN 'QUALIFIED'
+                             WHEN h.h1 % 100 < 70 THEN 'PROPOSAL' WHEN h.h1 % 100 < 85 THEN 'NEGOTIATION'
+                             WHEN h.h1 % 100 < 95 THEN 'WON' ELSE 'LOST' END AS stage) AS st
+    CROSS APPLY (SELECT st.stage, CAST(IIF(st.stage IN ('WON', 'LOST'), 1, 0) AS bit) AS closed,
+                        IIF(st.stage IN ('WON', 'LOST'), DATEADD(DAY, -(h.h3 % 28), @now), NULL) AS closed_at) AS x
+    JOIN @titles AS ti ON ti.n = h.h2 % 12
+    JOIN @lost AS l ON l.n = h.h3 % 3;
 END;

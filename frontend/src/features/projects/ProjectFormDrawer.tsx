@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { z } from "zod";
 import type { ProjectResponse } from "#/api/models";
 import { ApiError, FormDrawer } from "#/components/ui";
+import { legalEntitiesQuery, pickable } from "#/features/companies/hooks";
 import { teamsQuery, useTeamMembers } from "#/features/teams/hooks";
 import { useAppForm } from "#/forms";
 import { type I18n, useI18n } from "#/i18n";
@@ -28,6 +29,9 @@ const makeSchema = (t: I18n["t"]) =>
 				.string()
 				.min(1, t("Wybierz zespół, który go realizuje", "Choose the team that delivers it")),
 			ownerUserId: z.string().min(1, t("Wybierz właściciela", "Choose who owns it")),
+			legalEntityId: z
+				.string()
+				.min(1, t("Wybierz spółkę, która go realizuje", "Choose the company that delivers it")),
 			startDate: z.iso.date(t("Wybierz datę rozpoczęcia", "Pick a start date")),
 			dueDate: z.iso.date(t("Wybierz termin", "Pick a due date")),
 			budget: z
@@ -91,12 +95,16 @@ function FormContent({
 	const update = useUpdateProject(editing?.id ?? 0, onSaved);
 	const mutation = editing ? update : create;
 	const teams = useQuery(teamsQuery());
+	const entities = useQuery(legalEntitiesQuery());
+	// The delivering company changes only while the project is new (ADR-0016, 51908).
+	const entityLocked = editing != null && editing.stage !== "NEW";
 
 	const form = useAppForm({
 		defaultValues: {
 			name: editing?.name ?? "",
 			teamId: editing ? String(editing.teamId) : "",
 			ownerUserId: editing ? String(editing.ownerUserId) : "",
+			legalEntityId: editing ? String(editing.legalEntityId) : "",
 			startDate: editing?.startDate ?? todayIso(),
 			dueDate: editing?.dueDate ?? "",
 			budget: editing ? String(editing.budget) : "",
@@ -110,6 +118,7 @@ function FormContent({
 				startDate: value.startDate,
 				dueDate: value.dueDate,
 				budget: Number(value.budget.replace(",", ".")),
+				legalEntityId: Number(value.legalEntityId),
 			};
 			if (editing) update.mutate({ ...common, rowVersion: editing.rowVersion });
 			else if (target.mode === "create") create.mutate({ ...common, clientId: target.client.id });
@@ -186,12 +195,33 @@ function FormContent({
 						/>
 					)}
 				</form.AppField>
+				<form.AppField name="legalEntityId">
+					{(f) => (
+						<f.FormSelect
+							label={t("Spółka realizująca", "Delivering company")}
+							isDisabled={entityLocked}
+							description={
+								entityLocked
+									? t(
+											"Spółkę zmienia się tylko w nowym projekcie.",
+											"The company changes only while the project is new.",
+										)
+									: undefined
+							}
+							options={pickable(entities.data, editing?.legalEntityId).map((e) => ({
+								id: String(e.id),
+								label: e.name,
+								description: e.legalName,
+							}))}
+						/>
+					)}
+				</form.AppField>
 				<div className="grid grid-cols-2 gap-4">
 					<form.AppField name="startDate">
-						{(f) => <f.FormInput label={t("Rozpoczęcie", "Start")} type="date" />}
+						{(f) => <f.FormDate label={t("Rozpoczęcie", "Start")} />}
 					</form.AppField>
 					<form.AppField name="dueDate">
-						{(f) => <f.FormInput label={t("Termin", "Due")} type="date" />}
+						{(f) => <f.FormDate label={t("Termin", "Due")} />}
 					</form.AppField>
 				</div>
 				<form.AppField name="budget">

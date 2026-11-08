@@ -39,6 +39,14 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   users' departments.
 - Sales pipeline (ADR-0015): a kanban board of deals - Kontakt, Potrzeba potwierdzona, Oferta, Negocjacje, Wygrana,
   Przegrana - with drag and drop, column sums, the weighted forecast, won deals and the win rate.
+- Multi-company (ADR-0016): the group's own companies (Halycon Inc., Budownictwo, IT, Staff) deliver projects and
+  sign offers - a company per project (changed only while NEW) and per offer (its template's by default), filters on
+  both lists, the offer PDF under the signing company's name; administrators keep the companies on "Companies".
+- My day for salespeople (ADR-0017): follow-ups due (overdue first), started tasks and deals with no next step on one
+  screen; a deal page with the next step and the activity log (calls, e-mails, meetings...); tasks of a deal log on
+  it when done.
+- Reports keep their first column in place while scrolling sideways; ticket reports have a row menu that opens the
+  ticket. Dates are picked in the app's own date picker (typed or from a calendar), not the browser's.
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -51,7 +59,7 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
 | Controllers (`app/src/main/kotlin/crm/*/…Controller.kt`) | request validation, paging cursors, one repository call |
 | Repositories (`…Repository.kt`) | one method = one `EXEC app.<procedure>` through `JdbcClient` |
 | `app` schema (`app/src/main/resources/db/migration/R__app_*.sql`) | every rule: validation, visibility, state changes, concurrency |
-| `crm` schema (`V1__…`, `V3__…`, `V5__…`) | tables, the view `crm.v_projects`, the indexed view `crm.v_team_project_stats`, the desk's event stream `crm.ticket_events` and its read model `crm.tickets` |
+| `crm` schema (`V0001__…`, `V0003__…`, `V0005__…`) | tables, the view `crm.v_projects`, the indexed view `crm.v_team_project_stats`, the desk's event stream `crm.ticket_events` and its read model `crm.tickets` |
 
 The application's database login has **only** `EXECUTE` on schema `app` (ADR-0002). `./gradlew check` fails if an
 ORM or query mapper reaches the classpath.
@@ -95,7 +103,9 @@ CRM_SEED_CLIENTS=10000 CRM_SEED_PROJECTS=10000 CRM_SEED_COMMENTS=5000 ./start.sh
 After the seed log in as `perf.sales.0001`, `perf.manager.0001` or `perf.admin.0001` with `CRM_SEED_PASSWORD`.
 The seed runs only on an empty database (error 51060 otherwise); start over with `./start.sh --clean --seed`.
 It also seeds the service desk (`seed.desk_run`: ten agents such as `anna.nowak`, 40 people and Halcyon's 238 ticket
-histories replayed at their moments in the past, `CRM_SEED_DESK_STORIES`). That part is idempotent; for a database seeded before the desk existed run only it:
+histories replayed at their moments in the past, `CRM_SEED_DESK_STORIES`). The same step seeds the newer modules at a smaller scale - about 10 000 records each: tasks, deals with ~25 000
+activities and their next steps, offers with their lines - each only into an empty table.
+That part is idempotent; for a database seeded before the desk existed run only it:
 `CRM_SEED_DESK_ONLY=true docker compose --profile seed run --rm seed`.
 
 ### 3. Day to day
@@ -183,7 +193,9 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET/POST /api/offers`, `/count`, `/templates`, `GET/PUT/DELETE /api/offers/{id}`, `/items`, `POST …/status`, `GET …/pdf` | `offer_search`, `offer_count`, `offer_template_list`, `offer_get`, `offer_create`, `offer_update`, `offer_delete`, `offer_item_list`, `offer_change_status` | all (SALES: offers of own clients) |
 | `GET/PUT /api/auth/me/contact`, `/api/users/{id}/contact` | `user_contact_get`, `user_contact_update` | own; others: ADMIN (read: MANAGER too) |
 | `GET /api/tasks?from&to&scope=MINE\|DEPARTMENT\|ALL&department&done`, `GET/POST/PUT/DELETE /api/tasks/{id}`, `POST …/done` | `task_list`, `task_get`, `task_create`, `task_update`, `task_delete`, `task_set_done` | all (change: author or assignee for SALES) |
-| `GET/POST /api/deals?scope=MINE\|ALL&ownerUserId&search&closedDays`, `/stages`, `GET/PUT/DELETE /api/deals/{id}`, `POST …/move` | `deal_board`, `deal_stage_list`, `deal_get`, `deal_create`, `deal_update`, `deal_delete`, `deal_move` | all (SALES: deals of own clients) |
+| `GET/POST /api/deals?scope=MINE\|ALL&ownerUserId&search&closedDays&perStage`, `/stages`, `/summary`, `GET/PUT/DELETE /api/deals/{id}`, `POST …/move` | `deal_board`, `deal_board_summary`, `deal_stage_list`, `deal_get`, `deal_create`, `deal_update`, `deal_delete`, `deal_move` | all (SALES: deals of own clients) |
+| `GET/POST /api/legal-entities`, `GET/PUT /api/legal-entities/{id}` | `legal_entity_list`, `legal_entity_get`, `legal_entity_save` | read: all; write: ADMIN |
+| `GET /api/deals/activity-types`, `GET/POST /api/deals/{id}/activities`, `PUT /api/deals/{id}/next-step`, `GET /api/sales/follow-ups?until&scope`, `/without-next-step`, `GET /api/tasks/agenda?until&doneSince` | `deal_activity_type_list`, `deal_activity_list`, `deal_activity_add`, `deal_set_next_step`, `sales_follow_ups`, `sales_without_next_step`, `task_agenda` | all (SALES: deals of own clients) |
 | `GET /api/departments`, `PUT /api/users/{id}/department` | `department_list`, `user_set_department` | all / ADMIN |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
@@ -215,15 +227,20 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51170-51178 | offer: title, template, validity, lines, currency, texts, no lines to send, contact, status filter | 400 |
 | 51180-51184 | task: title, dates (end before start, over a year, window over 120 days), scope, department, description | 400 |
 | 51190-51197 | deal: title, value, currency, expected close, offer of another client, board filter, stage, lost reason | 400 |
+| 51200-51205 | company: name, legal name and address, NIP check digit, trading dates, contact, not trading on the day | 400 |
+| 51210-51214 | activity type, note, moment (last 90 days, not future); next step both or neither; a task of a deal is for its client | 400 |
 | 51304 | sales user changes only tasks they created or are assigned | 403 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
 | 51410-51413 | ticket, person, agent, attachment not found | 404 |
 | 51405 | offer not found (or not visible) | 404 |
 | 51406 | task not found | 404 |
 | 51407 | deal not found (or not visible) | 404 |
+| 51408 | company not found | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
 | 51911, 51912 | ticket already resolved / still in the pool (take it first) | 409 |
 | 51913 | the ticket's stream changed meanwhile | 409 |
+| 51908 | the delivering company changes only while the project is NEW | 409 |
+| 51909 | a closed deal has no next step | 409 |
 | 51906, 51907 | offer: only a draft is edited or deleted / status move not allowed | 409 |
 | 51301 | role not allowed | 403 |
 | 51302 | own account not active | 403 |
@@ -300,8 +317,7 @@ lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_AD
 (`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`), attachments bucket (`CRM_S3_ENDPOINT`,
 `CRM_S3_ACCESS_KEY`, `CRM_S3_SECRET_KEY`, `CRM_S3_BUCKET`, `CRM_S3_REGION`), monitoring (`CRM_MONITORING_ENABLED`,
 `_QUEUE_CAPACITY`, `_FLUSH_INTERVAL`, `_WRITE_BATCH_SIZE`, `_RETENTION`, `_CLEANUP_INTERVAL`, `_CLEANUP_BATCH_SIZE`,
-`_LOG_LEVEL`), the company on offer PDFs (`CRM_OFFER_COMPANY_NAME` - "Halycon Inc." - `_ADDRESS`, `_PHONE`, `_EMAIL`,
-`_WEBSITE`, `_TAX_ID`).
+`_LOG_LEVEL`). The companies on offer PDFs are data, not settings: the "Companies" page (ADR-0016).
 
 ## Build
 

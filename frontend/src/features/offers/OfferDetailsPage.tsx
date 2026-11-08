@@ -17,7 +17,8 @@ import { ArrowLeft, FileDown, FileText, Pencil, Plus, Trash2, X } from "lucide-r
 import { useState } from "react";
 import type { OfferItemResponse, OfferResponse } from "#/api/models";
 import { PageHeader } from "#/components/layout/AppLayout";
-import { ApiError, ConfirmDialog, InfoList } from "#/components/ui";
+import { ApiError, ConfirmDialog, DateInput, InfoList } from "#/components/ui";
+import { CompanySelect } from "#/features/companies/CompanySelect";
 import { useI18n } from "#/i18n";
 import { problemText } from "#/i18n/problems";
 import {
@@ -210,6 +211,7 @@ export function OfferDetailsPage() {
 										),
 									},
 									{ label: t("Ważna do", "Valid until"), value: date(o.validUntil) },
+									{ label: t("Spółka podpisująca", "Signing company"), value: o.legalEntityName },
 									{ label: t("Waluta", "Currency"), value: o.currency },
 									{ label: t("Autor", "Author"), value: o.authorName },
 									{
@@ -340,6 +342,7 @@ function DraftEditor({
 	const [terms, setTerms] = useState(offer.terms);
 	const [currency, setCurrency] = useState(offer.currency);
 	const [validUntil, setValidUntil] = useState(offer.validUntil);
+	const [company, setCompany] = useState(offer.legalEntityId);
 	const [lines, setLines] = useState<Line[]>(
 		items.map((it, i) => ({
 			key: i,
@@ -388,10 +391,16 @@ function DraftEditor({
 							</ListBox>
 						</Select.Popover>
 					</Select>
-					<TextField type="date" value={validUntil} onChange={setValidUntil}>
-						<Label>{t("Ważna do", "Valid until")}</Label>
-						<Input />
-					</TextField>
+					<DateInput
+						label={t("Ważna do", "Valid until")}
+						value={validUntil}
+						onChange={setValidUntil}
+					/>
+					<CompanySelect
+						label={t("Spółka podpisująca", "Signing company")}
+						value={company}
+						onChange={setCompany}
+					/>
 				</div>
 				<TextField value={intro} onChange={setIntro} fullWidth>
 					<Label>{t("Wstęp", "Introduction")}</Label>
@@ -517,6 +526,7 @@ function DraftEditor({
 								terms,
 								currency,
 								validUntil,
+								legalEntityId: company,
 								rowVersion: offer.rowVersion,
 								items: lines.map((l) => ({
 									description: l.description,

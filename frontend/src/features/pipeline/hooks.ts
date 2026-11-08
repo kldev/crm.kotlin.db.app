@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions, useMutation, useQueryClient } from "@ta
 import {
 	createDeal,
 	dealBoard,
+	dealBoardSummary,
 	deleteDeal,
 	listDealStages,
 	moveDeal,
@@ -27,6 +28,14 @@ export const dealBoardQuery = (params: DealBoardParams) =>
 	queryOptions({
 		queryKey: dealKeys.board(params),
 		queryFn: ({ signal }) => dealBoard(params, { signal }),
+		placeholderData: keepPreviousData,
+	});
+
+/** The board's totals per stage and currency, over every matching deal - not only the cards shown. */
+export const dealSummaryQuery = (params: DealBoardParams) =>
+	queryOptions({
+		queryKey: dealKeys.summary(params),
+		queryFn: ({ signal }) => dealBoardSummary(params, { signal }),
 		placeholderData: keepPreviousData,
 	});
 

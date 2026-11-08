@@ -9,7 +9,7 @@ import {
 	updateTask,
 } from "#/api/endpoints/tasks/tasks";
 import type { ListTasksParams, TaskRequest, TaskResponse } from "#/api/models";
-import { taskKeys, userKeys } from "#/api/query-keys";
+import { dealKeys, taskKeys, userKeys } from "#/api/query-keys";
 
 /** The tasks overlapping a window of days; the previous window stays on screen while the next one loads. */
 export const tasksQuery = (params: ListTasksParams) =>
@@ -35,7 +35,11 @@ function useTaskMutation<TVars, TResult>(
 	return useMutation({
 		mutationFn: fn,
 		onSuccess: async (result) => {
-			await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+			// Finishing a task of a deal logs on the deal (ADR-0017), so the deals are read again too.
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+				queryClient.invalidateQueries({ queryKey: dealKeys.all }),
+			]);
 			onSuccess?.(result);
 		},
 	});

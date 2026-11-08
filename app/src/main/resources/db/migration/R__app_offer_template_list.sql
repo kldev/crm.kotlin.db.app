@@ -5,7 +5,7 @@ AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
     EXEC crm.actor_require @actor_id;
-    SELECT template_key, name_pl, name_en, title_pl, title_en, validity_days,
+    SELECT template_key, name_pl, name_en, title_pl, title_en, validity_days, legal_entity_id,
            (SELECT COUNT(*) FROM crm.offer_template_items AS i WHERE i.template_key = t.template_key) AS item_count
     FROM crm.offer_templates AS t
     ORDER BY sort_order;

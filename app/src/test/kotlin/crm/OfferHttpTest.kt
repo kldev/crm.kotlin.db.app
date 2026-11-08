@@ -107,7 +107,7 @@ class OfferHttpTest : IntegrationTest() {
         sales.put("/api/auth/me/contact", mapOf("jobTitle" to "Doradca handlowy", "phone" to "+48 600 100 101", "email" to "anna.nowak@company.io"))
         val offer = create(sales, ownClient(sales), "OUTSOURCING")
         val text = pdfText(sales, offer["id"].asLong())
-        assertTrue("Halycon Inc." in text, text.take(300))
+        assertTrue("Halycon Staff" in text, text.take(300)) // the template's company signs (ADR-0016)
         assertTrue(offer["number"].asString() in text)
         assertTrue("Twój opiekun oferty" in text && "Anna Nowak" in text && "+48 600 100 101" in text, text)
         assertTrue("Spawacz MIG/MAG" in text)
@@ -116,7 +116,7 @@ class OfferHttpTest : IntegrationTest() {
         val manager = loggedIn("perf.manager.0001")
         val managerOffer = create(manager, ownClient(manager), "CONSTRUCTION")
         val managerText = pdfText(manager, managerOffer["id"].asLong())
-        assertTrue("Twój opiekun oferty" !in managerText && "+48 22 100 20 30" in managerText, managerText)
+        assertTrue("Twój opiekun oferty" !in managerText && "+48 22 100 20 40" in managerText, managerText)
     }
 
     @Test

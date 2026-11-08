@@ -1,5 +1,6 @@
 package crm.offers
 
+import crm.companies.LegalEntityRepository
 import crm.auth.CrmUserDetails
 import crm.desk.reports.Lang
 import crm.shared.Cursor
@@ -39,7 +40,11 @@ import java.nio.charset.StandardCharsets
 @Tag(name = "Offers")
 @RestController
 @RequestMapping("/api/offers")
-class OfferController(private val offers: OfferRepository, private val pdf: OfferPdf) {
+class OfferController(
+    private val offers: OfferRepository,
+    private val pdf: OfferPdf,
+    private val legalEntities: LegalEntityRepository,
+) {
 
     @Operation(summary = "Offer templates: Sales Budownictwo, Sales IT, Sales Outsourcing.")
     @GetMapping("/templates")
@@ -54,11 +59,12 @@ class OfferController(private val offers: OfferRepository, private val pdf: Offe
         @RequestParam(required = false) templateKey: String?,
         @RequestParam(required = false) clientId: Long?,
         @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) legalEntityId: Int?,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "25") @Min(1) @Max(200) size: Int,
     ): PageResponse<OfferResponse> {
         val afterId = Cursor.decode(cursor, 1)?.let { it[0].toLongOrNull() ?: throw InvalidCursorException("Invalid cursor.") }
-        val rows = offers.search(actor.id, OfferFilter(status, templateKey, clientId, search), afterId, size)
+        val rows = offers.search(actor.id, OfferFilter(status, templateKey, clientId, search, legalEntityId), afterId, size)
         return Cursor.page(rows, size) { Cursor.encode(it.id) }
     }
 
@@ -70,7 +76,8 @@ class OfferController(private val offers: OfferRepository, private val pdf: Offe
         @RequestParam(required = false) templateKey: String?,
         @RequestParam(required = false) clientId: Long?,
         @RequestParam(required = false) search: String?,
-    ): TotalResponse = TotalResponse(offers.count(actor.id, OfferFilter(status, templateKey, clientId, search)))
+        @RequestParam(required = false) legalEntityId: Int?,
+    ): TotalResponse = TotalResponse(offers.count(actor.id, OfferFilter(status, templateKey, clientId, search, legalEntityId)))
 
     @Operation(summary = "A new draft offer for a client from a template (its texts and lines are copied).")
     @PostMapping
@@ -122,12 +129,13 @@ class OfferController(private val offers: OfferRepository, private val pdf: Offe
     ): ResponseEntity<StreamingResponseBody> {
         val offer = offers.get(actor.id, id)
         val items = offers.items(actor.id, id)
+        val company = legalEntities.get(actor.id, offer.legalEntityId)
         val disposition = (if (download) ContentDisposition.attachment() else ContentDisposition.inline())
             .filename(pdf.fileName(offer), StandardCharsets.UTF_8).build()
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_PDF)
             .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
             .header("X-Content-Type-Options", "nosniff")
-            .body(StreamingResponseBody { out -> pdf.write(offer, items, Lang.of(lang), out) })
+            .body(StreamingResponseBody { out -> pdf.write(offer, items, company, Lang.of(lang), out) })
     }
 }

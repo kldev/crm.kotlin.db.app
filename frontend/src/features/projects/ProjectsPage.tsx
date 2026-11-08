@@ -4,6 +4,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import { BriefcaseBusiness } from "lucide-react";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, LoadMore, SelectFilter, TableSkeleton } from "#/components/ui";
+import { legalEntitiesQuery } from "#/features/companies/hooks";
 import { teamsQuery } from "#/features/teams/hooks";
 import { STAGES, type Stage, stageLabel } from "#/features/types";
 import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
@@ -19,7 +20,13 @@ export function ProjectsPage() {
 	const search = route.useSearch();
 	const navigate = route.useNavigate();
 	const teams = useQuery(teamsQuery());
-	const filters = { stage: search.stage, teamId: search.teamId, overdue: search.overdue };
+	const entities = useQuery(legalEntitiesQuery());
+	const filters = {
+		stage: search.stage,
+		teamId: search.teamId,
+		overdue: search.overdue,
+		legalEntityId: search.company,
+	};
 	const query = useInfiniteQuery(projectsQuery(filters));
 	const total = useOnDemandTotal(projectsCountQuery(filters));
 	const projects = query.data?.pages.flatMap((p) => p.items) ?? [];
@@ -52,6 +59,17 @@ export function ProjectsPage() {
 						onChange={(teamId) =>
 							void navigate({
 								search: (s) => ({ ...s, teamId: teamId ? Number(teamId) : undefined }),
+							})
+						}
+					/>
+					<SelectFilter
+						label={t("Spółka", "Company")}
+						className="w-full sm:w-60"
+						value={search.company ? String(search.company) : undefined}
+						options={(entities.data ?? []).map((e) => ({ id: String(e.id), label: e.name }))}
+						onChange={(company) =>
+							void navigate({
+								search: (s) => ({ ...s, company: company ? Number(company) : undefined }),
 							})
 						}
 					/>

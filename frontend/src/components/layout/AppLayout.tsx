@@ -15,6 +15,7 @@ import {
 	Inbox,
 	Kanban,
 	KeyRound,
+	Landmark,
 	LayoutDashboard,
 	ListOrdered,
 	ListTodo,
@@ -22,6 +23,7 @@ import {
 	Menu,
 	ScrollText,
 	SquarePlus,
+	Sun,
 	Tickets,
 	UserCog,
 	UsersRound,
@@ -48,6 +50,8 @@ interface NavItem {
 		| "/offers"
 		| "/tasks"
 		| "/pipeline"
+		| "/companies"
+		| "/my-day"
 		| "/teams"
 		| "/users"
 		| "/desk/pool"
@@ -72,11 +76,19 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 		section: (t) => t("CRM", "CRM"),
 		items: [
 			{ to: "/", label: (t) => t("Przegląd", "Overview"), icon: LayoutDashboard },
+			{ to: "/my-day", label: (t) => t("Mój dzień", "My day"), icon: Sun },
 			{ to: "/clients", label: (t) => t("Klienci", "Clients"), icon: Building2 },
-			{ to: "/projects", label: (t) => t("Projekty", "Projects"), icon: BriefcaseBusiness },
-			{ to: "/offers", label: (t) => t("Oferty", "Offers"), icon: FileSignature },
 			{ to: "/pipeline", label: (t) => t("Lejek sprzedaży", "Sales pipeline"), icon: Kanban },
+			{ to: "/offers", label: (t) => t("Oferty", "Offers"), icon: FileSignature },
+			{ to: "/projects", label: (t) => t("Projekty", "Projects"), icon: BriefcaseBusiness },
 			{ to: "/tasks", label: (t) => t("Zadania", "Tasks"), icon: CalendarRange },
+		],
+	},
+	{
+		// Who we are, not whom we sell to: the group's companies, the teams and the people with access.
+		section: (t) => t("Organizacja", "Organization"),
+		items: [
+			{ to: "/companies", label: (t) => t("Spółki", "Companies"), icon: Landmark },
 			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
 			{
 				to: "/users",
@@ -95,6 +107,12 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/desk/new", label: (t) => t("Nowe zgłoszenie", "New ticket"), icon: SquarePlus },
 			{ to: "/desk/agents", label: (t) => t("Agenci", "Agents"), icon: Headset },
 			{ to: "/desk/people", label: (t) => t("Osoby", "People"), icon: Contact },
+		],
+	},
+	{
+		// Reading the numbers: the reports with their exports and the charts.
+		section: (t) => t("BI", "BI"),
+		items: [
 			{ to: "/desk/reports", label: (t) => t("Raporty", "Reports"), icon: FileSpreadsheet },
 			{ to: "/desk/charts", label: (t) => t("Wykresy", "Charts"), icon: ChartColumn },
 		],

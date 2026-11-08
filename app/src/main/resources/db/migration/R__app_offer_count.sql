@@ -3,6 +3,7 @@ CREATE OR ALTER PROCEDURE app.offer_count
     @actor_id     int,
     @status       varchar(10)   = NULL,
     @template_key varchar(20)   = NULL,
+    @legal_entity_id int        = NULL,
     @client_id    bigint        = NULL,
     @search       nvarchar(200) = NULL
 AS
@@ -18,6 +19,7 @@ BEGIN
     WHERE (@role <> 'SALES' OR c.assigned_user_id = @actor_id)
       AND (@status IS NULL OR o.status = @status)
       AND (@template_key IS NULL OR o.template_key = @template_key)
+      AND (@legal_entity_id IS NULL OR o.legal_entity_id = @legal_entity_id)
       AND (@client_id IS NULL OR o.client_id = @client_id)
       AND (@search IS NULL OR o.number = @search OR o.title LIKE @pattern)
     OPTION (RECOMPILE);

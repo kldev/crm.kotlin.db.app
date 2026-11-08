@@ -7,6 +7,7 @@ import crm.shared.getInstantOrNull
 import crm.shared.getLocalDate
 import crm.shared.getLongOrNull
 import crm.shared.getRowVersion
+import crm.shared.toUtcLocalDateTime
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -68,6 +69,12 @@ data class DealResponse(
     val createdAt: Instant,
     val updatedAt: Instant,
     val rowVersion: String,
+    /** The follow-up (ADR-0017): what to do next and when; both or neither. */
+    val nextStep: String?,
+    val nextStepAt: Instant?,
+    /** The newest logged activity. */
+    val lastActivityAt: Instant?,
+    val lastActivityType: String?,
 )
 
 data class CreateDealRequest(
@@ -97,6 +104,38 @@ data class MoveDealRequest(
     @field:NotBlank @field:Pattern(regexp = RowVersion.PATTERN) val rowVersion: String?,
 )
 
+/** Per stage and currency: how many deals, their value and the value weighted by the stage's probability. */
+data class DealStageTotal(val stage: String, val currency: String, val deals: Int, val value: BigDecimal, val weighted: BigDecimal)
+
+/** A kind of activity logged on a deal (ADR-0017). */
+data class ActivityTypeResponse(val type: String, val namePl: String, val nameEn: String)
+
+/** What happened on a deal; never changed once logged. */
+data class ActivityResponse(
+    val id: Long,
+    val dealId: Long,
+    val type: String,
+    val note: String,
+    val occurredAt: Instant,
+    val createdBy: Int,
+    val createdByName: String,
+    val createdAt: Instant,
+)
+
+data class ActivityRequest(
+    @field:NotBlank val type: String?,
+    @field:NotBlank @field:Size(max = 1000) val note: String?,
+    /** When it happened; now when empty. */
+    val occurredAt: Instant?,
+)
+
+/** The follow-up: both or neither; empty clears it. */
+data class NextStepRequest(
+    @field:Size(max = 400) val nextStep: String?,
+    val nextStepAt: Instant?,
+    @field:NotBlank @field:Pattern(regexp = RowVersion.PATTERN) val rowVersion: String?,
+)
+
 /** The pipeline (ADR-0015): one `EXEC app.deal_*` per method. */
 @Repository
 class DealRepository(private val jdbc: JdbcClient) {
@@ -122,6 +161,10 @@ class DealRepository(private val jdbc: JdbcClient) {
             createdAt = rs.getInstant("created_at"),
             updatedAt = rs.getInstant("updated_at"),
             rowVersion = rs.getRowVersion(),
+            nextStep = rs.getString("next_step"),
+            nextStepAt = rs.getInstantOrNull("next_step_at"),
+            lastActivityAt = rs.getInstantOrNull("last_activity_at"),
+            lastActivityType = rs.getString("last_activity_type"),
         )
     }
 
@@ -136,17 +179,33 @@ class DealRepository(private val jdbc: JdbcClient) {
             }
             .list()
 
-    fun board(actorId: Int, scope: String, ownerUserId: Int?, search: String?, closedDays: Int): List<DealResponse> =
+    fun board(actorId: Int, scope: String, ownerUserId: Int?, search: String?, closedDays: Int, perStage: Int = 100): List<DealResponse> =
         jdbc.sql(
             "EXEC app.deal_board @actor_id = :actorId, @scope = :scope, @owner_user_id = :owner, @search = :search, " +
-                "@closed_days = :closedDays",
+                "@closed_days = :closedDays, @per_stage = :perStage",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("scope", scope, Types.VARCHAR)
             .param("owner", ownerUserId, Types.INTEGER)
             .param("search", search, Types.NVARCHAR)
             .param("closedDays", closedDays, Types.INTEGER)
+            .param("perStage", perStage, Types.INTEGER)
             .query(row)
+            .list()
+
+    fun summary(actorId: Int, scope: String, ownerUserId: Int?, search: String?, closedDays: Int): List<DealStageTotal> =
+        jdbc.sql(
+            "EXEC app.deal_board_summary @actor_id = :actorId, @scope = :scope, @owner_user_id = :owner, " +
+                "@search = :search, @closed_days = :closedDays",
+        )
+            .param("actorId", actorId, Types.INTEGER)
+            .param("scope", scope, Types.VARCHAR)
+            .param("owner", ownerUserId, Types.INTEGER)
+            .param("search", search, Types.NVARCHAR)
+            .param("closedDays", closedDays, Types.INTEGER)
+            .query { rs, _ ->
+                DealStageTotal(rs.getString("stage"), rs.getString("currency"), rs.getInt("deals"), rs.getBigDecimal("value"), rs.getBigDecimal("weighted"))
+            }
             .list()
 
     fun get(actorId: Int, id: Long): DealResponse =
@@ -198,6 +257,70 @@ class DealRepository(private val jdbc: JdbcClient) {
             .query(row)
             .single()
 
+    fun activityTypes(actorId: Int): List<ActivityTypeResponse> =
+        jdbc.sql("EXEC app.deal_activity_type_list @actor_id = :actorId")
+            .param("actorId", actorId, Types.INTEGER)
+            .query { rs, _ -> ActivityTypeResponse(rs.getString("activity_type"), rs.getString("name_pl"), rs.getString("name_en")) }
+            .list()
+
+    private val activityRow = RowMapper { rs, _ ->
+        ActivityResponse(
+            id = rs.getLong("id"),
+            dealId = rs.getLong("deal_id"),
+            type = rs.getString("activity_type"),
+            note = rs.getString("note"),
+            occurredAt = rs.getInstant("occurred_at"),
+            createdBy = rs.getInt("created_by"),
+            createdByName = rs.getString("created_by_name"),
+            createdAt = rs.getInstant("created_at"),
+        )
+    }
+
+    fun activities(actorId: Int, dealId: Long): List<ActivityResponse> =
+        jdbc.sql("EXEC app.deal_activity_list @actor_id = :actorId, @deal_id = :dealId")
+            .param("actorId", actorId, Types.INTEGER).param("dealId", dealId, Types.BIGINT).query(activityRow).list()
+
+    fun addActivity(actorId: Int, dealId: Long, body: ActivityRequest): ActivityResponse =
+        jdbc.sql(
+            "EXEC app.deal_activity_add @actor_id = :actorId, @deal_id = :dealId, @activity_type = :type, @note = :note, " +
+                "@occurred_at = :occurredAt",
+        )
+            .param("actorId", actorId, Types.INTEGER)
+            .param("dealId", dealId, Types.BIGINT)
+            .param("type", body.type, Types.VARCHAR)
+            .param("note", body.note, Types.NVARCHAR)
+            .param("occurredAt", body.occurredAt?.toUtcLocalDateTime(), Types.TIMESTAMP)
+            .query(activityRow)
+            .single()
+
+    fun setNextStep(actorId: Int, dealId: Long, body: NextStepRequest): DealResponse =
+        jdbc.sql(
+            "EXEC app.deal_set_next_step @actor_id = :actorId, @deal_id = :dealId, @next_step = :nextStep, " +
+                "@next_step_at = :nextStepAt, @row_version = :rowVersion",
+        )
+            .param("actorId", actorId, Types.INTEGER)
+            .param("dealId", dealId, Types.BIGINT)
+            .param("nextStep", body.nextStep, Types.NVARCHAR)
+            .param("nextStepAt", body.nextStepAt?.toUtcLocalDateTime(), Types.TIMESTAMP)
+            .param("rowVersion", RowVersion.parse(body.rowVersion!!), Types.BINARY)
+            .query(row)
+            .single()
+
+    fun followUps(actorId: Int, until: Instant, scope: String): List<DealResponse> =
+        jdbc.sql("EXEC app.sales_follow_ups @actor_id = :actorId, @until = :until, @scope = :scope")
+            .param("actorId", actorId, Types.INTEGER)
+            .param("until", until.toUtcLocalDateTime(), Types.TIMESTAMP)
+            .param("scope", scope, Types.VARCHAR)
+            .query(row)
+            .list()
+
+    fun withoutNextStep(actorId: Int, scope: String): List<DealResponse> =
+        jdbc.sql("EXEC app.sales_without_next_step @actor_id = :actorId, @scope = :scope")
+            .param("actorId", actorId, Types.INTEGER)
+            .param("scope", scope, Types.VARCHAR)
+            .query(row)
+            .list()
+
     fun delete(actorId: Int, id: Long, rowVersion: String) {
         jdbc.sql("EXEC app.deal_delete @actor_id = :actorId, @deal_id = :id, @row_version = :rowVersion")
             .param("actorId", actorId, Types.INTEGER)
@@ -205,6 +328,28 @@ class DealRepository(private val jdbc: JdbcClient) {
             .param("rowVersion", RowVersion.parse(rowVersion), Types.BINARY)
             .update()
     }
+}
+
+/** "My day" of a salesperson (ADR-0017): follow-ups due and deals nobody follows up. */
+@Tag(name = "Sales")
+@RestController
+@RequestMapping("/api/sales")
+class SalesController(private val deals: DealRepository) {
+
+    @Operation(summary = "Open deals whose next step is due by `until` (overdue included), oldest first. scope MINE or ALL.")
+    @GetMapping("/follow-ups")
+    fun listFollowUps(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @RequestParam until: Instant,
+        @RequestParam(defaultValue = "MINE") scope: String,
+    ): List<DealResponse> = deals.followUps(actor.id, until, scope)
+
+    @Operation(summary = "Open deals with no next step planned.")
+    @GetMapping("/without-next-step")
+    fun listWithoutNextStep(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @RequestParam(defaultValue = "MINE") scope: String,
+    ): List<DealResponse> = deals.withoutNextStep(actor.id, scope)
 }
 
 /** The sales pipeline as a kanban board (ADR-0015). SALES see the deals of their own clients. */
@@ -228,7 +373,18 @@ class DealController(private val deals: DealRepository) {
         @RequestParam(required = false) ownerUserId: Int?,
         @RequestParam(required = false) search: String?,
         @RequestParam(defaultValue = "30") @Min(0) @Max(365) closedDays: Int,
-    ): List<DealResponse> = deals.board(actor.id, scope, ownerUserId, search, closedDays)
+        @RequestParam(defaultValue = "100") @Min(1) @Max(500) perStage: Int,
+    ): List<DealResponse> = deals.board(actor.id, scope, ownerUserId, search, closedDays, perStage)
+
+    @Operation(summary = "The board's totals per stage and currency, over every deal the same filters match.")
+    @GetMapping("/summary")
+    fun dealBoardSummary(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @RequestParam(defaultValue = "ALL") scope: String,
+        @RequestParam(required = false) ownerUserId: Int?,
+        @RequestParam(required = false) search: String?,
+        @RequestParam(defaultValue = "30") @Min(0) @Max(365) closedDays: Int,
+    ): List<DealStageTotal> = deals.summary(actor.id, scope, ownerUserId, search, closedDays)
 
     @Operation(summary = "Deal details.")
     @GetMapping("/{id}")
@@ -255,6 +411,33 @@ class DealController(private val deals: DealRepository) {
         @PathVariable id: Long,
         @Valid @RequestBody body: MoveDealRequest,
     ): DealResponse = deals.move(actor.id, id, body)
+
+    @Operation(summary = "The kinds of activity (ADR-0017).")
+    @GetMapping("/activity-types")
+    fun listActivityTypes(@AuthenticationPrincipal actor: CrmUserDetails): List<ActivityTypeResponse> =
+        deals.activityTypes(actor.id)
+
+    @Operation(summary = "A deal's activities, newest first.")
+    @GetMapping("/{id}/activities")
+    fun listDealActivities(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): List<ActivityResponse> =
+        deals.activities(actor.id, id)
+
+    @Operation(summary = "Log a call, e-mail, meeting... on a deal (append-only).")
+    @PostMapping("/{id}/activities")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun addDealActivity(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @PathVariable id: Long,
+        @Valid @RequestBody body: ActivityRequest,
+    ): ActivityResponse = deals.addActivity(actor.id, id, body)
+
+    @Operation(summary = "Set or clear the deal's next step (follow-up). rowVersion required.")
+    @PutMapping("/{id}/next-step")
+    fun setDealNextStep(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @PathVariable id: Long,
+        @Valid @RequestBody body: NextStepRequest,
+    ): DealResponse = deals.setNextStep(actor.id, id, body)
 
     @Operation(summary = "Delete a deal opened by mistake.")
     @DeleteMapping("/{id}")

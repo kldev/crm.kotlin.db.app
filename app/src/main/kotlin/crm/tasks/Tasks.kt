@@ -8,6 +8,7 @@ import crm.shared.getIntOrNull
 import crm.shared.getLocalDate
 import crm.shared.getLongOrNull
 import crm.shared.getRowVersion
+import crm.shared.toUtcLocalDateTime
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -56,6 +57,9 @@ data class TaskResponse(
     val createdAt: Instant,
     val updatedAt: Instant,
     val rowVersion: String,
+    /** The deal the task belongs to (ADR-0017); finishing it logs on the deal. */
+    val dealId: Long?,
+    val dealTitle: String?,
 )
 
 data class TaskRequest(
@@ -66,6 +70,8 @@ data class TaskRequest(
     @field:NotNull val endDate: LocalDate?,
     val clientId: Long?,
     val projectId: Long?,
+    /** A deal the task belongs to; its client becomes the task's client. */
+    val dealId: Long? = null,
     /** Required to update; ignored on create. */
     @field:Pattern(regexp = RowVersion.PATTERN) val rowVersion: String?,
 )
@@ -105,6 +111,8 @@ class TaskRepository(private val jdbc: JdbcClient) {
             createdAt = rs.getInstant("created_at"),
             updatedAt = rs.getInstant("updated_at"),
             rowVersion = rs.getRowVersion(),
+            dealId = rs.getLongOrNull("deal_id"),
+            dealTitle = rs.getString("deal_title"),
         )
     }
 
@@ -122,6 +130,14 @@ class TaskRepository(private val jdbc: JdbcClient) {
             .query(row)
             .list()
 
+    fun agenda(actorId: Int, until: LocalDate, doneSince: Instant?): List<TaskResponse> =
+        jdbc.sql("EXEC app.task_agenda @actor_id = :actorId, @until = :until, @done_since = :doneSince")
+            .param("actorId", actorId, Types.INTEGER)
+            .param("until", until, Types.DATE)
+            .param("doneSince", doneSince?.toUtcLocalDateTime(), Types.TIMESTAMP)
+            .query(row)
+            .list()
+
     fun get(actorId: Int, id: Long): TaskResponse =
         jdbc.sql("EXEC app.task_get @actor_id = :actorId, @task_id = :id")
             .param("actorId", actorId, Types.INTEGER).param("id", id, Types.BIGINT).query(row).single()
@@ -130,7 +146,7 @@ class TaskRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.task_create @actor_id = :actorId, @title = :title, @description = :description, " +
                 "@assignee_user_id = :assignee, @start_date = :start, @end_date = :end, @client_id = :clientId, " +
-                "@project_id = :projectId",
+                "@project_id = :projectId, @deal_id = :dealId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .fields(body)
@@ -141,7 +157,7 @@ class TaskRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.task_update @actor_id = :actorId, @task_id = :id, @title = :title, @description = :description, " +
                 "@assignee_user_id = :assignee, @start_date = :start, @end_date = :end, @client_id = :clientId, " +
-                "@project_id = :projectId, @row_version = :rowVersion",
+                "@project_id = :projectId, @row_version = :rowVersion, @deal_id = :dealId",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("id", id, Types.BIGINT)
@@ -158,6 +174,7 @@ class TaskRepository(private val jdbc: JdbcClient) {
         .param("end", body.endDate, Types.DATE)
         .param("clientId", body.clientId, Types.BIGINT)
         .param("projectId", body.projectId, Types.BIGINT)
+        .param("dealId", body.dealId, Types.BIGINT)
 
     fun setDone(actorId: Int, id: Long, done: Boolean, rowVersion: String): TaskResponse =
         jdbc.sql("EXEC app.task_set_done @actor_id = :actorId, @task_id = :id, @done = :done, @row_version = :rowVersion")
@@ -210,6 +227,17 @@ class TaskController(private val tasks: TaskRepository) {
         @RequestParam(required = false) department: String?,
         @RequestParam(required = false) done: Boolean?,
     ): List<TaskResponse> = tasks.list(actor.id, from, to, scope, department, done)
+
+    @Operation(
+        summary = "My agenda: my open tasks started by `until` (overdue first, by their last day) and the ones I " +
+            "finished since `doneSince`.",
+    )
+    @GetMapping("/tasks/agenda")
+    fun taskAgenda(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) until: LocalDate,
+        @RequestParam(required = false) doneSince: Instant?,
+    ): List<TaskResponse> = tasks.agenda(actor.id, until, doneSince)
 
     @Operation(summary = "Task details.")
     @GetMapping("/tasks/{id}")
