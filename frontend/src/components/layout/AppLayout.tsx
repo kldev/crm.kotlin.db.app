@@ -5,6 +5,7 @@ import {
 	Activity,
 	BriefcaseBusiness,
 	Building2,
+	CalendarRange,
 	ChartColumn,
 	Contact,
 	Database,
@@ -44,6 +45,7 @@ interface NavItem {
 		| "/clients"
 		| "/projects"
 		| "/offers"
+		| "/tasks"
 		| "/teams"
 		| "/users"
 		| "/desk/pool"
@@ -71,6 +73,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/clients", label: (t) => t("Klienci", "Clients"), icon: Building2 },
 			{ to: "/projects", label: (t) => t("Projekty", "Projects"), icon: BriefcaseBusiness },
 			{ to: "/offers", label: (t) => t("Oferty", "Offers"), icon: FileSignature },
+			{ to: "/tasks", label: (t) => t("Zadania", "Tasks"), icon: CalendarRange },
 			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
 			{
 				to: "/users",

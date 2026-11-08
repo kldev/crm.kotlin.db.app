@@ -8,5 +8,6 @@ export * from './offers/offers.ts';
 export * from './projects/projects.ts';
 export * from './public-desk/public-desk.ts';
 export * from './system/system.ts';
+export * from './tasks/tasks.ts';
 export * from './teams/teams.ts';
 export * from './users/users.ts';

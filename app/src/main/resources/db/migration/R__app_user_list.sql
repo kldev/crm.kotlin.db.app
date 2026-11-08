@@ -20,7 +20,7 @@ BEGIN
 
     -- page_size + 1 rows: the caller knows whether there is a next page.
     SELECT TOP (@page_size + 1)
-           id, login, display_name, role, is_active, locked_until, last_login_at, created_at, updated_at, row_version
+           id, login, display_name, role, is_active, locked_until, last_login_at, created_at, updated_at, row_version, department
     FROM crm.users
     WHERE (@role IS NULL OR role = @role)
       AND (@after_id IS NULL OR id > @after_id)

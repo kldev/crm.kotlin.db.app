@@ -34,6 +34,9 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
 - Offers (ADR-0013): for a client from three templates (Sales Budownictwo, Sales IT, Sales Outsourcing), edited as a
   draft with lines and VAT, sent, accepted or rejected, printed as a Halycon Inc. PDF in the Obsidian look that closes
   with the salesperson's phone and e-mail ("My contact" in the account menu).
+- Tasks (ADR-0014): who does what from which day to which day, on a month calendar or a timeline by person and
+  department, with "only mine" / "my department" / all, open or done - no statuses, no kanban; administrators set
+  users' departments.
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -177,6 +180,8 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET /api/system/status`, `/requests`, `/logs`, `/database`, `/queues`, `POST /api/system/jobs/{name}/run` | `monitoring_http_*`, `monitoring_request_list`, `monitoring_log_list`, `monitoring_db_*` (signed) | ADMIN |
 | `GET/POST /api/offers`, `/count`, `/templates`, `GET/PUT/DELETE /api/offers/{id}`, `/items`, `POST …/status`, `GET …/pdf` | `offer_search`, `offer_count`, `offer_template_list`, `offer_get`, `offer_create`, `offer_update`, `offer_delete`, `offer_item_list`, `offer_change_status` | all (SALES: offers of own clients) |
 | `GET/PUT /api/auth/me/contact`, `/api/users/{id}/contact` | `user_contact_get`, `user_contact_update` | own; others: ADMIN (read: MANAGER too) |
+| `GET /api/tasks?from&to&scope=MINE\|DEPARTMENT\|ALL&department&done`, `GET/POST/PUT/DELETE /api/tasks/{id}`, `POST …/done` | `task_list`, `task_get`, `task_create`, `task_update`, `task_delete`, `task_set_done` | all (change: author or assignee for SALES) |
+| `GET /api/departments`, `PUT /api/users/{id}/department` | `department_list`, `user_set_department` | all / ADMIN |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
@@ -205,9 +210,12 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51150 | report period: from <= to, at most a year | 400 |
 | 51160 | monitoring cleanup: cutoff and batch size | 400 |
 | 51170-51178 | offer: title, template, validity, lines, currency, texts, no lines to send, contact, status filter | 400 |
+| 51180-51184 | task: title, dates (end before start, over a year, window over 120 days), scope, department, description | 400 |
+| 51304 | sales user changes only tasks they created or are assigned | 403 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
 | 51410-51413 | ticket, person, agent, attachment not found | 404 |
 | 51405 | offer not found (or not visible) | 404 |
+| 51406 | task not found | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
 | 51911, 51912 | ticket already resolved / still in the pool (take it first) | 409 |
 | 51913 | the ticket's stream changed meanwhile | 409 |

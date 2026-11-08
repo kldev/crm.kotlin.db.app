@@ -15,5 +15,6 @@
 | [0011](0011-desk-charts.md) | Desk charts drawn without a chart library | Accepted |
 | [0012](0012-monitoring-and-system-pages.md) | The application reports on itself: HTTP answers, log, database, queues | Accepted |
 | [0013](0013-offers.md) | Offers from templates, printed in the Obsidian look | Accepted |
+| [0014](0014-tasks-calendar-and-timeline.md) | Tasks on a calendar and a timeline, without statuses | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

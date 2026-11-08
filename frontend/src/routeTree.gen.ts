@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppClientsClientIdRouteImport } from './routes/_app/clients.$clientId'
@@ -56,6 +57,11 @@ const ReportRoute = ReportRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksRoute = AppTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => AppRoute,
 } as any)
 const AppUsersRoute = AppUsersRouteImport.update({
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/report': typeof ReportRoute
+  '/tasks': typeof AppTasksRoute
   '/users': typeof AppUsersRoute
   '/clients/$clientId': typeof AppClientsClientIdRoute
   '/desk/agents': typeof AppDeskAgentsRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/report': typeof ReportRoute
+  '/tasks': typeof AppTasksRoute
   '/users': typeof AppUsersRoute
   '/': typeof AppIndexRoute
   '/clients/$clientId': typeof AppClientsClientIdRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/report': typeof ReportRoute
+  '/_app/tasks': typeof AppTasksRoute
   '/_app/users': typeof AppUsersRoute
   '/_app/': typeof AppIndexRoute
   '/_app/clients/$clientId': typeof AppClientsClientIdRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/report'
+    | '/tasks'
     | '/users'
     | '/clients/$clientId'
     | '/desk/agents'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/report'
+    | '/tasks'
     | '/users'
     | '/'
     | '/clients/$clientId'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/report'
+    | '/_app/tasks'
     | '/_app/users'
     | '/_app/'
     | '/_app/clients/$clientId'
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks': {
+      id: '/_app/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AppTasksRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/users': {
@@ -585,6 +604,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppTasksRoute: typeof AppTasksRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppClientsClientIdRoute: typeof AppClientsClientIdRoute
@@ -614,6 +634,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppTasksRoute: AppTasksRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppClientsClientIdRoute: AppClientsClientIdRoute,

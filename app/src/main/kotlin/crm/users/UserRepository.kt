@@ -24,6 +24,7 @@ class UserRepository(private val jdbc: JdbcClient) {
             createdAt = rs.getLocalDateTime("created_at"),
             updatedAt = rs.getLocalDateTime("updated_at"),
             rowVersion = rs.getRowVersion(),
+            department = rs.getString("department"),
         )
     }
 

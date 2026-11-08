@@ -32,7 +32,7 @@ BEGIN
     VALUES (@login, @display_name, @role, @password_hash, @actor_id, @actor_id);
     SET @id = SCOPE_IDENTITY();
 
-    SELECT id, login, display_name, role, is_active, locked_until, last_login_at, created_at, updated_at, row_version
+    SELECT id, login, display_name, role, is_active, locked_until, last_login_at, created_at, updated_at, row_version, department
     FROM crm.users
     WHERE id = @id;
 END;

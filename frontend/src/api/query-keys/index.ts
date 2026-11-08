@@ -96,3 +96,11 @@ export const offerKeys = {
 	myContact: () => [...offerKeys.all, "my-contact"] as const,
 	contact: (userId: number) => [...offerKeys.all, "contact", userId] as const,
 };
+
+/** Tasks (ADR-0014): a window of days with its filters. A write invalidates the area. */
+export const taskKeys = {
+	all: ["tasks"] as const,
+	window: (filters: object) => [...taskKeys.all, "window", filters] as const,
+	detail: (id: number) => [...taskKeys.all, "detail", id] as const,
+	departments: () => [...taskKeys.all, "departments"] as const,
+};

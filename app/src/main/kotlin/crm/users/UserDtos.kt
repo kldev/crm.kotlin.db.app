@@ -17,6 +17,8 @@ data class UserResponse(
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
     val rowVersion: String,
+    /** For the "my department" views of tasks (ADR-0014); set by an administrator. */
+    val department: String?,
 )
 
 data class CreateUserRequest(

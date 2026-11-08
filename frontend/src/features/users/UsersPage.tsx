@@ -2,6 +2,7 @@ import { Button, Card, Chip, Dropdown, Label, Table, toast } from "@heroui/react
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import {
+	Building,
 	Contact,
 	EllipsisVertical,
 	KeyRound,
@@ -23,6 +24,7 @@ import {
 } from "#/components/ui";
 import { can, useMe } from "#/features/auth/session";
 import { type ContactCommand, ContactDrawer } from "#/features/offers/ContactDrawer";
+import { type DepartmentCommand, DepartmentDrawer } from "#/features/tasks/DepartmentDrawer";
 import { ROLES, type RoleName, roleColor, roleLabel } from "#/features/types";
 import { useI18n } from "#/i18n";
 import { problemText } from "#/i18n/problems";
@@ -42,6 +44,7 @@ export function UsersPage() {
 	const users = query.data?.pages.flatMap((p) => p.items) ?? [];
 	const drawer = useRef<UserDrawerCommand>(null);
 	const contactDrawer = useRef<ContactCommand>(null);
+	const departmentDrawer = useRef<DepartmentCommand>(null);
 	const admin = can.manageUsers(me.role);
 	const setActive = useSetUserActive((u) =>
 		toast.success(
@@ -97,6 +100,7 @@ export function UsersPage() {
 									<Table.Header>
 										<Table.Column isRowHeader>{t("Użytkownik", "User")}</Table.Column>
 										<Table.Column>{t("Rola", "Role")}</Table.Column>
+										<Table.Column>{t("Dział", "Department")}</Table.Column>
 										<Table.Column>{t("Status", "Status")}</Table.Column>
 										<Table.Column>{t("Ostatnie logowanie", "Last login")}</Table.Column>
 										<Table.Column className="w-12">
@@ -123,6 +127,11 @@ export function UsersPage() {
 													>
 														{roleLabel(u.role, i18n)}
 													</Chip>
+												</Table.Cell>
+												<Table.Cell>
+													<span className="text-sm">
+														{u.department ?? <span className="text-muted">—</span>}
+													</span>
 												</Table.Cell>
 												<Table.Cell>
 													<UserStatus user={u} />
@@ -152,6 +161,7 @@ export function UsersPage() {
 																	onAction={(key) => {
 																		if (key === "edit") drawer.current?.edit(u);
 																		if (key === "contact") contactDrawer.current?.open(u.id);
+																		if (key === "department") departmentDrawer.current?.open(u);
 																		if (key === "password") drawer.current?.resetPassword(u);
 																		if (key === "toggle")
 																			setActive.mutate(
@@ -166,6 +176,13 @@ export function UsersPage() {
 																	>
 																		<ShieldCheck className="size-4" />
 																		<Label>{t("Zmień rolę", "Change role")}</Label>
+																	</Dropdown.Item>
+																	<Dropdown.Item
+																		id="department"
+																		textValue={t("Dział", "Department")}
+																	>
+																		<Building className="size-4" />
+																		<Label>{t("Dział", "Department")}</Label>
 																	</Dropdown.Item>
 																	<Dropdown.Item
 																		id="contact"
@@ -226,6 +243,7 @@ export function UsersPage() {
 			</Card>
 			<UserDrawer ref={drawer} />
 			<ContactDrawer ref={contactDrawer} />
+			<DepartmentDrawer ref={departmentDrawer} />
 		</>
 	);
 }

@@ -91,4 +91,6 @@ BEGIN
 
     IF @stories IS NOT NULL AND NOT EXISTS (SELECT 1 FROM crm.tickets)
         EXEC seed.desk_replay @stories;
+    -- The agents' departments and their plan of tasks (ADR-0014).
+    EXEC seed.tasks_run;
 END;

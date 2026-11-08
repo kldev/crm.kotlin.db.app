@@ -116,6 +116,16 @@ const DESK: Record<number, Text> = {
 	51405: { pl: "Nie znaleziono oferty." },
 	51906: { pl: "Tylko szkic oferty można edytować albo usunąć." },
 	51907: { pl: "Ta zmiana statusu oferty nie jest dozwolona." },
+	// Tasks (ADR-0014).
+	51180: { pl: "Tytuł zadania jest wymagany (najwyżej 200 znaków)." },
+	51181: {
+		pl: "Nieprawidłowe daty: koniec nie może być przed początkiem, zadanie trwa najwyżej rok, a widok obejmuje najwyżej 120 dni.",
+	},
+	51182: { pl: "Nieprawidłowy zakres: tylko moje, mój dział albo wszystkie." },
+	51183: { pl: "Nie ma takiego działu." },
+	51184: { pl: "Opis zadania może mieć najwyżej 2000 znaków." },
+	51304: { pl: "Sprzedawca zmienia tylko zadania, które założył albo które ma przypisane." },
+	51406: { pl: "Nie znaleziono zadania." },
 	51100: { pl: "Pole „Tytuł” jest wymagane." },
 	51101: { pl: "Pole „Tytuł” może mieć najwyżej 200 znaków." },
 	51102: { pl: "Pole „Opis” jest wymagane." },
