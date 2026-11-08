@@ -6,6 +6,7 @@ import {
 	BriefcaseBusiness,
 	Building2,
 	CalendarRange,
+	CarFront,
 	ChartColumn,
 	Contact,
 	Database,
@@ -52,6 +53,7 @@ interface NavItem {
 		| "/pipeline"
 		| "/companies"
 		| "/my-day"
+		| "/fleet"
 		| "/teams"
 		| "/users"
 		| "/desk/pool"
@@ -90,6 +92,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 		items: [
 			{ to: "/companies", label: (t) => t("Spółki", "Companies"), icon: Landmark },
 			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
+			{ to: "/fleet", label: (t) => t("Flota", "Fleet"), icon: CarFront },
 			{
 				to: "/users",
 				label: (t) => t("Użytkownicy", "Users"),

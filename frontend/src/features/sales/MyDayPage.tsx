@@ -14,6 +14,7 @@ import {
 	AlarmClock,
 	CalendarClock,
 	CalendarPlus,
+	CarFront,
 	CircleAlert,
 	ListTodo,
 	Snowflake,
@@ -24,6 +25,7 @@ import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError } from "#/components/ui";
 import { useMe } from "#/features/auth/session";
 import { StatTile } from "#/features/desk/charts/ChartKit";
+import { myCarsQuery } from "#/features/fleet/hooks";
 import { amount, stageAccent } from "#/features/pipeline/types";
 import { useSetTaskDone } from "#/features/tasks/hooks";
 import { TaskDrawer, type TaskDrawerCommand } from "#/features/tasks/TaskDrawer";
@@ -131,6 +133,7 @@ export function MyDayPage() {
 					</div>
 				}
 			/>
+			<MyCar />
 			<div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 				<StatTile
 					icon={CircleAlert}
@@ -458,4 +461,33 @@ function Rows() {
 
 function Empty({ text }: { text: string }) {
 	return <p className="px-4 py-8 text-center text-sm text-muted">{text}</p>;
+}
+
+/** "My car" (ADR-0018): the car I have now or will get next, one line above my day. */
+function MyCar() {
+	const { t, locale } = useI18n();
+	const mine = useQuery(myCarsQuery());
+	const live = (mine.data ?? []).find(
+		(h) => h.state === "CURRENT" || h.state === "OVERDUE" || h.state === "PLANNED",
+	);
+	if (!live) return null;
+	const date = (iso: string) =>
+		new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(
+			new Date(`${iso}T00:00:00`),
+		);
+	return (
+		<div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-separator bg-[var(--obs-surface)] px-4 py-2.5 text-sm">
+			<CarFront className="size-4 text-[var(--obs-champagne)]" />
+			<span className="font-medium">{live.carName}</span>
+			<span className="font-mono text-xs tracking-wider text-muted">{live.plate}</span>
+			<span
+				className={`text-xs ${live.state === "OVERDUE" ? "font-medium text-[var(--obs-danger)]" : "text-muted"}`}
+			>
+				{live.state === "PLANNED" ? `${t("od", "from")} ${date(live.issueDate)} · ` : ""}
+				{live.plannedReturn
+					? `${live.state === "OVERDUE" ? t("zwrot był", "return was due") : t("zwrot", "return")} ${date(live.plannedReturn)}`
+					: t("bezterminowo", "open-ended")}
+			</span>
+		</div>
+	);
 }

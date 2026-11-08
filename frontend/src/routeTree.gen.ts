@@ -27,6 +27,8 @@ import { Route as AppDeskMineRouteImport } from './routes/_app/desk.mine'
 import { Route as AppDeskNewRouteImport } from './routes/_app/desk.new'
 import { Route as AppDeskPeopleRouteImport } from './routes/_app/desk.people'
 import { Route as AppDeskPoolRouteImport } from './routes/_app/desk.pool'
+import { Route as AppFleetIndexRouteImport } from './routes/_app/fleet.index'
+import { Route as AppFleetCarIdRouteImport } from './routes/_app/fleet.$carId'
 import { Route as AppOffersIndexRouteImport } from './routes/_app/offers.index'
 import { Route as AppOffersOfferIdRouteImport } from './routes/_app/offers.$offerId'
 import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline.index'
@@ -133,6 +135,16 @@ const AppDeskPoolRoute = AppDeskPoolRouteImport.update({
   path: '/desk/pool',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFleetIndexRoute = AppFleetIndexRouteImport.update({
+  id: '/fleet/',
+  path: '/fleet/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFleetCarIdRoute = AppFleetCarIdRouteImport.update({
+  id: '/fleet/$carId',
+  path: '/fleet/$carId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOffersIndexRoute = AppOffersIndexRouteImport.update({
   id: '/offers/',
   path: '/offers/',
@@ -230,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/desk/new': typeof AppDeskNewRoute
   '/desk/people': typeof AppDeskPeopleRoute
   '/desk/pool': typeof AppDeskPoolRoute
+  '/fleet/$carId': typeof AppFleetCarIdRoute
   '/offers/$offerId': typeof AppOffersOfferIdRoute
   '/pipeline/$dealId': typeof AppPipelineDealIdRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
@@ -240,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients/': typeof AppClientsIndexRoute
   '/desk/': typeof AppDeskIndexRoute
+  '/fleet/': typeof AppFleetIndexRoute
   '/offers/': typeof AppOffersIndexRoute
   '/pipeline/': typeof AppPipelineIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
@@ -265,6 +279,7 @@ export interface FileRoutesByTo {
   '/desk/new': typeof AppDeskNewRoute
   '/desk/people': typeof AppDeskPeopleRoute
   '/desk/pool': typeof AppDeskPoolRoute
+  '/fleet/$carId': typeof AppFleetCarIdRoute
   '/offers/$offerId': typeof AppOffersOfferIdRoute
   '/pipeline/$dealId': typeof AppPipelineDealIdRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
@@ -275,6 +290,7 @@ export interface FileRoutesByTo {
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients': typeof AppClientsIndexRoute
   '/desk': typeof AppDeskIndexRoute
+  '/fleet': typeof AppFleetIndexRoute
   '/offers': typeof AppOffersIndexRoute
   '/pipeline': typeof AppPipelineIndexRoute
   '/projects': typeof AppProjectsIndexRoute
@@ -302,6 +318,7 @@ export interface FileRoutesById {
   '/_app/desk/new': typeof AppDeskNewRoute
   '/_app/desk/people': typeof AppDeskPeopleRoute
   '/_app/desk/pool': typeof AppDeskPoolRoute
+  '/_app/fleet/$carId': typeof AppFleetCarIdRoute
   '/_app/offers/$offerId': typeof AppOffersOfferIdRoute
   '/_app/pipeline/$dealId': typeof AppPipelineDealIdRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
@@ -312,6 +329,7 @@ export interface FileRoutesById {
   '/_app/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/desk/': typeof AppDeskIndexRoute
+  '/_app/fleet/': typeof AppFleetIndexRoute
   '/_app/offers/': typeof AppOffersIndexRoute
   '/_app/pipeline/': typeof AppPipelineIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
@@ -339,6 +357,7 @@ export interface FileRouteTypes {
     | '/desk/new'
     | '/desk/people'
     | '/desk/pool'
+    | '/fleet/$carId'
     | '/offers/$offerId'
     | '/pipeline/$dealId'
     | '/projects/$projectId'
@@ -349,6 +368,7 @@ export interface FileRouteTypes {
     | '/teams/$teamId'
     | '/clients/'
     | '/desk/'
+    | '/fleet/'
     | '/offers/'
     | '/pipeline/'
     | '/projects/'
@@ -374,6 +394,7 @@ export interface FileRouteTypes {
     | '/desk/new'
     | '/desk/people'
     | '/desk/pool'
+    | '/fleet/$carId'
     | '/offers/$offerId'
     | '/pipeline/$dealId'
     | '/projects/$projectId'
@@ -384,6 +405,7 @@ export interface FileRouteTypes {
     | '/teams/$teamId'
     | '/clients'
     | '/desk'
+    | '/fleet'
     | '/offers'
     | '/pipeline'
     | '/projects'
@@ -410,6 +432,7 @@ export interface FileRouteTypes {
     | '/_app/desk/new'
     | '/_app/desk/people'
     | '/_app/desk/pool'
+    | '/_app/fleet/$carId'
     | '/_app/offers/$offerId'
     | '/_app/pipeline/$dealId'
     | '/_app/projects/$projectId'
@@ -420,6 +443,7 @@ export interface FileRouteTypes {
     | '/_app/teams/$teamId'
     | '/_app/clients/'
     | '/_app/desk/'
+    | '/_app/fleet/'
     | '/_app/offers/'
     | '/_app/pipeline/'
     | '/_app/projects/'
@@ -564,6 +588,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDeskPoolRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/fleet/': {
+      id: '/_app/fleet/'
+      path: '/fleet'
+      fullPath: '/fleet/'
+      preLoaderRoute: typeof AppFleetIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/fleet/$carId': {
+      id: '/_app/fleet/$carId'
+      path: '/fleet/$carId'
+      fullPath: '/fleet/$carId'
+      preLoaderRoute: typeof AppFleetCarIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/offers/': {
       id: '/_app/offers/'
       path: '/offers'
@@ -693,6 +731,7 @@ interface AppRouteChildren {
   AppDeskNewRoute: typeof AppDeskNewRoute
   AppDeskPeopleRoute: typeof AppDeskPeopleRoute
   AppDeskPoolRoute: typeof AppDeskPoolRoute
+  AppFleetCarIdRoute: typeof AppFleetCarIdRoute
   AppOffersOfferIdRoute: typeof AppOffersOfferIdRoute
   AppPipelineDealIdRoute: typeof AppPipelineDealIdRoute
   AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
@@ -703,6 +742,7 @@ interface AppRouteChildren {
   AppTeamsTeamIdRoute: typeof AppTeamsTeamIdRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppDeskIndexRoute: typeof AppDeskIndexRoute
+  AppFleetIndexRoute: typeof AppFleetIndexRoute
   AppOffersIndexRoute: typeof AppOffersIndexRoute
   AppPipelineIndexRoute: typeof AppPipelineIndexRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
@@ -727,6 +767,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDeskNewRoute: AppDeskNewRoute,
   AppDeskPeopleRoute: AppDeskPeopleRoute,
   AppDeskPoolRoute: AppDeskPoolRoute,
+  AppFleetCarIdRoute: AppFleetCarIdRoute,
   AppOffersOfferIdRoute: AppOffersOfferIdRoute,
   AppPipelineDealIdRoute: AppPipelineDealIdRoute,
   AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,
@@ -737,6 +778,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeamsTeamIdRoute: AppTeamsTeamIdRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
   AppDeskIndexRoute: AppDeskIndexRoute,
+  AppFleetIndexRoute: AppFleetIndexRoute,
   AppOffersIndexRoute: AppOffersIndexRoute,
   AppPipelineIndexRoute: AppPipelineIndexRoute,
   AppProjectsIndexRoute: AppProjectsIndexRoute,

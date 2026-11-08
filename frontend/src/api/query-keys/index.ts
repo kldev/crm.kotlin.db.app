@@ -125,3 +125,17 @@ export const legalEntityKeys = {
 	all: ["legal-entities"] as const,
 	list: () => [...legalEntityKeys.all, "list"] as const,
 };
+
+/** The fleet (ADR-0018). A write invalidates the area: the list, the car, its handovers and history, "my car". */
+export const fleetKeys = {
+	all: ["fleet"] as const,
+	list: (filters: object) => [...fleetKeys.all, "list", filters] as const,
+	count: (filters: object) => [...fleetKeys.all, "count", filters] as const,
+	detail: (id: number) => [...fleetKeys.all, "detail", id] as const,
+	handovers: (id: number) => [...fleetKeys.all, "handovers", id] as const,
+	history: (id: number) => [...fleetKeys.all, "history", id] as const,
+	statuses: () => [...fleetKeys.all, "statuses"] as const,
+	makes: () => [...fleetKeys.all, "makes"] as const,
+	partners: (kind?: string) => [...fleetKeys.all, "partners", kind ?? "all"] as const,
+	mine: () => [...fleetKeys.all, "mine"] as const,
+};

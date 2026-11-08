@@ -5,6 +5,7 @@ export * from './deals/deals.ts';
 export * from './desk/desk.ts';
 export * from './desk-charts/desk-charts.ts';
 export * from './desk-reports/desk-reports.ts';
+export * from './fleet/fleet.ts';
 export * from './legal-entities/legal-entities.ts';
 export * from './offers/offers.ts';
 export * from './projects/projects.ts';

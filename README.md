@@ -45,6 +45,9 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
 - My day for salespeople (ADR-0017): follow-ups due (overdue first), started tasks and deals with no next step on one
   screen; a deal page with the next step and the activity log (calls, e-mails, meetings...); tasks of a deal log on
   it when done.
+- Fleet (ADR-0018): the companies' cars with status by hand and its history, financing (bought / leasing), inspection
+  and insurance deadlines, repair shops and leasing companies, and handovers to people without overlaps; "my car" on
+  My day.
 - Reports keep their first column in place while scrolling sideways; ticket reports have a row menu that opens the
   ticket. Dates are picked in the app's own date picker (typed or from a calendar), not the browser's.
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
@@ -104,7 +107,8 @@ After the seed log in as `perf.sales.0001`, `perf.manager.0001` or `perf.admin.0
 The seed runs only on an empty database (error 51060 otherwise); start over with `./start.sh --clean --seed`.
 It also seeds the service desk (`seed.desk_run`: ten agents such as `anna.nowak`, 40 people and Halcyon's 238 ticket
 histories replayed at their moments in the past, `CRM_SEED_DESK_STORIES`). The same step seeds the newer modules at a smaller scale - about 10 000 records each: tasks, deals with ~25 000
-activities and their next steps, offers with their lines - each only into an empty table.
+activities and their next steps, offers with their lines, and a fleet of 2 000 cars with ~10 000 handovers - each
+only into an empty table.
 That part is idempotent; for a database seeded before the desk existed run only it:
 `CRM_SEED_DESK_ONLY=true docker compose --profile seed run --rm seed`.
 
@@ -196,6 +200,7 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET/POST /api/deals?scope=MINE\|ALL&ownerUserId&search&closedDays&perStage`, `/stages`, `/summary`, `GET/PUT/DELETE /api/deals/{id}`, `POST …/move` | `deal_board`, `deal_board_summary`, `deal_stage_list`, `deal_get`, `deal_create`, `deal_update`, `deal_delete`, `deal_move` | all (SALES: deals of own clients) |
 | `GET/POST /api/legal-entities`, `GET/PUT /api/legal-entities/{id}` | `legal_entity_list`, `legal_entity_get`, `legal_entity_save` | read: all; write: ADMIN |
 | `GET /api/deals/activity-types`, `GET/POST /api/deals/{id}/activities`, `PUT /api/deals/{id}/next-step`, `GET /api/sales/follow-ups?until&scope`, `/without-next-step`, `GET /api/tasks/agenda?until&doneSince` | `deal_activity_type_list`, `deal_activity_list`, `deal_activity_add`, `deal_set_next_step`, `sales_follow_ups`, `sales_without_next_step`, `task_agenda` | all (SALES: deals of own clients) |
+| `GET/POST /api/fleet/cars`, `/count`, `GET/PUT/DELETE /api/fleet/cars/{id}`, `PUT …/financing`, `POST …/status`, `GET …/status-history`, `GET/POST …/handovers`, `POST /api/fleet/handovers/{id}/return`, `/undo-return`, `/cancel`, `PUT /api/fleet/handovers/{id}`, `GET /api/fleet/my`, `/statuses`, `/makes`, `GET/POST/PUT /api/fleet/partners` | `car_list`, `car_count`, `car_get`, `car_save`, `car_delete`, `car_set_financing`, `car_change_status`, `car_status_history`, `car_handover_*`, `car_my`, `car_status_list`, `car_make_list`, `fleet_partner_list`, `fleet_partner_save` | read: all; write: ADMIN, MANAGER |
 | `GET /api/departments`, `PUT /api/users/{id}/department` | `department_list`, `user_set_department` | all / ADMIN |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
@@ -229,6 +234,7 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51190-51197 | deal: title, value, currency, expected close, offer of another client, board filter, stage, lost reason | 400 |
 | 51200-51205 | company: name, legal name and address, NIP check digit, trading dates, contact, not trading on the day | 400 |
 | 51210-51214 | activity type, note, moment (last 90 days, not future); next step both or neither; a task of a deal is for its client | 400 |
+| 51220-51236 | car: name, year, plate, VIN, notes, VIN correction reason, financing, status day, repair shop; handover: dates, mileage and fuel, return day and mileage, cancel reason; filters; partner | 400 |
 | 51304 | sales user changes only tasks they created or are assigned | 403 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
 | 51410-51413 | ticket, person, agent, attachment not found | 404 |
@@ -236,11 +242,13 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51406 | task not found | 404 |
 | 51407 | deal not found (or not visible) | 404 |
 | 51408 | company not found | 404 |
+| 51409, 51414 | car, handover not found | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
 | 51911, 51912 | ticket already resolved / still in the pool (take it first) | 409 |
 | 51913 | the ticket's stream changed meanwhile | 409 |
 | 51908 | the delivering company changes only while the project is NEW | 409 |
 | 51909 | a closed deal has no next step | 409 |
+| 51920-51927 | fleet: not for sale / archived while handed over, archive only by an administrator, delete only if never handed over, car taken, person has a car, car for sale cannot go, handover not live, undo only on the day | 409 |
 | 51906, 51907 | offer: only a draft is edited or deleted / status move not allowed | 409 |
 | 51301 | role not allowed | 403 |
 | 51302 | own account not active | 403 |

@@ -99,6 +99,8 @@ BEGIN
     EXEC seed.sales_run;
     -- Offers of the deals' clients from the three templates (ADR-0013).
     EXEC seed.offers_run;
+    -- The fleet: cars, repair shops, leasing, handovers (ADR-0018).
+    EXEC seed.fleet_run;
     -- The group's companies on the projects seeded before them (ADR-0016).
     EXEC seed.legal_entities_run;
 END;
