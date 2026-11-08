@@ -18,10 +18,8 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   client details with its projects, projects with stage, team and overdue filters, project details with the stage
   path, stage changes with a comment, comments and stage history, teams with delivery statistics from the indexed
   view and membership, users (ADMIN/MANAGER).
-- `frontend/build-to-resources.sh` builds the app and copies it to `app/src/main/resources/static` (git-ignored);
-  the Docker image runs the same build in a Node stage.
-- Development: `cd frontend && yarn install && yarn dev` (port 5173, `/api` proxied to the compose app on 8088).
-  After an API change: `yarn api:gen` with the stack running (orval from `/v3/api-docs`).
+- The Docker image builds the app in a Node stage; for work on the front end see
+  [Local development](#local-development).
 
 ## How it works
 
@@ -36,22 +34,88 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
 The application's database login has **only** `EXECUTE` on schema `app` (ADR-0002). `./gradlew check` fails if an
 ORM or query mapper reaches the classpath.
 
-## Run locally
+## Local development
 
-Requirements: Docker with compose. JDK 25 only to build outside Docker.
+### Requirements
+
+| Tool | Needed for |
+|---|---|
+| Docker with compose v2 | the whole stack (SQL Server, migrations, app) - enough to just run the app |
+| JDK 25 | `./gradlew build` / tests (Testcontainers, so Docker must be running) and running the API from the IDE |
+| Node 22 + corepack (Yarn 4.18 from `packageManager`) | front-end development (`frontend/`) |
+
+The SQL Server image is `linux/amd64`; on Apple Silicon enable Rosetta emulation in Docker Desktop.
+
+### 1. First start (everything in Docker)
 
 ```bash
 cd infrastructure
-cp .env-sample .env        # set the passwords (SQL Server needs strong ones; no single quote)
-./start.sh                 # mssql -> db-init -> migrate (Flyway) -> app
-./start.sh --seed          # the performance data set (several minutes, see below)
-./start.sh --clean --seed  # from an empty database
-./start.sh --down
+cp .env-sample .env   # fill in every empty password (strong: 8+ chars, upper/lower case, digit, symbol; no ')
+./start.sh            # mssql -> db-init (database, logins) -> migrate (Flyway) -> app
 ```
 
-API: <http://127.0.0.1:8088/swagger-ui.html> (port `CRM_HTTP_PORT`). Log in as `CRM_ADMIN_LOGIN` /
-`CRM_ADMIN_PASSWORD`, or after the seed as `perf.sales.0001` (or `perf.manager.0001`, `perf.admin.0001`) with
-`CRM_SEED_PASSWORD`.
+Then open:
+
+- web app: <http://127.0.0.1:8088/> (port `CRM_HTTP_PORT`)
+- API docs: <http://127.0.0.1:8088/swagger-ui.html>, OpenAPI: `/v3/api-docs`
+- SQL Server: `127.0.0.1,14333` (`CRM_DB_HOST_PORT`), login `sa` / `MSSQL_SA_PASSWORD` (e.g. Azure Data Studio,
+  DataGrip, `sqlcmd`)
+
+Log in as `CRM_ADMIN_LOGIN` / `CRM_ADMIN_PASSWORD` (created on the first start). The database starts empty.
+
+### 2. Test data (optional)
+
+```bash
+CRM_SEED_CLIENTS=10000 CRM_SEED_PROJECTS=10000 CRM_SEED_COMMENTS=5000 ./start.sh --seed   # small, seconds
+./start.sh --seed                                                                         # full set, ~13 min
+```
+
+After the seed log in as `perf.sales.0001`, `perf.manager.0001` or `perf.admin.0001` with `CRM_SEED_PASSWORD`.
+The seed runs only on an empty database (error 51060 otherwise); start over with `./start.sh --clean --seed`.
+
+### 3. Day to day
+
+| Task | Command |
+|---|---|
+| rebuild and restart after a Kotlin or SQL change (migrations run again) | `infrastructure/start.sh` |
+| stop everything (data stays in the `mssql-data` volume) | `infrastructure/start.sh --down` |
+| drop the database and start from zero | `infrastructure/start.sh --clean` |
+| build, tests, ORM guard | `./gradlew build` |
+| front-end lint and format | `cd frontend && yarn check` / `yarn format` |
+
+### Front end with hot reload
+
+Keep the stack running (`./start.sh`), then:
+
+```bash
+cd frontend
+corepack enable
+yarn install
+yarn dev              # http://127.0.0.1:5173, /api and /v3 proxied to http://127.0.0.1:8088
+```
+
+The proxy keeps one origin, so the session and `XSRF-TOKEN` cookies work as in production. A different API
+address: `CRM_API_URL=http://127.0.0.1:8080 yarn dev`. After changing an endpoint, regenerate the client with the
+new API running: `yarn api:gen` (orval from `/v3/api-docs`, files in `src/api/`).
+
+### API from the IDE (debugging Kotlin)
+
+Run the database and migrations in Docker, the API from IntelliJ or Gradle:
+
+```bash
+cd infrastructure && ./start.sh && docker compose --env-file .env stop app && cd ..
+set -a; . infrastructure/.env; set +a
+export CRM_DB_URL="jdbc:sqlserver://127.0.0.1:${CRM_DB_HOST_PORT};databaseName=${CRM_DB_NAME};encrypt=true;trustServerCertificate=true"
+PORT=8088 ./gradlew :app:bootRun
+```
+
+In IntelliJ set the same variables in the Spring Boot run configuration of the application (`CRM_DB_URL`, `CRM_DB_APP_USER`,
+`CRM_DB_APP_PASSWORD`, `CRM_ADMIN_LOGIN`, `CRM_ADMIN_PASSWORD`, `PORT=8088`). With `PORT=8088` `yarn dev` works
+without changes. Migrations (`R__app_*.sql`, `V*__*.sql`) are applied by the `migrate` container, so after a SQL
+change run `infrastructure/start.sh` again. To serve the built web app from `bootRun`, run
+`frontend/build-to-resources.sh` first (copies `dist/` to `app/src/main/resources/static`, git-ignored).
+
+### Calling the API with curl
 
 ```bash
 B=http://127.0.0.1:8088
