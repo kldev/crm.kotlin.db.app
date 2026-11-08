@@ -6,3 +6,7 @@
 !app/build.gradle.kts
 !app/src/main/
 !infrastructure/entrypoint.sh
+!frontend/
+frontend/node_modules
+frontend/dist
+app/src/main/resources/static

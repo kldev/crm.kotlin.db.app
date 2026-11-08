@@ -7,7 +7,7 @@ only `EXECUTE` on schema `app`.
 
 ```mermaid
 flowchart LR
-    client["API client<br/>(curl, Swagger UI, k6)"]
+    client["Browser: React + HeroUI<br/>(static files from the same app)<br/>or curl, Swagger UI, k6"]
     subgraph app["Spring Boot 4 (Kotlin)"]
         security["Spring Security<br/>session cookie + CSRF"]
         controllers["Controllers<br/>(hand-written endpoints)"]

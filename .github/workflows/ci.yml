@@ -22,3 +22,19 @@ jobs:
       - run: ./gradlew build --no-daemon
       - name: Docker image builds
         run: docker build -t crm-app:ci .
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: corepack enable
+      - run: yarn install --immutable
+      # Biome (lint + format), route tree, tsc and the Vite build.
+      - run: yarn check
+      - run: yarn build

@@ -9,6 +9,20 @@ one procedure with `EXEC app.<procedure>`.
 - Decisions: [docs/adr/](docs/adr/README.md)
 - Performance: [perf/README.md](perf/README.md)
 
+## Web app
+
+A React app (Vite, HeroUI v3, TanStack Router/Query/Form) in `frontend/`, styled with the Ambit Obsidian theme,
+served by the same Spring Boot application: open <http://127.0.0.1:8088/> after `./start.sh`.
+
+- Overview (overdue and due-soon projects, latest clients), clients with prefix search and filters in the URL,
+  client details with its projects, projects with stage, team and overdue filters, project details with the stage
+  path, stage changes with a comment, comments and stage history, teams with delivery statistics from the indexed
+  view and membership, users (ADMIN/MANAGER).
+- `frontend/build-to-resources.sh` builds the app and copies it to `app/src/main/resources/static` (git-ignored);
+  the Docker image runs the same build in a Node stage.
+- Development: `cd frontend && yarn install && yarn dev` (port 5173, `/api` proxied to the compose app on 8088).
+  After an API change: `yarn api:gen` with the stack running (orval from `/v3/api-docs`).
+
 ## How it works
 
 | Layer | What it does |

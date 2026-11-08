@@ -1,5 +1,14 @@
 # syntax=docker/dockerfile:1
 # One image, three modes (CRM_MODE): app (default), migrate (Flyway, then exit), seed (EXEC seed.run, then exit).
+# The React app (frontend/), built once and served by Spring Boot from resources/static.
+FROM node:22-alpine AS web
+WORKDIR /web
+RUN corepack enable
+COPY frontend/package.json frontend/yarn.lock frontend/.yarnrc.yml ./
+RUN --mount=type=cache,target=/root/.yarn/berry/cache yarn install --immutable
+COPY frontend/ ./
+RUN yarn build
+
 # The Gradle image has the same Gradle as the wrapper (gradle/wrapper/gradle-wrapper.properties), so the build
 # does not download a distribution.
 FROM gradle:9.7.1-jdk25 AS build
@@ -11,6 +20,7 @@ COPY app/build.gradle.kts app/build.gradle.kts
 RUN --mount=type=cache,target=/home/gradle/.gradle gradle :app:dependencies --no-daemon -q > /dev/null
 
 COPY app/src/main app/src/main
+COPY --from=web /web/dist app/src/main/resources/static
 RUN --mount=type=cache,target=/home/gradle/.gradle gradle :app:bootJar --no-daemon -q
 
 # Layers: dependencies change rarely, the application on every commit.
