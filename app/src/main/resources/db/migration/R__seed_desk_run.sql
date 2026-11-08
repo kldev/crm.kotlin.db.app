@@ -101,6 +101,8 @@ BEGIN
     EXEC seed.offers_run;
     -- The fleet: cars, repair shops, leasing, handovers (ADR-0018).
     EXEC seed.fleet_run;
+    -- Business trips of sales, marketing and project people (ADR-0019).
+    EXEC seed.trips_run;
     -- The group's companies on the projects seeded before them (ADR-0016).
     EXEC seed.legal_entities_run;
 END;

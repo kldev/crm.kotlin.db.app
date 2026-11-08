@@ -41,6 +41,8 @@ import { Route as AppSystemQueuesRouteImport } from './routes/_app/system.queues
 import { Route as AppSystemStatusRouteImport } from './routes/_app/system.status'
 import { Route as AppTeamsIndexRouteImport } from './routes/_app/teams.index'
 import { Route as AppTeamsTeamIdRouteImport } from './routes/_app/teams.$teamId'
+import { Route as AppTripsIndexRouteImport } from './routes/_app/trips.index'
+import { Route as AppTripsTripIdRouteImport } from './routes/_app/trips.$tripId'
 import { Route as AppDeskReportsIndexRouteImport } from './routes/_app/desk.reports.index'
 import { Route as AppDeskReportsSlugRouteImport } from './routes/_app/desk.reports.$slug'
 import { Route as AppDeskReportsAgentsRouteImport } from './routes/_app/desk.reports.agents'
@@ -205,6 +207,16 @@ const AppTeamsTeamIdRoute = AppTeamsTeamIdRouteImport.update({
   path: '/teams/$teamId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTripsIndexRoute = AppTripsIndexRouteImport.update({
+  id: '/trips/',
+  path: '/trips/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTripsTripIdRoute = AppTripsTripIdRouteImport.update({
+  id: '/trips/$tripId',
+  path: '/trips/$tripId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDeskReportsIndexRoute = AppDeskReportsIndexRouteImport.update({
   id: '/desk/reports/',
   path: '/desk/reports/',
@@ -251,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/system/queues': typeof AppSystemQueuesRoute
   '/system/status': typeof AppSystemStatusRoute
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
+  '/trips/$tripId': typeof AppTripsTripIdRoute
   '/clients/': typeof AppClientsIndexRoute
   '/desk/': typeof AppDeskIndexRoute
   '/fleet/': typeof AppFleetIndexRoute
@@ -258,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/pipeline/': typeof AppPipelineIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/teams/': typeof AppTeamsIndexRoute
+  '/trips/': typeof AppTripsIndexRoute
   '/desk/reports/$slug': typeof AppDeskReportsSlugRoute
   '/desk/reports/agents': typeof AppDeskReportsAgentsRoute
   '/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
@@ -288,6 +302,7 @@ export interface FileRoutesByTo {
   '/system/queues': typeof AppSystemQueuesRoute
   '/system/status': typeof AppSystemStatusRoute
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
+  '/trips/$tripId': typeof AppTripsTripIdRoute
   '/clients': typeof AppClientsIndexRoute
   '/desk': typeof AppDeskIndexRoute
   '/fleet': typeof AppFleetIndexRoute
@@ -295,6 +310,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AppPipelineIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/teams': typeof AppTeamsIndexRoute
+  '/trips': typeof AppTripsIndexRoute
   '/desk/reports/$slug': typeof AppDeskReportsSlugRoute
   '/desk/reports/agents': typeof AppDeskReportsAgentsRoute
   '/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
@@ -327,6 +343,7 @@ export interface FileRoutesById {
   '/_app/system/queues': typeof AppSystemQueuesRoute
   '/_app/system/status': typeof AppSystemStatusRoute
   '/_app/teams/$teamId': typeof AppTeamsTeamIdRoute
+  '/_app/trips/$tripId': typeof AppTripsTripIdRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/desk/': typeof AppDeskIndexRoute
   '/_app/fleet/': typeof AppFleetIndexRoute
@@ -334,6 +351,7 @@ export interface FileRoutesById {
   '/_app/pipeline/': typeof AppPipelineIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/_app/teams/': typeof AppTeamsIndexRoute
+  '/_app/trips/': typeof AppTripsIndexRoute
   '/_app/desk/reports/$slug': typeof AppDeskReportsSlugRoute
   '/_app/desk/reports/agents': typeof AppDeskReportsAgentsRoute
   '/_app/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
@@ -366,6 +384,7 @@ export interface FileRouteTypes {
     | '/system/queues'
     | '/system/status'
     | '/teams/$teamId'
+    | '/trips/$tripId'
     | '/clients/'
     | '/desk/'
     | '/fleet/'
@@ -373,6 +392,7 @@ export interface FileRouteTypes {
     | '/pipeline/'
     | '/projects/'
     | '/teams/'
+    | '/trips/'
     | '/desk/reports/$slug'
     | '/desk/reports/agents'
     | '/desk/tickets/$ticketId'
@@ -403,6 +423,7 @@ export interface FileRouteTypes {
     | '/system/queues'
     | '/system/status'
     | '/teams/$teamId'
+    | '/trips/$tripId'
     | '/clients'
     | '/desk'
     | '/fleet'
@@ -410,6 +431,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/projects'
     | '/teams'
+    | '/trips'
     | '/desk/reports/$slug'
     | '/desk/reports/agents'
     | '/desk/tickets/$ticketId'
@@ -441,6 +463,7 @@ export interface FileRouteTypes {
     | '/_app/system/queues'
     | '/_app/system/status'
     | '/_app/teams/$teamId'
+    | '/_app/trips/$tripId'
     | '/_app/clients/'
     | '/_app/desk/'
     | '/_app/fleet/'
@@ -448,6 +471,7 @@ export interface FileRouteTypes {
     | '/_app/pipeline/'
     | '/_app/projects/'
     | '/_app/teams/'
+    | '/_app/trips/'
     | '/_app/desk/reports/$slug'
     | '/_app/desk/reports/agents'
     | '/_app/desk/tickets/$ticketId'
@@ -686,6 +710,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeamsTeamIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/trips/': {
+      id: '/_app/trips/'
+      path: '/trips'
+      fullPath: '/trips/'
+      preLoaderRoute: typeof AppTripsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/trips/$tripId': {
+      id: '/_app/trips/$tripId'
+      path: '/trips/$tripId'
+      fullPath: '/trips/$tripId'
+      preLoaderRoute: typeof AppTripsTripIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/desk/reports/': {
       id: '/_app/desk/reports/'
       path: '/desk/reports'
@@ -740,6 +778,7 @@ interface AppRouteChildren {
   AppSystemQueuesRoute: typeof AppSystemQueuesRoute
   AppSystemStatusRoute: typeof AppSystemStatusRoute
   AppTeamsTeamIdRoute: typeof AppTeamsTeamIdRoute
+  AppTripsTripIdRoute: typeof AppTripsTripIdRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppDeskIndexRoute: typeof AppDeskIndexRoute
   AppFleetIndexRoute: typeof AppFleetIndexRoute
@@ -747,6 +786,7 @@ interface AppRouteChildren {
   AppPipelineIndexRoute: typeof AppPipelineIndexRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
   AppTeamsIndexRoute: typeof AppTeamsIndexRoute
+  AppTripsIndexRoute: typeof AppTripsIndexRoute
   AppDeskReportsSlugRoute: typeof AppDeskReportsSlugRoute
   AppDeskReportsAgentsRoute: typeof AppDeskReportsAgentsRoute
   AppDeskTicketsTicketIdRoute: typeof AppDeskTicketsTicketIdRoute
@@ -776,6 +816,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSystemQueuesRoute: AppSystemQueuesRoute,
   AppSystemStatusRoute: AppSystemStatusRoute,
   AppTeamsTeamIdRoute: AppTeamsTeamIdRoute,
+  AppTripsTripIdRoute: AppTripsTripIdRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
   AppDeskIndexRoute: AppDeskIndexRoute,
   AppFleetIndexRoute: AppFleetIndexRoute,
@@ -783,6 +824,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPipelineIndexRoute: AppPipelineIndexRoute,
   AppProjectsIndexRoute: AppProjectsIndexRoute,
   AppTeamsIndexRoute: AppTeamsIndexRoute,
+  AppTripsIndexRoute: AppTripsIndexRoute,
   AppDeskReportsSlugRoute: AppDeskReportsSlugRoute,
   AppDeskReportsAgentsRoute: AppDeskReportsAgentsRoute,
   AppDeskTicketsTicketIdRoute: AppDeskTicketsTicketIdRoute,

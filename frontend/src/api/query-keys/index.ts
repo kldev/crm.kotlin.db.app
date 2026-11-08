@@ -139,3 +139,13 @@ export const fleetKeys = {
 	partners: (kind?: string) => [...fleetKeys.all, "partners", kind ?? "all"] as const,
 	mine: () => [...fleetKeys.all, "mine"] as const,
 };
+
+/** Business trips (ADR-0019). A write invalidates the area: lists, the trip, its expenses. */
+export const tripKeys = {
+	all: ["trips"] as const,
+	list: (filters: object) => [...tripKeys.all, "list", filters] as const,
+	count: (filters: object) => [...tripKeys.all, "count", filters] as const,
+	detail: (id: number) => [...tripKeys.all, "detail", id] as const,
+	expenses: (id: number) => [...tripKeys.all, "expenses", id] as const,
+	rates: () => [...tripKeys.all, "rates"] as const,
+};

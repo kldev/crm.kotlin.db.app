@@ -22,6 +22,7 @@ import {
 	ListTodo,
 	LogOut,
 	Menu,
+	Plane,
 	ScrollText,
 	SquarePlus,
 	Sun,
@@ -54,6 +55,7 @@ interface NavItem {
 		| "/companies"
 		| "/my-day"
 		| "/fleet"
+		| "/trips"
 		| "/teams"
 		| "/users"
 		| "/desk/pool"
@@ -93,6 +95,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/companies", label: (t) => t("Spółki", "Companies"), icon: Landmark },
 			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
 			{ to: "/fleet", label: (t) => t("Flota", "Fleet"), icon: CarFront },
+			{ to: "/trips", label: (t) => t("Delegacje", "Business trips"), icon: Plane },
 			{
 				to: "/users",
 				label: (t) => t("Użytkownicy", "Users"),

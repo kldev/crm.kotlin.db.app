@@ -20,5 +20,6 @@
 | [0016](0016-multi-company.md) | The group's companies deliver projects and sign offers | Accepted |
 | [0017](0017-salesperson-day.md) | A salesperson's day: activities, the next step, tasks of a deal | Accepted |
 | [0018](0018-fleet.md) | The fleet: cars, statuses, financing and handovers | Accepted |
+| [0019](0019-business-trips.md) | Business trips and their settlement | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

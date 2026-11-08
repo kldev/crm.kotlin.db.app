@@ -1,4 +1,5 @@
 export * from './auth/auth.ts';
+export * from './business-trips/business-trips.ts';
 export * from './clients/clients.ts';
 export * from './contacts/contacts.ts';
 export * from './deals/deals.ts';
