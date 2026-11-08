@@ -1,0 +1,52 @@
+{
+	"name": "crm-frontend",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"imports": {
+		"#/*": "./src/*"
+	},
+	"scripts": {
+		"dev": "vite --port 5173",
+		"build": "tsr generate && tsc -b && vite build",
+		"build:spring": "./build-to-resources.sh",
+		"preview": "vite preview",
+		"check": "biome check",
+		"format": "biome check --write .",
+		"api:gen": "orval && yarn format"
+	},
+	"packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e",
+	"dependencies": {
+		"@fontsource-variable/inter": "^5.3.0",
+		"@fontsource/cormorant-garamond": "^5.3.0",
+		"@heroui/react": "^3.2.6",
+		"@heroui/styles": "^3.2.6",
+		"@internationalized/date": "^3.12.4",
+		"@react-aria/ssr": "^3.10.1",
+		"@react-aria/utils": "^3.34.1",
+		"@tanstack/react-form": "^1.33.5",
+		"@tanstack/react-query": "^5.104.5",
+		"@tanstack/react-router": "^1.170.46",
+		"axios": "^1.20.0",
+		"lucide-react": "^1.45.0",
+		"react": "^19.2.0",
+		"react-aria": "^3.53.1",
+		"react-aria-components": "^1.22.1",
+		"react-dom": "^19.2.0",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.13",
+		"@tailwindcss/vite": "^4.1.18",
+		"@tanstack/router-cli": "^1.167.46",
+		"@tanstack/router-plugin": "^1.168.48",
+		"@types/node": "^22",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"@vitejs/plugin-react": "^6.2.1",
+		"orval": "^8.46.0",
+		"tailwindcss": "^4.1.18",
+		"typescript": "^6.0.2",
+		"vite": "^8.0.0"
+	}
+}

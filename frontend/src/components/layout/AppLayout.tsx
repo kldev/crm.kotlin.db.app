@@ -1,0 +1,212 @@
+import { Button, Chip, Drawer, Dropdown, Label, Separator, toast } from "@heroui/react";
+import { useMutation } from "@tanstack/react-query";
+import { Link, Outlet, useNavigate } from "@tanstack/react-router";
+import {
+	BriefcaseBusiness,
+	Building2,
+	KeyRound,
+	LayoutDashboard,
+	LogOut,
+	Menu,
+	UserCog,
+	UsersRound,
+} from "lucide-react";
+import { type ReactNode, useRef, useState } from "react";
+import { http } from "#/api/mutator";
+import { UserAvatar } from "#/components/ui";
+import {
+	type ChangePasswordCommand,
+	ChangePasswordDrawer,
+} from "#/features/auth/ChangePasswordDrawer";
+import { can, type Role, useForgetSession, useMe } from "#/features/auth/session";
+import { roleLabel } from "#/features/types";
+
+interface NavItem {
+	to: "/" | "/clients" | "/projects" | "/teams" | "/users";
+	label: string;
+	icon: typeof LayoutDashboard;
+	visible?: (role: Role) => boolean;
+}
+
+const NAV: NavItem[] = [
+	{ to: "/", label: "Overview", icon: LayoutDashboard },
+	{ to: "/clients", label: "Clients", icon: Building2 },
+	{ to: "/projects", label: "Projects", icon: BriefcaseBusiness },
+	{ to: "/teams", label: "Teams", icon: UsersRound },
+	{ to: "/users", label: "Users", icon: UserCog, visible: can.seeUsers },
+];
+
+function Brand() {
+	return (
+		<div className="flex items-center gap-3 px-5 pt-6 pb-8">
+			<img src="/favicon.svg" alt="" className="size-8" />
+			<div className="leading-tight">
+				<p className="font-display text-2xl font-semibold text-white">CRM</p>
+				<p className="font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
+					Kotlin · T-SQL
+				</p>
+			</div>
+		</div>
+	);
+}
+
+function Navigation({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
+	return (
+		<nav className="flex flex-col gap-1 px-3" aria-label="Main">
+			<p className="px-3 pb-2 font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
+				Workspace
+			</p>
+			{NAV.filter((item) => !item.visible || item.visible(role)).map((item) => (
+				<Link
+					key={item.to}
+					to={item.to}
+					onClick={onNavigate}
+					activeOptions={{ exact: item.to === "/" }}
+					className="group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover data-[status=active]:bg-sidebar-active data-[status=active]:text-champagne"
+				>
+					<span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-champagne opacity-0 transition-opacity group-data-[status=active]:opacity-100" />
+					<item.icon className="size-4" strokeWidth={1.75} />
+					{item.label}
+				</Link>
+			))}
+		</nav>
+	);
+}
+
+function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
+	const me = useMe();
+	const navigate = useNavigate();
+	const forget = useForgetSession();
+	const logout = useMutation({
+		mutationFn: () => http.post("/api/auth/logout"),
+		onSettled: () => {
+			forget();
+			void navigate({ to: "/login" });
+		},
+	});
+
+	return (
+		<Dropdown>
+			<Dropdown.Trigger>
+				<Button variant="ghost" className="h-auto gap-3 px-2 py-1.5" aria-label="Account">
+					<UserAvatar name={me.displayName} />
+					<span className="hidden text-left leading-tight sm:block">
+						<span className="block text-sm font-medium text-foreground">{me.displayName}</span>
+						<span className="block font-mono text-[11px] text-muted">{me.login}</span>
+					</span>
+				</Button>
+			</Dropdown.Trigger>
+			<Dropdown.Popover placement="bottom end">
+				<Dropdown.Menu
+					onAction={(key) => {
+						if (key === "password") onChangePassword();
+						if (key === "logout") logout.mutate();
+					}}
+				>
+					<Dropdown.Item id="role" isDisabled textValue="Role">
+						<Label>Signed in as</Label>
+						<Chip size="sm" variant="soft">
+							{roleLabel[me.role]}
+						</Chip>
+					</Dropdown.Item>
+					<Separator />
+					<Dropdown.Item id="password" textValue="Change password">
+						<KeyRound className="size-4" />
+						<Label>Change password</Label>
+					</Dropdown.Item>
+					<Dropdown.Item id="logout" textValue="Log out" variant="danger">
+						<LogOut className="size-4" />
+						<Label>Log out</Label>
+					</Dropdown.Item>
+				</Dropdown.Menu>
+			</Dropdown.Popover>
+		</Dropdown>
+	);
+}
+
+export function AppLayout() {
+	const me = useMe();
+	const [mobileNav, setMobileNav] = useState(false);
+	const passwordDrawer = useRef<ChangePasswordCommand>(null);
+
+	return (
+		<div className="min-h-screen bg-background lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
+			<aside className="sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+				<Brand />
+				<Navigation role={me.role} />
+				<p className="mt-auto px-6 pb-6 text-[11px] leading-relaxed text-sidebar-muted">
+					Every read and write is a T-SQL procedure.
+				</p>
+			</aside>
+
+			<Drawer>
+				<Drawer.Backdrop isOpen={mobileNav} onOpenChange={setMobileNav}>
+					<Drawer.Content placement="left" className="max-w-[270px]">
+						<Drawer.Dialog className="bg-sidebar">
+							<Brand />
+							<Navigation role={me.role} onNavigate={() => setMobileNav(false)} />
+						</Drawer.Dialog>
+					</Drawer.Content>
+				</Drawer.Backdrop>
+			</Drawer>
+
+			<div className="flex min-w-0 flex-col">
+				<header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-separator bg-topbar/95 px-4 backdrop-blur sm:px-8">
+					<Button
+						isIconOnly
+						variant="ghost"
+						className="lg:hidden"
+						aria-label="Open navigation"
+						onPress={() => setMobileNav(true)}
+					>
+						<Menu className="size-5" />
+					</Button>
+					<div className="ml-auto">
+						<UserMenu onChangePassword={() => passwordDrawer.current?.open()} />
+					</div>
+				</header>
+				<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8">
+					<Outlet />
+				</main>
+			</div>
+
+			<ChangePasswordDrawer
+				ref={passwordDrawer}
+				onSuccess={() => toast.success("Password changed")}
+			/>
+		</div>
+	);
+}
+
+/** Page title in the Obsidian serif, optional eyebrow, description and actions. */
+export function PageHeader({
+	eyebrow,
+	title,
+	description,
+	actions,
+	meta,
+}: {
+	eyebrow?: ReactNode;
+	title: ReactNode;
+	description?: ReactNode;
+	actions?: ReactNode;
+	meta?: ReactNode;
+}) {
+	return (
+		<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+			<div className="min-w-0">
+				{eyebrow ? (
+					<div className="mb-2 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+						{eyebrow}
+					</div>
+				) : null}
+				<h1 className="font-display text-4xl leading-tight font-semibold text-foreground">
+					{title}
+				</h1>
+				{description ? <p className="mt-2 max-w-2xl text-sm text-muted">{description}</p> : null}
+				{meta ? <div className="mt-3 flex flex-wrap items-center gap-2">{meta}</div> : null}
+			</div>
+			{actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+		</div>
+	);
+}
