@@ -1,9 +1,10 @@
 import { Button, Card } from "@heroui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { Database, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ChevronRight, Database, LockKeyhole, ShieldCheck } from "lucide-react";
 import { z } from "zod";
-import { getCsrfToken, login } from "#/api/endpoints/auth/auth";
+import { devLogin, getCsrfToken, getDevLoginStatus, login } from "#/api/endpoints/auth/auth";
+import type { MeResponse } from "#/api/models";
 import { authKeys } from "#/api/query-keys";
 import { ApiError } from "#/components/ui";
 import { useAppForm } from "#/forms";
@@ -32,17 +33,34 @@ export function LoginPage() {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 
+	const signedIn = (me: MeResponse) => {
+		queryClient.setQueryData(authKeys.me(), me);
+		void navigate({ to: search.redirect ?? "/" });
+	};
+
 	const mutation = useMutation({
 		mutationFn: async (value: z.infer<typeof schema>) => {
 			// The first write needs the XSRF-TOKEN cookie; this request sets it.
 			await getCsrfToken();
 			return login({ login: value.login, password: value.password });
 		},
-		onSuccess: (me) => {
-			queryClient.setQueryData(authKeys.me(), me);
-			void navigate({ to: search.redirect ?? "/" });
-		},
+		onSuccess: signedIn,
 	});
+
+	// One-click login without a password, only when the server runs with CRM_DEV_LOGIN=true (local stack).
+	const devLoginStatus = useQuery({
+		queryKey: authKeys.devLogin(),
+		queryFn: () => getDevLoginStatus(),
+		staleTime: Number.POSITIVE_INFINITY,
+	});
+	const quickLogin = useMutation({
+		mutationFn: async (userLogin: string) => {
+			await getCsrfToken();
+			return devLogin({ login: userLogin });
+		},
+		onSuccess: signedIn,
+	});
+	const devLoginEnabled = devLoginStatus.data?.enabled === true;
 
 	const form = useAppForm({
 		defaultValues: { login: "", password: "" },
@@ -125,7 +143,7 @@ export function LoginPage() {
 								<field.FormInput label="Password" type="password" autoComplete="current-password" />
 							)}
 						</form.AppField>
-						<ApiError error={mutation.error} title="Sign-in failed" />
+						<ApiError error={mutation.error ?? quickLogin.error} title="Sign-in failed" />
 						<Button type="submit" fullWidth size="lg" isPending={mutation.isPending}>
 							Sign in
 						</Button>
@@ -137,20 +155,36 @@ export function LoginPage() {
 								Seeded accounts
 							</Card.Title>
 							<Card.Description>
-								Password: CRM_SEED_PASSWORD from infrastructure/.env
+								{devLoginEnabled
+									? "Press › to sign in at once (CRM_DEV_LOGIN), or pick a login and type CRM_SEED_PASSWORD."
+									: "Password: CRM_SEED_PASSWORD from infrastructure/.env"}
 							</Card.Description>
 						</Card.Header>
 						<Card.Content className="flex flex-col gap-1">
 							{DEMO_LOGINS.map((demo) => (
-								<button
-									key={demo.login}
-									type="button"
-									className="flex items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-default"
-									onClick={() => form.setFieldValue("login", demo.login)}
-								>
-									<span className="font-mono text-xs text-foreground">{demo.login}</span>
-									<span className="text-[11px] text-muted">{demo.role}</span>
-								</button>
+								<div key={demo.login} className="flex items-center gap-1">
+									<button
+										type="button"
+										className="flex min-w-0 flex-1 items-baseline justify-between gap-3 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-default"
+										onClick={() => form.setFieldValue("login", demo.login)}
+									>
+										<span className="font-mono text-xs text-foreground">{demo.login}</span>
+										<span className="text-[11px] text-muted">{demo.role}</span>
+									</button>
+									{devLoginEnabled && (
+										<Button
+											isIconOnly
+											size="sm"
+											variant="ghost"
+											aria-label={`Sign in as ${demo.login}`}
+											isPending={quickLogin.isPending && quickLogin.variables === demo.login}
+											isDisabled={quickLogin.isPending}
+											onPress={() => quickLogin.mutate(demo.login)}
+										>
+											<ChevronRight className="size-4" />
+										</Button>
+									)}
+								</div>
 							))}
 						</Card.Content>
 					</Card>

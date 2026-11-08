@@ -13,6 +13,7 @@ import type {
 export const authKeys = {
 	all: ["auth"] as const,
 	me: () => [...authKeys.all, "me"] as const,
+	devLogin: () => [...authKeys.all, "dev-login"] as const,
 };
 
 export const clientKeys = {

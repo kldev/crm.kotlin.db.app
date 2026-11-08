@@ -71,6 +71,8 @@ class SecurityConfig {
             authorizeHttpRequests {
                 authorize("/api/auth/csrf", permitAll)
                 authorize(HttpMethod.POST, "/api/auth/login", permitAll)
+                // Answers 404 unless CRM_DEV_LOGIN=true (AuthController).
+                authorize("/api/auth/dev-login", permitAll)
                 authorize("/actuator/health/**", permitAll)
                 // Error dispatches keep their real status (otherwise denyAll would turn every error into 403).
                 authorize("/error", permitAll)

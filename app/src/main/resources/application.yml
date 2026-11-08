@@ -37,6 +37,8 @@ crm:
     lock-minutes: ${CRM_LOGIN_LOCK_MINUTES:15}
     admin-login: ${CRM_ADMIN_LOGIN:}
     admin-password: ${CRM_ADMIN_PASSWORD:}
+    # Local development only: POST /api/auth/dev-login logs in as any active user without a password.
+    dev-login: ${CRM_DEV_LOGIN:false}
 
 management:
   endpoints:

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 
 data class LoginRequest(
     @field:NotBlank @field:Size(max = 64) val login: String?,
@@ -35,6 +36,10 @@ data class ChangePasswordRequest(
     @field:NotBlank val currentPassword: String?,
     @field:NotBlank @field:Size(min = 8, max = 200) val newPassword: String?,
 )
+
+data class DevLoginRequest(@field:NotBlank @field:Size(max = 64) val login: String?)
+
+data class DevLoginStatus(val enabled: Boolean)
 
 data class MeResponse(val id: Int, val login: String, val displayName: String, val role: String) {
     companion object {
@@ -79,7 +84,32 @@ class AuthController(
 
         val user = (authentication.principal as CrmUserDetails).withoutPassword()
         auth.loginSucceeded(user.id)
+        return startSession(user, request, response)
+    }
 
+    @Operation(summary = "Whether one-click development login is on (CRM_DEV_LOGIN). The login page shows it only then.")
+    @GetMapping("/dev-login")
+    fun getDevLoginStatus(): DevLoginStatus = DevLoginStatus(properties.devLogin)
+
+    @Operation(
+        summary = "Local development only (CRM_DEV_LOGIN=true, otherwise 404): log in as an active user without " +
+            "a password. Skips the password and the lockout, nothing else; roles apply as usual.",
+    )
+    @PostMapping("/dev-login")
+    fun devLogin(
+        @Valid @RequestBody body: DevLoginRequest,
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): MeResponse {
+        if (!properties.devLogin) throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        val user = auth.findForLogin(body.login!!.trim().lowercase())
+            ?.takeIf { it.isEnabled }
+            ?.withoutPassword()
+            ?: throw InvalidLoginException()
+        return startSession(user, request, response)
+    }
+
+    private fun startSession(user: CrmUserDetails, request: HttpServletRequest, response: HttpServletResponse): MeResponse {
         // Session fixation protection: the session id changes on login.
         request.getSession(true)
         request.changeSessionId()
@@ -87,7 +117,6 @@ class AuthController(
         context.authentication = UsernamePasswordAuthenticationToken.authenticated(user, null, user.authorities)
         SecurityContextHolder.getContextHolderStrategy().context = context
         contextRepository.saveContext(context, request, response)
-
         return MeResponse.from(user)
     }
 

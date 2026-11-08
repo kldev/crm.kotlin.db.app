@@ -6,6 +6,8 @@
  */
 import type {
   ChangePasswordRequest,
+  DevLoginRequest,
+  DevLoginStatus,
   LoginRequest,
   MeResponse
 } from '../../models';
@@ -44,6 +46,30 @@ export const login = (
       options);
     }
   /**
+ * @summary Whether one-click development login is on (CRM_DEV_LOGIN). The login page shows it only then.
+ */
+export const getDevLoginStatus = (
+
+ options?: SecondParameter<typeof customInstance<DevLoginStatus>>,) => {
+      return customInstance<DevLoginStatus>(
+      {url: `/api/auth/dev-login`, method: 'GET'
+    },
+      options);
+    }
+  /**
+ * @summary Local development only (CRM_DEV_LOGIN=true, otherwise 404): log in as an active user without a password. Skips the password and the lockout, nothing else; roles apply as usual.
+ */
+export const devLogin = (
+    devLoginRequest: BodyType<DevLoginRequest>,
+ options?: SecondParameter<typeof customInstance<MeResponse>>,) => {
+      return customInstance<MeResponse>(
+      {url: `/api/auth/dev-login`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: devLoginRequest
+    },
+      options);
+    }
+  /**
  * @summary The logged-in user.
  */
 export const getMe = (
@@ -67,5 +93,7 @@ export const getCsrfToken = (
     }
   export type ChangeOwnPasswordResult = NonNullable<Awaited<ReturnType<typeof changeOwnPassword>>>
 export type LoginResult = NonNullable<Awaited<ReturnType<typeof login>>>
+export type GetDevLoginStatusResult = NonNullable<Awaited<ReturnType<typeof getDevLoginStatus>>>
+export type DevLoginResult = NonNullable<Awaited<ReturnType<typeof devLogin>>>
 export type GetMeResult = NonNullable<Awaited<ReturnType<typeof getMe>>>
 export type GetCsrfTokenResult = NonNullable<Awaited<ReturnType<typeof getCsrfToken>>>

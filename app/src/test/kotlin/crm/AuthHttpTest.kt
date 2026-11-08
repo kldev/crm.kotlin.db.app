@@ -56,6 +56,15 @@ class AuthHttpTest : IntegrationTest() {
     }
 
     @Test
+    fun `dev login is off unless CRM_DEV_LOGIN is set`() {
+        assertEquals(false, client().get("/api/auth/dev-login").body!!["enabled"].asBoolean())
+        val c = client()
+        c.csrf()
+        assertEquals(404, c.post("/api/auth/dev-login", mapOf("login" to "perf.admin.0001")).status)
+        assertEquals(401, c.get("/api/auth/me").status)
+    }
+
+    @Test
     fun `api requires a session`() {
         assertEquals(401, client().get("/api/clients").status)
         assertEquals(401, client().get("/api/auth/me").status)
