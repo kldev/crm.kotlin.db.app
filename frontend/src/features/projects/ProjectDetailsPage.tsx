@@ -17,6 +17,7 @@ import type { ProjectResponse } from "#/api/models";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, InfoList, UserAvatar } from "#/components/ui";
 import { NEXT_STAGES, type Stage, stageAction, stageLabel } from "#/features/types";
+import { useI18n } from "#/i18n";
 import { daysUntil, formatDate, formatDateTime, formatMoney, formatRelative } from "#/lib";
 import { projectCommentsQuery, projectQuery, projectStagesQuery, useAddComment } from "./hooks";
 import { type ProjectFormCommand, ProjectFormDrawer } from "./ProjectFormDrawer";
@@ -27,6 +28,8 @@ import { StagePath } from "./StagePath";
 const route = getRouteApi("/_app/projects/$projectId");
 
 export function ProjectDetailsPage() {
+	const i18n = useI18n();
+	const { t, locale } = i18n;
 	const { projectId } = route.useParams();
 	const search = route.useSearch();
 	const navigate = route.useNavigate();
@@ -44,7 +47,12 @@ export function ProjectDetailsPage() {
 		);
 	}
 	if (project.isError)
-		return <ApiError error={project.error} title="Project could not be loaded" />;
+		return (
+			<ApiError
+				error={project.error}
+				title={t("Nie udało się wczytać projektu", "Project could not be loaded")}
+			/>
+		);
 	const p = project.data;
 	const stage = p.stage as Stage;
 	const next = NEXT_STAGES[stage];
@@ -56,21 +64,25 @@ export function ProjectDetailsPage() {
 				to="/projects"
 				className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
 			>
-				<ArrowLeft className="size-4" /> Projects
+				<ArrowLeft className="size-4" /> {t("Projekty", "Projects")}
 			</Link>
 			<PageHeader
-				eyebrow={<span className="figures">Project #{p.id}</span>}
+				eyebrow={
+					<span className="figures">
+						{t("Projekt", "Project")} #{p.id}
+					</span>
+				}
 				title={p.name}
 				meta={
 					<>
 						<StageChip stage={p.stage} size="md" />
 						{p.overdue ? (
 							<Chip size="md" variant="soft" color="danger">
-								Overdue
+								{t("Po terminie", "Overdue")}
 							</Chip>
 						) : null}
 						<span className="text-xs text-muted">
-							in stage since {formatRelative(p.stageChangedAt)}
+							{t("na tym etapie od", "in stage since")} {formatRelative(p.stageChangedAt, locale)}
 						</span>
 					</>
 				}
@@ -88,12 +100,12 @@ export function ProjectDetailsPage() {
 								}
 								onPress={() => setStageTarget(target)}
 							>
-								{stageAction[target]}
+								{stageAction(target, i18n)}
 							</Button>
 						))}
 						{isFinal ? null : (
 							<Button variant="secondary" onPress={() => drawer.current?.edit(p)}>
-								<Pencil className="size-4" /> Edit
+								<Pencil className="size-4" /> {t("Edytuj", "Edit")}
 							</Button>
 						)}
 					</>
@@ -107,13 +119,13 @@ export function ProjectDetailsPage() {
 			<div className="grid gap-6 lg:grid-cols-3">
 				<Card className="lg:col-span-1">
 					<Card.Header>
-						<Card.Title className="font-display text-xl">Details</Card.Title>
+						<Card.Title className="font-display text-xl">{t("Szczegóły", "Details")}</Card.Title>
 					</Card.Header>
 					<Card.Content>
 						<InfoList
 							items={[
 								{
-									label: "Client",
+									label: t("Klient", "Client"),
 									value: (
 										<Link
 											to="/clients/$clientId"
@@ -125,7 +137,7 @@ export function ProjectDetailsPage() {
 									),
 								},
 								{
-									label: "Team",
+									label: t("Zespół", "Team"),
 									value: (
 										<Link
 											to="/teams/$teamId"
@@ -137,7 +149,7 @@ export function ProjectDetailsPage() {
 									),
 								},
 								{
-									label: "Owner",
+									label: t("Właściciel", "Owner"),
 									value: (
 										<span className="flex items-center gap-2">
 											<UserAvatar name={p.ownerDisplayName} />
@@ -148,13 +160,13 @@ export function ProjectDetailsPage() {
 										</span>
 									),
 								},
-								{ label: "Start", value: formatDate(p.startDate) },
-								{ label: "Due", value: <DueLine project={p} /> },
+								{ label: t("Rozpoczęcie", "Start"), value: formatDate(p.startDate, locale) },
+								{ label: t("Termin", "Due"), value: <DueLine project={p} /> },
 								{
-									label: "Budget",
+									label: t("Budżet", "Budget"),
 									value: <span className="figures">{formatMoney(p.budget)}</span>,
 								},
-								{ label: "Updated", value: formatDateTime(p.updatedAt) },
+								{ label: t("Zmieniono", "Updated"), value: formatDateTime(p.updatedAt, locale) },
 							]}
 						/>
 					</Card.Content>
@@ -172,13 +184,13 @@ export function ProjectDetailsPage() {
 						}
 					>
 						<Tabs.ListContainer className="border-b border-separator px-4 pt-3">
-							<Tabs.List aria-label="Project activity">
+							<Tabs.List aria-label={t("Aktywność projektu", "Project activity")}>
 								<Tabs.Tab id="comments">
-									<MessageSquare className="size-4" /> Comments
+									<MessageSquare className="size-4" /> {t("Komentarze", "Comments")}
 									<Tabs.Indicator />
 								</Tabs.Tab>
 								<Tabs.Tab id="history">
-									<History className="size-4" /> Stage history
+									<History className="size-4" /> {t("Historia etapów", "Stage history")}
 									<Tabs.Indicator />
 								</Tabs.Tab>
 							</Tabs.List>
@@ -193,14 +205,18 @@ export function ProjectDetailsPage() {
 				</Card>
 			</div>
 
-			<ProjectFormDrawer ref={drawer} onSaved={() => toast.success("Project saved")} />
+			<ProjectFormDrawer
+				ref={drawer}
+				onSaved={() => toast.success(t("Zapisano projekt", "Project saved"))}
+			/>
 			<StageDialog
 				project={p}
 				target={stageTarget}
 				onClose={() => setStageTarget(null)}
 				onChanged={(updated) => {
 					setStageTarget(null);
-					toast.success(`Project is now ${stageLabel[updated.stage as Stage].toLowerCase()}`);
+					const label = stageLabel(updated.stage, i18n).toLowerCase();
+					toast.success(t(`Etap projektu: ${label}`, `Project is now ${label}`));
 				}}
 			/>
 		</>
@@ -208,17 +224,22 @@ export function ProjectDetailsPage() {
 }
 
 function DueLine({ project }: { project: ProjectResponse }) {
+	const { t, locale } = useI18n();
 	const days = daysUntil(project.dueDate);
 	const open = NEXT_STAGES[project.stage as Stage].length > 0;
 	return (
 		<span className="flex items-center gap-2">
 			<CalendarClock className={`size-4 ${project.overdue ? "text-danger" : "text-muted"}`} />
 			<span className={project.overdue ? "font-semibold text-danger" : ""}>
-				{formatDate(project.dueDate)}
+				{formatDate(project.dueDate, locale)}
 			</span>
 			{open ? (
 				<span className="text-xs text-muted">
-					{days < 0 ? `${-days} days late` : days === 0 ? "today" : `in ${days} days`}
+					{days < 0
+						? t(`${-days} ${days === -1 ? "dzień" : "dni"} po terminie`, `${-days} days late`)
+						: days === 0
+							? t("dziś", "today")
+							: t(`za ${days} ${days === 1 ? "dzień" : "dni"}`, `in ${days} days`)}
 				</span>
 			) : null}
 		</span>
@@ -226,6 +247,7 @@ function DueLine({ project }: { project: ProjectResponse }) {
 }
 
 function Comments({ projectId }: { projectId: number }) {
+	const { t, locale } = useI18n();
 	const comments = useInfiniteQuery(projectCommentsQuery(projectId));
 	const [text, setText] = useState("");
 	const add = useAddComment(projectId, () => setText(""));
@@ -240,14 +262,22 @@ function Comments({ projectId }: { projectId: number }) {
 					if (text.trim()) add.mutate(text.trim());
 				}}
 			>
-				<TextField value={text} onChange={setText} fullWidth aria-label="New comment">
-					<Label className="sr-only">New comment</Label>
-					<TextArea rows={2} placeholder="Write a note for the team…" />
+				<TextField
+					value={text}
+					onChange={setText}
+					fullWidth
+					aria-label={t("Nowy komentarz", "New comment")}
+				>
+					<Label className="sr-only">{t("Nowy komentarz", "New comment")}</Label>
+					<TextArea
+						rows={2}
+						placeholder={t("Napisz notatkę dla zespołu…", "Write a note for the team…")}
+					/>
 				</TextField>
 				<ApiError error={add.error} />
 				<div className="flex justify-end">
 					<Button type="submit" size="sm" isDisabled={!text.trim()} isPending={add.isPending}>
-						<Send className="size-4" /> Comment
+						<Send className="size-4" /> {t("Skomentuj", "Comment")}
 					</Button>
 				</div>
 			</form>
@@ -259,8 +289,11 @@ function Comments({ projectId }: { projectId: number }) {
 			) : items.length === 0 ? (
 				<EmptyState
 					icon={MessageSquare}
-					title="No comments yet"
-					description="Notes and stage changes with a comment appear here."
+					title={t("Nie ma jeszcze komentarzy", "No comments yet")}
+					description={t(
+						"Tu pojawiają się notatki i zmiany etapu z komentarzem.",
+						"Notes and stage changes with a comment appear here.",
+					)}
 				/>
 			) : (
 				<ul className="flex flex-col gap-4">
@@ -273,9 +306,9 @@ function Comments({ projectId }: { projectId: number }) {
 									<span className="font-mono text-[11px] text-muted">{c.authorLogin}</span>
 									<span
 										className="ml-auto text-[11px] text-muted"
-										title={formatDateTime(c.createdAt)}
+										title={formatDateTime(c.createdAt, locale)}
 									>
-										{formatRelative(c.createdAt)}
+										{formatRelative(c.createdAt, locale)}
 									</span>
 								</div>
 								<p className="text-sm whitespace-pre-wrap text-foreground">{c.body}</p>
@@ -292,7 +325,7 @@ function Comments({ projectId }: { projectId: number }) {
 					isPending={comments.isFetchingNextPage}
 					onPress={() => void comments.fetchNextPage()}
 				>
-					Older comments
+					{t("Starsze komentarze", "Older comments")}
 				</Button>
 			) : null}
 		</div>
@@ -300,6 +333,8 @@ function Comments({ projectId }: { projectId: number }) {
 }
 
 function StageHistory({ projectId }: { projectId: number }) {
+	const i18n = useI18n();
+	const { t, locale } = i18n;
 	const history = useQuery(projectStagesQuery(projectId));
 	if (history.isPending) return <Skeleton className="h-24 w-full rounded-lg" />;
 	if (history.isError) return <ApiError error={history.error} />;
@@ -311,16 +346,16 @@ function StageHistory({ projectId }: { projectId: number }) {
 					<p className="text-sm">
 						{h.fromStage ? (
 							<>
-								<span className="text-muted">{stageLabel[h.fromStage as Stage]}</span>
+								<span className="text-muted">{stageLabel(h.fromStage, i18n)}</span>
 								{" → "}
 							</>
 						) : (
-							<span className="text-muted">Created as </span>
+							<span className="text-muted">{t("Utworzony jako", "Created as")} </span>
 						)}
-						<strong>{stageLabel[h.toStage as Stage]}</strong>
+						<strong>{stageLabel(h.toStage, i18n)}</strong>
 					</p>
 					<p className="mt-0.5 text-xs text-muted">
-						{formatDateTime(h.changedAt)}
+						{formatDateTime(h.changedAt, locale)}
 						{h.changedByLogin ? ` · ${h.changedByLogin}` : " · seed"}
 					</p>
 				</li>

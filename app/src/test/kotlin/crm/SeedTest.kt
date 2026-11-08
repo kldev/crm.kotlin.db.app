@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import java.sql.SQLException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /** The seed is the same procedure as in production, run here with small numbers. */
 class SeedTest : IntegrationTest() {
@@ -58,5 +59,52 @@ class SeedTest : IntegrationTest() {
     @Test
     fun `seeded user logs in through the API`() {
         assertEquals("SALES", loggedIn("perf.sales.0001").get("/api/auth/me").body!!["role"].asString())
+    }
+
+    @Test
+    fun `desk histories are replayed in the past, the read model matches the streams`() {
+        // 238 stories; tests may add tickets later, never fewer.
+        assertTrue(scalar<Int>("SELECT COUNT(*) FROM crm.tickets")!! >= 238)
+        assertTrue(scalar<Int>("SELECT COUNT(*) FROM crm.tickets WHERE reported_at < DATEADD(DAY, -7, SYSUTCDATETIME())")!! > 50)
+        assertEquals(0, scalar<Int>("SELECT COUNT(*) FROM crm.ticket_events WHERE at < DATEADD(DAY, -29, SYSUTCDATETIME())"))
+        // The projection is the fold of the stream: its version is the last event's, its state follows the events.
+        assertEquals(0, scalar<Int>(
+            "SELECT COUNT(*) FROM crm.tickets t WHERE t.version <> (SELECT MAX(version) FROM crm.ticket_events e WHERE e.ticket_id = t.id)",
+        ))
+        assertEquals(0, scalar<Int>(
+            "SELECT COUNT(*) FROM crm.tickets WHERE status = 'DONE' AND resolved_late <> IIF(resolved_at >= deadline, 1, 0)",
+        ))
+        assertEquals(0, scalar<Int>(
+            "SELECT COUNT(*) FROM crm.tickets t WHERE t.comment_count <> " +
+                "(SELECT COUNT(*) FROM crm.ticket_events e WHERE e.ticket_id = t.id AND e.event_type = 'TicketCommented')",
+        ))
+        // A curated story: taken, handed over, with its reason, hours ago.
+        val handed = scalar<Int>(
+            "SELECT COUNT(*) FROM crm.ticket_events e JOIN crm.tickets t ON t.id = e.ticket_id " +
+                "WHERE t.title = N'Serwer plików nie odpowiada' AND e.event_type = 'TicketHandedOver' AND e.at < DATEADD(HOUR, -1, SYSUTCDATETIME())",
+        )
+        assertEquals(1, handed)
+    }
+
+    @Test
+    fun `the application login cannot move the desk clock`() {
+        val ticket = loggedIn("anna.nowak").post(
+            "/api/desk/tickets",
+            mapOf(
+                "title" to "Test zegara", "description" to "Opis", "categoryKey" to "it", "subcategoryKey" to "it.hardware",
+                "priority" to "LOW", "reportedAt" to java.time.Instant.now().toString(), "requesterIncognito" to true,
+            ),
+        ).body!!["id"].asLong()
+        val anna = scalar<Int>("SELECT id FROM crm.users WHERE login = 'anna.nowak'")!!
+        crm.support.SqlServer.app().use { c ->
+            c.createStatement().use { st ->
+                st.execute("EXEC sys.sp_set_session_context N'desk.now', '2020-01-01T00:00:00'")
+                st.execute("EXEC app.desk_ticket_comment @actor_id = $anna, @ticket_id = $ticket, @text = N'Teraz'")
+            }
+        }
+        assertEquals(0, scalar<Int>(
+            "SELECT COUNT(*) FROM crm.ticket_events WHERE ticket_id = ? AND event_type = 'TicketCommented' AND at < '2021-01-01'",
+            ticket,
+        ))
     }
 }

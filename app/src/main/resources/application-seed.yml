@@ -22,5 +22,5 @@ crm:
     random-seed: ${CRM_SEED_RANDOM_SEED:42}
     batch-size: ${CRM_SEED_BATCH_SIZE:500000}
     password: ${CRM_SEED_PASSWORD:}
-    desk-tickets: ${CRM_SEED_DESK_TICKETS:200}
+    desk-stories: ${CRM_SEED_DESK_STORIES:true}
     desk-only: ${CRM_SEED_DESK_ONLY:false}

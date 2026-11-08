@@ -9,6 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import java.sql.Types
 
+/** Halcyon's ticket histories for the desk seed (ADR-0007); also used by the integration tests. */
+val DESK_STORIES = SeedRunner::class.java.getResource("/desk/seed-tickets.json")!!
+
 /**
  * CRM_MODE=seed (Spring profile `seed`, migrator login): computes the password hash once with the application's
  * PasswordEncoder (so k6 logs in through the real endpoint) and calls `EXEC seed.run`, then `EXEC seed.desk_run`
@@ -30,12 +33,13 @@ class SeedRunner(
         val p = properties
         val hash = passwordEncoder.encode(password)
         if (!p.deskOnly) seedCrm(p, hash!!)
-        jdbc.sql("EXEC seed.desk_run @password_hash = :hash, @tickets = :tickets, @random_seed = :randomSeed")
+        // Halcyon's ticket histories, replayed at their moments in the past (seed.desk_replay).
+        val stories = if (p.deskStories) DESK_STORIES.readText() else null
+        jdbc.sql("EXEC seed.desk_run @password_hash = :hash, @stories = :stories")
             .param("hash", hash, Types.VARCHAR)
-            .param("tickets", p.deskTickets, Types.INTEGER)
-            .param("randomSeed", p.randomSeed, Types.INTEGER)
+            .param("stories", stories, Types.NVARCHAR)
             .update()
-        log.info("Desk seed finished: up to {} tickets", p.deskTickets)
+        log.info("Desk seed finished (ticket histories: {})", p.deskStories)
     }
 
     private fun seedCrm(p: SeedProperties, hash: String) {

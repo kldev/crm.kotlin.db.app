@@ -221,7 +221,7 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 					<Dropdown.Item id="role" isDisabled textValue={t("Rola", "Role")}>
 						<Label>{t("Zalogowano jako", "Signed in as")}</Label>
 						<Chip size="sm" variant="soft">
-							{roleLabel[me.role]}
+							{roleLabel(me.role, { t })}
 						</Chip>
 					</Dropdown.Item>
 					<Separator />

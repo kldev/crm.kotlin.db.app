@@ -7,12 +7,15 @@ import { ApiError, EmptyState, LoadMore, SelectFilter, TableSkeleton } from "#/c
 import { teamsQuery } from "#/features/teams/hooks";
 import { STAGES, type Stage, stageLabel } from "#/features/types";
 import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
+import { useI18n } from "#/i18n";
 import { projectsCountQuery, projectsQuery } from "./hooks";
 import { ProjectsTable } from "./ProjectsTable";
 
 const route = getRouteApi("/_app/projects/");
 
 export function ProjectsPage() {
+	const i18n = useI18n();
+	const { t } = i18n;
 	const search = route.useSearch();
 	const navigate = route.useNavigate();
 	const teams = useQuery(teamsQuery());
@@ -24,25 +27,28 @@ export function ProjectsPage() {
 	return (
 		<>
 			<PageHeader
-				eyebrow="Delivery"
-				title="Projects"
-				description="Every project you can see, nearest due date first. New projects start from a client's page."
+				eyebrow={t("Realizacja", "Delivery")}
+				title={t("Projekty", "Projects")}
+				description={t(
+					"Wszystkie widoczne dla Ciebie projekty, najbliższy termin na górze. Nowy projekt zakłada się na stronie klienta.",
+					"Every project you can see, nearest due date first. New projects start from a client's page.",
+				)}
 			/>
 			<Card className="overflow-hidden p-0">
 				<div className="flex flex-col gap-3 border-b border-separator p-4 sm:flex-row sm:items-center">
 					<SelectFilter
-						label="Stage"
+						label={t("Etap", "Stage")}
 						value={search.stage}
-						options={STAGES.map((s) => ({ id: s, label: stageLabel[s] }))}
+						options={STAGES.map((s) => ({ id: s, label: stageLabel(s, i18n) }))}
 						onChange={(stage) =>
 							void navigate({ search: (s) => ({ ...s, stage: stage as Stage | undefined }) })
 						}
 					/>
 					<SelectFilter
-						label="Team"
+						label={t("Zespół", "Team")}
 						className="w-full sm:w-56"
 						value={search.teamId ? String(search.teamId) : undefined}
-						options={(teams.data ?? []).map((t) => ({ id: String(t.id), label: t.name }))}
+						options={(teams.data ?? []).map((team) => ({ id: String(team.id), label: team.name }))}
 						onChange={(teamId) =>
 							void navigate({
 								search: (s) => ({ ...s, teamId: teamId ? Number(teamId) : undefined }),
@@ -60,7 +66,7 @@ export function ProjectsPage() {
 							<Switch.Thumb />
 						</Switch.Control>
 						<Switch.Content>
-							<Label>Overdue only</Label>
+							<Label>{t("Tylko po terminie", "Overdue only")}</Label>
 						</Switch.Content>
 					</Switch>
 				</div>
@@ -68,19 +74,25 @@ export function ProjectsPage() {
 					<TableSkeleton />
 				) : query.isError ? (
 					<div className="p-4">
-						<ApiError error={query.error} title="Projects could not be loaded" />
+						<ApiError
+							error={query.error}
+							title={t("Nie udało się wczytać projektów", "Projects could not be loaded")}
+						/>
 					</div>
 				) : projects.length === 0 ? (
 					<EmptyState
 						icon={BriefcaseBusiness}
-						title="No projects here"
-						description="Clear a filter, or open a client to start a project."
+						title={t("Brak projektów", "No projects here")}
+						description={t(
+							"Wyczyść filtr albo otwórz klienta, aby założyć projekt.",
+							"Clear a filter, or open a client to start a project.",
+						)}
 					/>
 				) : (
 					<>
 						<ProjectsTable projects={projects} />
 						<LoadMore
-							noun="projects"
+							noun={t("projektów", "projects")}
 							shown={projects.length}
 							hasMore={query.hasNextPage}
 							isLoading={query.isFetchingNextPage}

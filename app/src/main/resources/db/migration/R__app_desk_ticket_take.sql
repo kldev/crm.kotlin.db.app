@@ -6,7 +6,7 @@ CREATE OR ALTER PROCEDURE app.desk_ticket_take
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
-    DECLARE @actor_name nvarchar(200), @now datetime2(3) = SYSUTCDATETIME();
+    DECLARE @actor_name nvarchar(200), @now datetime2(3) = crm.desk_now();
     EXEC crm.desk_actor @actor_id, @actor_name OUTPUT;
 
     BEGIN TRANSACTION;

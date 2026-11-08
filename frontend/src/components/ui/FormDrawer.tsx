@@ -1,5 +1,6 @@
 import { Button, Drawer } from "@heroui/react";
 import { createContext, type ReactNode, useContext, useId } from "react";
+import { useI18n } from "#/i18n";
 
 const FormIdContext = createContext<string | null>(null);
 
@@ -64,20 +65,21 @@ FormDrawer.Body = function FormDrawerBody({ children }: { children: ReactNode })
 };
 
 FormDrawer.Footer = function FormDrawerFooter({
-	submitLabel = "Save",
+	submitLabel,
 	isPending,
 }: {
 	submitLabel?: string;
 	isPending?: boolean;
 }) {
+	const { t } = useI18n();
 	const formId = useContext(FormIdContext) ?? undefined;
 	return (
 		<Drawer.Footer>
 			<Button slot="close" variant="secondary">
-				Cancel
+				{t("Anuluj", "Cancel")}
 			</Button>
 			<Button type="submit" form={formId} isPending={isPending}>
-				{submitLabel}
+				{submitLabel ?? t("Zapisz", "Save")}
 			</Button>
 		</Drawer.Footer>
 	);

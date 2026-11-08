@@ -3,15 +3,16 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { ArrowLeft, BriefcaseBusiness, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
-import { problemMessage } from "#/api/mutator";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, LoadMore, TableSkeleton, UserAvatar } from "#/components/ui";
 import { useMe } from "#/features/auth/session";
 import { projectsCountQuery, projectsQuery } from "#/features/projects/hooks";
 import { ProjectsTable } from "#/features/projects/ProjectsTable";
-import { type RoleName, roleLabel } from "#/features/types";
+import { roleLabel } from "#/features/types";
 import { useSalesUsers } from "#/features/users/hooks";
 import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
+import { useI18n } from "#/i18n";
+import { problemText } from "#/i18n/problems";
 import {
 	teamMembersQuery,
 	teamStatsQuery,
@@ -24,10 +25,11 @@ import { TeamStats } from "./TeamStats";
 const route = getRouteApi("/_app/teams/$teamId");
 
 export function TeamDetailsPage() {
+	const { t } = useI18n();
 	const { teamId } = route.useParams();
 	const me = useMe();
 	const teams = useQuery(teamsQuery());
-	const team = teams.data?.find((t) => t.id === teamId);
+	const team = teams.data?.find((item) => item.id === teamId);
 	const members = useQuery(teamMembersQuery(teamId));
 	const stats = useQuery(teamStatsQuery(teamId));
 	const projects = useInfiniteQuery(projectsQuery({ teamId }, 10));
@@ -37,7 +39,12 @@ export function TeamDetailsPage() {
 
 	if (teams.isPending) return <Skeleton className="h-40 w-full rounded-lg" />;
 	if (!team)
-		return <ApiError error={new Error("This team does not exist.")} title="Team not found" />;
+		return (
+			<ApiError
+				error={new Error(t("Taki zespół nie istnieje.", "This team does not exist."))}
+				title={t("Nie znaleziono zespołu", "Team not found")}
+			/>
+		);
 	const list = projects.data?.pages.flatMap((p) => p.items) ?? [];
 
 	return (
@@ -46,14 +53,18 @@ export function TeamDetailsPage() {
 				to="/teams"
 				className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
 			>
-				<ArrowLeft className="size-4" /> Teams
+				<ArrowLeft className="size-4" /> {t("Zespoły", "Teams")}
 			</Link>
 			<PageHeader
-				eyebrow={<span className="figures">Team #{team.id}</span>}
+				eyebrow={
+					<span className="figures">
+						{t("Zespół", "Team")} #{team.id}
+					</span>
+				}
 				title={team.name}
 				meta={
 					<span className="flex items-center gap-2 text-sm text-muted">
-						<UserAvatar name={team.leadLogin} /> led by{" "}
+						<UserAvatar name={team.leadLogin} /> {t("lider:", "led by")}{" "}
 						<span className="font-mono text-xs text-foreground">{team.leadLogin}</span>
 					</span>
 				}
@@ -62,9 +73,12 @@ export function TeamDetailsPage() {
 			<div className="grid gap-6 lg:grid-cols-2">
 				<Card>
 					<Card.Header>
-						<Card.Title className="font-display text-xl">Delivery</Card.Title>
+						<Card.Title className="font-display text-xl">{t("Realizacja", "Delivery")}</Card.Title>
 						<Card.Description>
-							Read from an indexed view - a handful of rows, however many projects.
+							{t(
+								"Czytane z widoku indeksowanego - kilka wierszy, niezależnie od liczby projektów.",
+								"Read from an indexed view - a handful of rows, however many projects.",
+							)}
 						</Card.Description>
 					</Card.Header>
 					<Card.Content>
@@ -80,9 +94,11 @@ export function TeamDetailsPage() {
 
 				<Card>
 					<Card.Header>
-						<Card.Title className="font-display text-xl">Members</Card.Title>
+						<Card.Title className="font-display text-xl">{t("Członkowie", "Members")}</Card.Title>
 						<Card.Description>
-							{members.data ? `${members.data.length} people` : " "}
+							{members.data
+								? t(`Osób: ${members.data.length}`, `${members.data.length} people`)
+								: " "}
 						</Card.Description>
 					</Card.Header>
 					<Card.Content className="flex flex-col gap-4">
@@ -106,17 +122,17 @@ export function TeamDetailsPage() {
 
 			<Card className="mt-6 overflow-hidden p-0">
 				<div className="border-b border-separator px-5 py-4">
-					<h2 className="font-display text-xl font-semibold">Projects</h2>
+					<h2 className="font-display text-xl font-semibold">{t("Projekty", "Projects")}</h2>
 				</div>
 				{projects.isPending ? (
 					<TableSkeleton rows={4} />
 				) : list.length === 0 ? (
-					<EmptyState icon={BriefcaseBusiness} title="No projects" />
+					<EmptyState icon={BriefcaseBusiness} title={t("Brak projektów", "No projects")} />
 				) : (
 					<>
 						<ProjectsTable projects={list} hide={["team"]} />
 						<LoadMore
-							noun="projects"
+							noun={t("projektów", "projects")}
 							shown={list.length}
 							hasMore={projects.hasNextPage}
 							isLoading={projects.isFetchingNextPage}
@@ -139,8 +155,12 @@ function MemberRow({
 	canManage: boolean;
 	member: { userId: number; login: string; displayName: string; role: string; active: boolean };
 }) {
+	const i18n = useI18n();
+	const { t } = i18n;
 	const remove = useRemoveTeamMember(teamId, () =>
-		toast.success(`${member.displayName} left the team`),
+		toast.success(
+			t(`${member.displayName} opuszcza zespół`, `${member.displayName} left the team`),
+		),
 	);
 	return (
 		<li className="flex items-center gap-3 py-2.5">
@@ -148,8 +168,8 @@ function MemberRow({
 			<span className="flex min-w-0 flex-1 flex-col leading-tight">
 				<span className="truncate text-sm">{member.displayName}</span>
 				<span className="font-mono text-[11px] text-muted">
-					{member.login} · {roleLabel[member.role as RoleName] ?? member.role}
-					{member.active ? "" : " · inactive"}
+					{member.login} · {roleLabel(member.role, i18n)}
+					{member.active ? "" : ` · ${t("nieaktywny", "inactive")}`}
 				</span>
 			</span>
 			{canManage ? (
@@ -157,12 +177,12 @@ function MemberRow({
 					isIconOnly
 					size="sm"
 					variant="ghost"
-					aria-label={`Remove ${member.displayName}`}
+					aria-label={t(`Usuń: ${member.displayName}`, `Remove ${member.displayName}`)}
 					isPending={remove.isPending}
 					onPress={() =>
 						remove.mutate(member.userId, {
 							// 51905: the member still owns open projects of the team.
-							onError: (error) => toast.danger(problemMessage(error)),
+							onError: (error) => toast.danger(problemText(error, i18n)),
 						})
 					}
 				>
@@ -174,11 +194,12 @@ function MemberRow({
 }
 
 function AddMember({ teamId, memberIds }: { teamId: number; memberIds: number[] }) {
+	const { t } = useI18n();
 	const sales = useSalesUsers(true);
 	const [userId, setUserId] = useState<string | null>(null);
 	const add = useAddTeamMember(teamId, () => {
 		setUserId(null);
-		toast.success("Member added");
+		toast.success(t("Dodano członka zespołu", "Member added"));
 	});
 	const candidates = (sales.data ?? []).filter((u) => !memberIds.includes(u.id));
 	return (
@@ -186,11 +207,15 @@ function AddMember({ teamId, memberIds }: { teamId: number; memberIds: number[] 
 			<div className="flex items-end gap-2">
 				<Select
 					className="flex-1"
-					placeholder={sales.isPending ? "Loading…" : "Choose a sales user"}
+					placeholder={
+						sales.isPending
+							? t("Wczytywanie…", "Loading…")
+							: t("Wybierz sprzedawcę", "Choose a sales user")
+					}
 					value={userId}
 					onChange={(k) => setUserId(k == null ? null : String(k))}
 				>
-					<Label>Add a member</Label>
+					<Label>{t("Dodaj członka", "Add a member")}</Label>
 					<Select.Trigger>
 						<Select.Value />
 						<Select.Indicator />
@@ -218,7 +243,7 @@ function AddMember({ teamId, memberIds }: { teamId: number; memberIds: number[] 
 					isPending={add.isPending}
 					onPress={() => userId && add.mutate(Number(userId))}
 				>
-					<UserPlus className="size-4" /> Add
+					<UserPlus className="size-4" /> {t("Dodaj", "Add")}
 				</Button>
 			</div>
 			<ApiError error={add.error} />

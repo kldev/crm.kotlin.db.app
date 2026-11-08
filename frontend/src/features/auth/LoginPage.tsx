@@ -2,6 +2,7 @@ import { Button, Card } from "@heroui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Database, LockKeyhole, Send, ShieldCheck } from "lucide-react";
+import { useMemo } from "react";
 import { z } from "zod";
 import { devLogin, getCsrfToken, getDevLoginStatus, login } from "#/api/endpoints/auth/auth";
 import type { MeResponse } from "#/api/models";
@@ -13,10 +14,13 @@ import { LanguageSwitch } from "#/i18n/LanguageSwitch";
 
 const route = getRouteApi("/login");
 
-const schema = z.object({
-	login: z.string().trim().min(1, "Enter your login"),
-	password: z.string().min(1, "Enter your password"),
-});
+// A factory, so the messages follow the language; the type of the values does not depend on it.
+const makeSchema = (t: I18n["t"]) =>
+	z.object({
+		login: z.string().trim().min(1, t("Podaj login", "Enter your login")),
+		password: z.string().min(1, t("Podaj hasło", "Enter your password")),
+	});
+type Values = z.infer<ReturnType<typeof makeSchema>>;
 
 const DEMO_LOGINS: { login: string; role: (t: I18n["t"]) => string }[] = [
 	{
@@ -38,14 +42,36 @@ const DEMO_LOGINS: { login: string; role: (t: I18n["t"]) => string }[] = [
 	},
 ];
 
-const FACTS = [
-	{ icon: Database, text: "5 000 000 clients and projects, every call one T-SQL procedure" },
-	{ icon: ShieldCheck, text: "The app login may only EXECUTE procedures of schema app" },
-	{ icon: LockKeyhole, text: "Spring Security session, CSRF cookie, lockout after failed logins" },
+const FACTS: { icon: typeof Database; text: (t: I18n["t"]) => string }[] = [
+	{
+		icon: Database,
+		text: (t) =>
+			t(
+				"5 000 000 klientów i projektów, każde wywołanie to jedna procedura T-SQL",
+				"5 000 000 clients and projects, every call one T-SQL procedure",
+			),
+	},
+	{
+		icon: ShieldCheck,
+		text: (t) =>
+			t(
+				"Login aplikacji może tylko wykonywać (EXECUTE) procedury schematu app",
+				"The app login may only EXECUTE procedures of schema app",
+			),
+	},
+	{
+		icon: LockKeyhole,
+		text: (t) =>
+			t(
+				"Sesja Spring Security, cookie CSRF, blokada po nieudanych logowaniach",
+				"Spring Security session, CSRF cookie, lockout after failed logins",
+			),
+	},
 ];
 
 export function LoginPage() {
 	const { t } = useI18n();
+	const schema = useMemo(() => makeSchema(t), [t]);
 	const search = route.useSearch();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
@@ -56,7 +82,7 @@ export function LoginPage() {
 	};
 
 	const mutation = useMutation({
-		mutationFn: async (value: z.infer<typeof schema>) => {
+		mutationFn: async (value: Values) => {
 			// The first write needs the XSRF-TOKEN cookie; this request sets it.
 			await getCsrfToken();
 			return login({ login: value.login, password: value.password });
@@ -105,20 +131,22 @@ export function LoginPage() {
 
 				<div className="mt-auto max-w-lg">
 					<p className="font-mono text-[11px] tracking-[0.16em] text-champagne uppercase">
-						Clients · Projects · Teams
+						{t("Klienci · Projekty · Zespoły", "Clients · Projects · Teams")}
 					</p>
 					<h1 className="mt-4 font-display text-6xl leading-[1.05] font-semibold text-white">
-						Every client,
+						{t("Każdy klient,", "Every client,")}
 						<br />
-						every project,
+						{t("każdy projekt,", "every project,")}
 						<br />
-						<span className="text-champagne">one procedure away.</span>
+						<span className="text-champagne">
+							{t("o jedną procedurę stąd.", "one procedure away.")}
+						</span>
 					</h1>
 					<ul className="mt-10 flex flex-col gap-4">
 						{FACTS.map((fact) => (
-							<li key={fact.text} className="flex items-start gap-3 text-sm">
+							<li key={fact.text(t)} className="flex items-start gap-3 text-sm">
 								<fact.icon className="mt-0.5 size-4 shrink-0 text-champagne" strokeWidth={1.75} />
-								<span>{fact.text}</span>
+								<span>{fact.text(t)}</span>
 							</li>
 						))}
 					</ul>
@@ -162,7 +190,7 @@ export function LoginPage() {
 								<field.FormInput
 									label={t("Login", "Login")}
 									autoComplete="username"
-									placeholder="name.surname"
+									placeholder={t("imie.nazwisko", "name.surname")}
 									autoFocus
 								/>
 							)}

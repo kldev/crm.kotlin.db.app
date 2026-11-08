@@ -86,8 +86,8 @@ CRM_SEED_CLIENTS=10000 CRM_SEED_PROJECTS=10000 CRM_SEED_COMMENTS=5000 ./start.sh
 
 After the seed log in as `perf.sales.0001`, `perf.manager.0001` or `perf.admin.0001` with `CRM_SEED_PASSWORD`.
 The seed runs only on an empty database (error 51060 otherwise); start over with `./start.sh --clean --seed`.
-It also seeds the service desk (`seed.desk_run`: ten agents such as `anna.nowak`, 40 people, `CRM_SEED_DESK_TICKETS`
-tickets). That part is idempotent; for a database seeded before the desk existed run only it:
+It also seeds the service desk (`seed.desk_run`: ten agents such as `anna.nowak`, 40 people and Halcyon's 238 ticket
+histories replayed at their moments in the past, `CRM_SEED_DESK_STORIES`). That part is idempotent; for a database seeded before the desk existed run only it:
 `CRM_SEED_DESK_ONLY=true docker compose --profile seed run --rm seed`.
 
 ### 3. Day to day
@@ -275,7 +275,7 @@ not), and the seed.
 All settings are environment variables (see `infrastructure/.env-sample` and `app/src/main/resources/application.yml`):
 database URL and logins (`CRM_DB_*`), pool size (`CRM_DB_POOL_SIZE`), session timeout (`CRM_SESSION_TIMEOUT`),
 lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_ADMIN_*`), seed (`CRM_SEED_*`;
-`CRM_SEED_DESK_TICKETS`, and `CRM_SEED_DESK_ONLY=true` to add the desk to an already seeded database), dev login
+`CRM_SEED_DESK_STORIES`, and `CRM_SEED_DESK_ONLY=true` to add the desk to an already seeded database), dev login
 (`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`), attachments bucket (`CRM_S3_ENDPOINT`,
 `CRM_S3_ACCESS_KEY`, `CRM_S3_SECRET_KEY`, `CRM_S3_BUCKET`, `CRM_S3_REGION`), monitoring (`CRM_MONITORING_ENABLED`,
 `_QUEUE_CAPACITY`, `_FLUSH_INTERVAL`, `_WRITE_BATCH_SIZE`, `_RETENTION`, `_CLEANUP_INTERVAL`, `_CLEANUP_BATCH_SIZE`,

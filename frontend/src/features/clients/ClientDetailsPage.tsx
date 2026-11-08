@@ -26,6 +26,7 @@ import { projectsCountQuery, projectsQuery } from "#/features/projects/hooks";
 import { type ProjectFormCommand, ProjectFormDrawer } from "#/features/projects/ProjectFormDrawer";
 import { ProjectsTable } from "#/features/projects/ProjectsTable";
 import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
+import { useI18n } from "#/i18n";
 import { formatDateTime } from "#/lib";
 import { type ClientFormCommand, ClientFormDrawer } from "./ClientFormDrawer";
 import { ClientStatusChip } from "./ClientStatusChip";
@@ -34,6 +35,7 @@ import { clientQuery, useDeleteClient } from "./hooks";
 const route = getRouteApi("/_app/clients/$clientId");
 
 export function ClientDetailsPage() {
+	const { t, locale } = useI18n();
 	const { clientId } = route.useParams();
 	const me = useMe();
 	const navigate = useNavigate();
@@ -44,7 +46,7 @@ export function ClientDetailsPage() {
 	const projectDrawer = useRef<ProjectFormCommand>(null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const remove = useDeleteClient(() => {
-		toast.success("Client deleted");
+		toast.success(t("Usunięto klienta", "Client deleted"));
 		void navigate({ to: "/clients" });
 	});
 
@@ -56,7 +58,13 @@ export function ClientDetailsPage() {
 			</div>
 		);
 	}
-	if (client.isError) return <ApiError error={client.error} title="Client could not be loaded" />;
+	if (client.isError)
+		return (
+			<ApiError
+				error={client.error}
+				title={t("Nie udało się wczytać klienta", "Client could not be loaded")}
+			/>
+		);
 	const c = client.data;
 	const list = projects.data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -66,10 +74,14 @@ export function ClientDetailsPage() {
 				to="/clients"
 				className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
 			>
-				<ArrowLeft className="size-4" /> Clients
+				<ArrowLeft className="size-4" /> {t("Klienci", "Clients")}
 			</Link>
 			<PageHeader
-				eyebrow={<span className="figures">Client #{c.id}</span>}
+				eyebrow={
+					<span className="figures">
+						{t("Klient", "Client")} #{c.id}
+					</span>
+				}
 				title={c.name}
 				meta={
 					<>
@@ -80,11 +92,11 @@ export function ClientDetailsPage() {
 				actions={
 					<>
 						<Button variant="secondary" onPress={() => clientDrawer.current?.edit(c)}>
-							<Pencil className="size-4" /> Edit
+							<Pencil className="size-4" /> {t("Edytuj", "Edit")}
 						</Button>
 						{can.deleteClients(me.role) ? (
 							<Button variant="danger-soft" onPress={() => setConfirmDelete(true)}>
-								<Trash2 className="size-4" /> Delete
+								<Trash2 className="size-4" /> {t("Usuń", "Delete")}
 							</Button>
 						) : null}
 					</>
@@ -94,7 +106,7 @@ export function ClientDetailsPage() {
 			<div className="grid gap-6 lg:grid-cols-3">
 				<Card className="lg:col-span-2">
 					<Card.Header>
-						<Card.Title className="font-display text-xl">Contact</Card.Title>
+						<Card.Title className="font-display text-xl">{t("Kontakt", "Contact")}</Card.Title>
 					</Card.Header>
 					<Card.Content>
 						<div className="grid gap-4 sm:grid-cols-3">
@@ -106,11 +118,11 @@ export function ClientDetailsPage() {
 							/>
 							<ContactTile
 								icon={Phone}
-								label="Phone"
+								label={t("Telefon", "Phone")}
 								value={c.phone}
 								href={c.phone ? `tel:${c.phone}` : undefined}
 							/>
-							<ContactTile icon={MapPin} label="City" value={c.city} />
+							<ContactTile icon={MapPin} label={t("Miasto", "City")} value={c.city} />
 						</div>
 						{c.note ? (
 							<blockquote className="mt-6 border-l-2 border-champagne pl-4 text-sm text-foreground/80 italic">
@@ -121,21 +133,23 @@ export function ClientDetailsPage() {
 				</Card>
 				<Card>
 					<Card.Header>
-						<Card.Title className="font-display text-xl">Account</Card.Title>
+						<Card.Title className="font-display text-xl">{t("Konto", "Account")}</Card.Title>
 					</Card.Header>
 					<Card.Content>
 						<InfoList
 							items={[
 								{
-									label: "Owner",
+									label: t("Opiekun", "Owner"),
 									value: (
-										<span className="font-mono text-xs">{c.assignedUserLogin ?? "unassigned"}</span>
+										<span className="font-mono text-xs">
+											{c.assignedUserLogin ?? t("nieprzypisany", "unassigned")}
+										</span>
 									),
 								},
-								{ label: "Created", value: formatDateTime(c.createdAt) },
-								{ label: "Updated", value: formatDateTime(c.updatedAt) },
+								{ label: t("Utworzono", "Created"), value: formatDateTime(c.createdAt, locale) },
+								{ label: t("Zmieniono", "Updated"), value: formatDateTime(c.updatedAt, locale) },
 								{
-									label: "Version",
+									label: t("Wersja", "Version"),
 									value: <span className="figures text-xs text-muted">{c.rowVersion}</span>,
 								},
 							]}
@@ -146,12 +160,12 @@ export function ClientDetailsPage() {
 
 			<Card className="mt-6 overflow-hidden p-0">
 				<div className="flex items-center justify-between border-b border-separator px-5 py-4">
-					<h2 className="font-display text-xl font-semibold">Projects</h2>
+					<h2 className="font-display text-xl font-semibold">{t("Projekty", "Projects")}</h2>
 					<Button
 						size="sm"
 						onPress={() => projectDrawer.current?.create({ id: c.id, name: c.name })}
 					>
-						<Plus className="size-4" /> New project
+						<Plus className="size-4" /> {t("Nowy projekt", "New project")}
 					</Button>
 				</div>
 				{projects.isPending ? (
@@ -159,14 +173,17 @@ export function ClientDetailsPage() {
 				) : list.length === 0 ? (
 					<EmptyState
 						icon={BriefcaseBusiness}
-						title="No projects yet"
-						description="A project is delivered by a team and owned by one of its members."
+						title={t("Nie ma jeszcze projektów", "No projects yet")}
+						description={t(
+							"Projekt realizuje zespół, a jego właścicielem jest jeden z członków zespołu.",
+							"A project is delivered by a team and owned by one of its members.",
+						)}
 					/>
 				) : (
 					<>
 						<ProjectsTable projects={list} hide={["client"]} />
 						<LoadMore
-							noun="projects"
+							noun={t("projektów", "projects")}
 							shown={list.length}
 							hasMore={projects.hasNextPage}
 							isLoading={projects.isFetchingNextPage}
@@ -177,19 +194,25 @@ export function ClientDetailsPage() {
 				)}
 			</Card>
 
-			<ClientFormDrawer ref={clientDrawer} onSaved={() => toast.success("Client saved")} />
+			<ClientFormDrawer
+				ref={clientDrawer}
+				onSaved={() => toast.success(t("Zapisano klienta", "Client saved"))}
+			/>
 			<ProjectFormDrawer
 				ref={projectDrawer}
 				onSaved={(p) => {
-					toast.success(`Project "${p.name}" created`);
+					toast.success(t(`Dodano projekt „${p.name}”`, `Project "${p.name}" created`));
 					void navigate({ to: "/projects/$projectId", params: { projectId: p.id } });
 				}}
 			/>
 			<ConfirmDialog
 				isOpen={confirmDelete}
-				title="Delete this client?"
-				description={`"${c.name}" will be removed. A client with projects cannot be deleted - set it to Inactive instead.`}
-				confirmLabel="Delete client"
+				title={t("Usunąć tego klienta?", "Delete this client?")}
+				description={t(
+					`Klient „${c.name}” zostanie usunięty. Klienta z projektami nie można usunąć - zamiast tego ustaw status „Nieaktywny”.`,
+					`"${c.name}" will be removed. A client with projects cannot be deleted - set it to Inactive instead.`,
+				)}
+				confirmLabel={t("Usuń klienta", "Delete client")}
 				isPending={remove.isPending}
 				error={remove.error}
 				onConfirm={() => remove.mutate({ id: c.id, rowVersion: c.rowVersion })}

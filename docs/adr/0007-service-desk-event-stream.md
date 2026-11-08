@@ -46,6 +46,11 @@ in T-SQL procedures (ADR-0002), and there is no event store library.
 - **Lists** are keyset-paged in two phases: open tickets by `(deadline, id)`, then resolved ones by
   `(resolved_at DESC, id DESC)`; filtered indexes per list. The total is a separate count on request.
 - The number given to the requester is `HAL-` and 8 random hex digits (unique index).
+- **One clock for writes, `crm.desk_now()`:** the database clock - except for a `db_owner` (the seed, run with the
+  migrator login), which may set `SESSION_CONTEXT 'desk.now'`. The seed replays Halcyon's 238 ticket histories
+  (`desk/seed-tickets.json`, dumped from its seed data) step by step at their moments in the past through the very
+  procedures the application calls (`seed.desk_replay`), so every rule holds and the charts and reports have a real
+  history. The application login is never `db_owner` and cannot move the clock (tested).
 
 ## Consequences
 

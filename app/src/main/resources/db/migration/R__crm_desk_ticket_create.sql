@@ -23,7 +23,7 @@ AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
 
-    DECLARE @now datetime2(3) = SYSUTCDATETIME();
+    DECLARE @now datetime2(3) = crm.desk_now();
     DECLARE @actor_name nvarchar(200);
     IF @actor_id IS NOT NULL
         EXEC crm.desk_actor @actor_id, @actor_name OUTPUT;

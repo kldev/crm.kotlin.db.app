@@ -1,6 +1,7 @@
 import { Table } from "@heroui/react";
 import { useNavigate } from "@tanstack/react-router";
 import type { ProjectResponse } from "#/api/models";
+import { useI18n } from "#/i18n";
 import { formatMoney } from "#/lib";
 import { DueDate, StageChip } from "./StageChip";
 
@@ -8,25 +9,28 @@ import { DueDate, StageChip } from "./StageChip";
 export function ProjectsTable({
 	projects,
 	hide = [],
-	label = "Projects",
+	label,
 }: {
 	projects: ProjectResponse[];
 	hide?: ("client" | "team" | "owner")[];
 	label?: string;
 }) {
+	const { t } = useI18n();
 	const navigate = useNavigate();
 	return (
 		<Table className="rounded-none shadow-none">
 			<Table.ScrollContainer>
-				<Table.Content aria-label={label} className="min-w-[760px]">
+				<Table.Content aria-label={label ?? t("Projekty", "Projects")} className="min-w-[760px]">
 					<Table.Header>
-						<Table.Column isRowHeader>Project</Table.Column>
-						{hide.includes("client") ? null : <Table.Column>Client</Table.Column>}
-						{hide.includes("team") ? null : <Table.Column>Team</Table.Column>}
-						{hide.includes("owner") ? null : <Table.Column>Owner</Table.Column>}
-						<Table.Column>Stage</Table.Column>
-						<Table.Column>Due</Table.Column>
-						<Table.Column className="text-right">Budget</Table.Column>
+						<Table.Column isRowHeader>{t("Projekt", "Project")}</Table.Column>
+						{hide.includes("client") ? null : <Table.Column>{t("Klient", "Client")}</Table.Column>}
+						{hide.includes("team") ? null : <Table.Column>{t("Zespół", "Team")}</Table.Column>}
+						{hide.includes("owner") ? null : (
+							<Table.Column>{t("Właściciel", "Owner")}</Table.Column>
+						)}
+						<Table.Column>{t("Etap", "Stage")}</Table.Column>
+						<Table.Column>{t("Termin", "Due")}</Table.Column>
+						<Table.Column className="text-right">{t("Budżet", "Budget")}</Table.Column>
 					</Table.Header>
 					<Table.Body>
 						{projects.map((p) => (

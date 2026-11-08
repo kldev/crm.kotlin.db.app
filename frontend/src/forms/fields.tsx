@@ -8,6 +8,7 @@ import {
 	TextArea,
 	TextField,
 } from "@heroui/react";
+import { useI18n } from "#/i18n";
 import { useFieldContext } from "./context";
 
 /** TanStack Form keeps zod issues (or strings); HeroUI shows one message. */
@@ -98,7 +99,7 @@ export interface SelectOption {
 export function FormSelect({
 	label,
 	options,
-	placeholder = "Select…",
+	placeholder,
 	description,
 	isDisabled,
 }: {
@@ -108,12 +109,13 @@ export function FormSelect({
 	description?: string;
 	isDisabled?: boolean;
 }) {
+	const { t } = useI18n();
 	const { field, message } = useFieldState<string>();
 	return (
 		<Select
 			fullWidth
 			name={field.name}
-			placeholder={placeholder}
+			placeholder={placeholder ?? t("Wybierz…", "Select…")}
 			// "" in the form means nothing chosen; null shows the placeholder
 			value={field.state.value || null}
 			onChange={(key) => field.handleChange(key == null ? "" : String(key))}

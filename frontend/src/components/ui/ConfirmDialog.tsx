@@ -1,5 +1,6 @@
 import { AlertDialog, Button } from "@heroui/react";
 import type { ReactNode } from "react";
+import { useI18n } from "#/i18n";
 import { ApiError } from "./ApiError";
 
 export function ConfirmDialog({
@@ -21,6 +22,7 @@ export function ConfirmDialog({
 	onConfirm: () => void;
 	onClose: () => void;
 }) {
+	const { t } = useI18n();
 	return (
 		<AlertDialog>
 			<AlertDialog.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -38,7 +40,7 @@ export function ConfirmDialog({
 						</AlertDialog.Body>
 						<AlertDialog.Footer>
 							<Button slot="close" variant="secondary">
-								Cancel
+								{t("Anuluj", "Cancel")}
 							</Button>
 							<Button variant="danger" isPending={isPending} onPress={onConfirm}>
 								{confirmLabel}

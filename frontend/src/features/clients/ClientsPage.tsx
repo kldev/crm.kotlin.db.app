@@ -8,6 +8,7 @@ import { ApiError, EmptyState, LoadMore, SelectFilter, TableSkeleton } from "#/c
 import { CITIES, CLIENT_STATUSES, clientStatusLabel } from "#/features/types";
 import { useDebouncedValue } from "#/hooks/useDebouncedValue";
 import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
+import { useI18n } from "#/i18n";
 import { formatRelative } from "#/lib";
 import { type ClientFormCommand, ClientFormDrawer } from "./ClientFormDrawer";
 import { ClientStatusChip } from "./ClientStatusChip";
@@ -16,6 +17,8 @@ import { clientsCountQuery, clientsQuery } from "./hooks";
 const route = getRouteApi("/_app/clients/");
 
 export function ClientsPage() {
+	const i18n = useI18n();
+	const { t, locale } = i18n;
 	const search = route.useSearch();
 	const navigate = route.useNavigate();
 	const goTo = useNavigate();
@@ -37,17 +40,20 @@ export function ClientsPage() {
 	return (
 		<>
 			<PageHeader
-				eyebrow="Directory"
-				title="Clients"
+				eyebrow={t("Kartoteka", "Directory")}
+				title={t("Klienci", "Clients")}
 				description={
 					search.q
-						? "Matching names, in alphabetical order."
-						: "Newest first. Type the beginning of a name to search all clients."
+						? t("Pasujące nazwy, alfabetycznie.", "Matching names, in alphabetical order.")
+						: t(
+								"Najnowsi na górze. Wpisz początek nazwy, aby szukać wśród wszystkich klientów.",
+								"Newest first. Type the beginning of a name to search all clients.",
+							)
 				}
 				actions={
 					<Button onPress={() => drawer.current?.create()}>
 						<Plus className="size-4" />
-						New client
+						{t("Nowy klient", "New client")}
 					</Button>
 				}
 			/>
@@ -55,27 +61,27 @@ export function ClientsPage() {
 			<Card className="overflow-hidden p-0">
 				<div className="flex flex-col gap-3 border-b border-separator p-4 sm:flex-row sm:items-center">
 					<SearchField
-						aria-label="Search clients"
+						aria-label={t("Szukaj klientów", "Search clients")}
 						className="w-full sm:max-w-xs"
 						value={text}
 						onChange={setText}
 					>
 						<SearchField.Group>
 							<SearchField.SearchIcon />
-							<SearchField.Input placeholder="Name starts with…" />
+							<SearchField.Input placeholder={t("Nazwa zaczyna się od…", "Name starts with…")} />
 							<SearchField.ClearButton />
 						</SearchField.Group>
 					</SearchField>
 					<SelectFilter
-						label="City"
+						label={t("Miasto", "City")}
 						value={search.city}
 						options={CITIES.map((c) => ({ id: c, label: c }))}
 						onChange={(city) => void navigate({ search: (s) => ({ ...s, city }) })}
 					/>
 					<SelectFilter
-						label="Status"
+						label={t("Status", "Status")}
 						value={search.status}
-						options={CLIENT_STATUSES.map((s) => ({ id: s, label: clientStatusLabel[s] }))}
+						options={CLIENT_STATUSES.map((s) => ({ id: s, label: clientStatusLabel(s, i18n) }))}
 						onChange={(status) =>
 							void navigate({
 								search: (s) => ({
@@ -91,30 +97,43 @@ export function ClientsPage() {
 					<TableSkeleton />
 				) : query.isError ? (
 					<div className="p-4">
-						<ApiError error={query.error} title="Clients could not be loaded" />
+						<ApiError
+							error={query.error}
+							title={t("Nie udało się wczytać klientów", "Clients could not be loaded")}
+						/>
 					</div>
 				) : clients.length === 0 ? (
 					<EmptyState
 						icon={Building2}
-						title={filtered ? "No clients match" : "No clients yet"}
+						title={
+							filtered
+								? t("Brak pasujących klientów", "No clients match")
+								: t("Nie ma jeszcze klientów", "No clients yet")
+						}
 						description={
 							filtered
-								? "Try a shorter name or clear a filter."
-								: "Create the first client to get started."
+								? t(
+										"Spróbuj krótszej nazwy albo wyczyść filtr.",
+										"Try a shorter name or clear a filter.",
+									)
+								: t(
+										"Dodaj pierwszego klienta, aby zacząć.",
+										"Create the first client to get started.",
+									)
 						}
 					/>
 				) : (
 					<>
 						<Table className="rounded-none shadow-none">
 							<Table.ScrollContainer>
-								<Table.Content aria-label="Clients" className="min-w-[760px]">
+								<Table.Content aria-label={t("Klienci", "Clients")} className="min-w-[760px]">
 									<Table.Header>
-										<Table.Column isRowHeader>Client</Table.Column>
+										<Table.Column isRowHeader>{t("Klient", "Client")}</Table.Column>
 										<Table.Column>NIP</Table.Column>
-										<Table.Column>City</Table.Column>
-										<Table.Column>Status</Table.Column>
-										<Table.Column>Owner</Table.Column>
-										<Table.Column>Updated</Table.Column>
+										<Table.Column>{t("Miasto", "City")}</Table.Column>
+										<Table.Column>{t("Status", "Status")}</Table.Column>
+										<Table.Column>{t("Opiekun", "Owner")}</Table.Column>
+										<Table.Column>{t("Zmieniono", "Updated")}</Table.Column>
 									</Table.Header>
 									<Table.Body>
 										{clients.map((c) => (
@@ -141,11 +160,13 @@ export function ClientsPage() {
 												</Table.Cell>
 												<Table.Cell>
 													<span className="font-mono text-xs text-muted">
-														{c.assignedUserLogin ?? "unassigned"}
+														{c.assignedUserLogin ?? t("nieprzypisany", "unassigned")}
 													</span>
 												</Table.Cell>
 												<Table.Cell>
-													<span className="text-xs text-muted">{formatRelative(c.updatedAt)}</span>
+													<span className="text-xs text-muted">
+														{formatRelative(c.updatedAt, locale)}
+													</span>
 												</Table.Cell>
 											</Table.Row>
 										))}
@@ -154,7 +175,7 @@ export function ClientsPage() {
 							</Table.ScrollContainer>
 						</Table>
 						<LoadMore
-							noun="clients"
+							noun={t("klientów", "clients")}
 							shown={clients.length}
 							hasMore={query.hasNextPage}
 							isLoading={query.isFetchingNextPage}
@@ -168,7 +189,7 @@ export function ClientsPage() {
 			<ClientFormDrawer
 				ref={drawer}
 				onSaved={(client) => {
-					toast.success(`Client "${client.name}" created`);
+					toast.success(t(`Dodano klienta „${client.name}”`, `Client "${client.name}" created`));
 					void goTo({ to: "/clients/$clientId", params: { clientId: client.id } });
 				}}
 			/>

@@ -1,5 +1,6 @@
 import type { TeamStageStats } from "#/api/models";
 import { STAGES, stageLabel } from "#/features/types";
+import { useI18n } from "#/i18n";
 import { formatMoney } from "#/lib";
 
 /**
@@ -8,6 +9,8 @@ import { formatMoney } from "#/lib";
  * names the series, so no legend. Hover shows the budget of the stage.
  */
 export function TeamStats({ stats }: { stats: TeamStageStats[] }) {
+	const i18n = useI18n();
+	const { t, locale } = i18n;
 	const byStage = new Map(stats.map((s) => [s.stage, s]));
 	const total = stats.reduce((sum, s) => sum + s.projectCount, 0);
 	const budget = stats.reduce((sum, s) => sum + s.budgetTotal, 0);
@@ -19,12 +22,14 @@ export function TeamStats({ stats }: { stats: TeamStageStats[] }) {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="grid grid-cols-3 gap-3">
-				<Tile label="Projects" value={total.toLocaleString("en")} />
-				<Tile label="Open" value={open.toLocaleString("en")} />
-				<Tile label="Budget" value={formatMoney(budget)} small />
+				<Tile label={t("Projekty", "Projects")} value={total.toLocaleString(locale)} />
+				<Tile label={t("Otwarte", "Open")} value={open.toLocaleString(locale)} />
+				<Tile label={t("Budżet", "Budget")} value={formatMoney(budget)} small />
 			</div>
 			<div>
-				<p className="mb-3 text-sm font-medium">Projects by stage</p>
+				<p className="mb-3 text-sm font-medium">
+					{t("Projekty według etapów", "Projects by stage")}
+				</p>
 				<ul className="flex flex-col gap-2.5">
 					{STAGES.map((stage) => {
 						const s = byStage.get(stage);
@@ -33,9 +38,9 @@ export function TeamStats({ stats }: { stats: TeamStageStats[] }) {
 							<li
 								key={stage}
 								className="grid grid-cols-[84px_1fr_48px] items-center gap-3"
-								title={`${stageLabel[stage]}: ${count} projects, ${formatMoney(s?.budgetTotal ?? 0)}`}
+								title={`${stageLabel(stage, i18n)}: ${t(`projektów: ${count}`, `${count} projects`)}, ${formatMoney(s?.budgetTotal ?? 0)}`}
 							>
-								<span className="text-xs text-muted">{stageLabel[stage]}</span>
+								<span className="text-xs text-muted">{stageLabel(stage, i18n)}</span>
 								<span className="h-2 rounded-r-[4px] bg-surface-secondary">
 									<span
 										className="block h-2 rounded-r-[4px] bg-ink transition-[width] duration-500"

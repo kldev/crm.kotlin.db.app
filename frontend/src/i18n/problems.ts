@@ -8,7 +8,94 @@ import type { I18n } from ".";
  * captured part (a person's name, a department) goes into the Polish text. A number this table does not know shows
  * the server's message as it is.
  */
-type Text = { pl: string; en?: string; match?: RegExp };
+type Text = { pl: string; en?: string; match?: RegExp; when?: RegExp };
+
+/*
+ * One number with several English messages (51050 of the seed, 51902) lists its texts; the first whose `when`
+ * matches the message is used, a text without `when` matches any.
+ */
+const CRM: Record<number, Text | Text[]> = {
+	// SQL Server's own errors the API passes on with the number (the detail is the title, e.g. "Already exists").
+	547: { pl: "Nieprawidłowe odwołanie do innego wpisu." },
+	1205: { pl: "Baza danych była zajęta. Spróbuj ponownie." },
+	2601: { pl: "Taki wpis już istnieje (powtarza się login, NIP albo nazwa zespołu)." },
+	2627: { pl: "Taki wpis już istnieje (powtarza się login, NIP albo nazwa zespołu)." },
+	51010: { pl: "Nazwa klienta jest wymagana." },
+	51011: { pl: "NIP musi mieć dokładnie 10 cyfr." },
+	51012: { pl: "Adres e-mail jest nieprawidłowy." },
+	51013: { pl: "Status musi być jednym z: LEAD, ACTIVE, INACTIVE." },
+	51014: { pl: "Rozmiar strony musi być od 1 do 200." },
+	51015: {
+		pl: "Login musi mieć 3-64 znaki: litery, cyfry, kropka, podkreślenie albo łącznik.",
+	},
+	51016: { pl: "Rola musi być jedną z: ADMIN, MANAGER, SALES." },
+	51017: { pl: "Klienta można przypisać tylko aktywnemu sprzedawcy." },
+	51018: { pl: "Nie możesz zmienić własnej roli ani dezaktywować własnego konta." },
+	51019: { pl: "Imię i nazwisko jest wymagane." },
+	51020: { pl: "Hasło jest wymagane." },
+	51030: { pl: "Nazwa projektu jest wymagana." },
+	51031: { pl: "Etap musi być jednym z: NEW, ACCEPTED, ACTIVE, ON_HOLD, CLOSED, DECLINED." },
+	51032: {
+		pl: "Data rozpoczęcia i termin są wymagane, a termin nie może być przed datą rozpoczęcia.",
+	},
+	51033: { pl: "Budżet musi wynosić 0 lub więcej." },
+	51034: { pl: "Treść komentarza jest wymagana." },
+	51035: { pl: "Liderem zespołu może być tylko aktywny manager." },
+	51036: { pl: "Nazwa zespołu jest wymagana." },
+	51037: { pl: "Właścicielem projektu musi być aktywny członek zespołu projektu." },
+	51038: { pl: "Do zespołu może dołączyć tylko aktywny użytkownik." },
+	51050: [
+		{ when: /clients must be 0/, pl: "Seed: liczba klientów musi wynosić 0 lub więcej." },
+		{ when: /user counts/, pl: "Seed: liczby użytkowników muszą wynosić 0 lub więcej." },
+		{
+			when: /at most 9999 users/,
+			pl: "Seed: najwyżej 9999 użytkowników na rolę (login perf.<rola>.NNNN).",
+		},
+		{
+			when: /clients need/,
+			pl: "Seed: klienci wymagają co najmniej jednego sprzedawcy, któremu zostaną przypisani.",
+		},
+		{
+			when: /projects and comments/,
+			pl: "Seed: liczby projektów i komentarzy muszą wynosić 0 lub więcej.",
+		},
+		{
+			when: /projects need/,
+			pl: "Seed: projekty wymagają klientów i co najmniej jednego managera (lidera zespołu).",
+		},
+		{ when: /comments need/, pl: "Seed: komentarze wymagają projektów." },
+		{ when: /team size/, pl: "Seed: rozmiar zespołu musi wynosić 1 lub więcej." },
+		{ when: /batch size/, pl: "Seed: rozmiar partii musi być od 1000 do 2000000." },
+		{ when: /desk tickets/, pl: "Seed: liczba zgłoszeń musi być od 0 do 100000." },
+	],
+	51060: {
+		pl: "Seed: baza ma już dane seeda albo klientów. Zacznij od pustej bazy (start.sh --clean).",
+	},
+	51301: { pl: "Nie masz uprawnień do tej operacji." },
+	51302: { pl: "Twoje konto jest nieaktywne." },
+	51303: { pl: "Sprzedawca może pracować tylko na klientach przypisanych do siebie." },
+	51401: { pl: "Nie znaleziono klienta." },
+	51402: { pl: "Nie znaleziono użytkownika." },
+	51403: { pl: "Nie znaleziono projektu." },
+	51404: { pl: "Nie znaleziono zespołu." },
+	51901: [
+		{
+			when: /client/,
+			pl: "Ktoś inny zmienił w międzyczasie tego klienta. Odśwież i spróbuj ponownie.",
+		},
+		{ pl: "Ktoś inny zmienił w międzyczasie ten projekt. Odśwież i spróbuj ponownie." },
+	],
+	51902: [
+		{ when: /closed or declined/, pl: "Zamkniętego ani odrzuconego projektu nie można zmieniać." },
+		{ pl: "Taka zmiana etapu jest niedozwolona." },
+	],
+	51904: {
+		pl: "Klient ma projekty i nie można go usunąć. Zamiast tego ustaw status „Nieaktywny”.",
+	},
+	51905: {
+		pl: "Ten użytkownik jest nadal właścicielem otwartych projektów zespołu. Najpierw przekaż je komuś innemu.",
+	},
+};
 
 const DESK: Record<number, Text> = {
 	51100: { pl: "Pole „Tytuł” jest wymagane." },
@@ -93,12 +180,22 @@ export function problemText(error: unknown, i18n: Pick<I18n, "lang" | "t" | "n">
 				"Brak połączenia z serwerem. Sprawdź połączenie i spróbuj ponownie.",
 				"The server cannot be reached. Check your connection and try again.",
 			);
+		// Two refusals of Spring, not of a procedure, so without a number: matched by their fixed text.
+		if (data?.detail === "Invalid login or password.")
+			return i18n.t("Nieprawidłowy login lub hasło.", "Invalid login or password.");
+		if (data?.detail === "Current password is not correct.")
+			return i18n.t("Obecne hasło jest nieprawidłowe.", "Current password is not correct.");
 		if (error.response.status === 429)
 			return i18n.t(
 				"Zbyt wiele zgłoszeń w ostatniej minucie. Spróbuj za chwilę.",
 				"Too many tickets were sent in the last minute. Try again shortly.",
 			);
-		const text = data?.errorNumber != null ? DESK[data.errorNumber] : undefined;
+		const entry =
+			data?.errorNumber != null ? (DESK[data.errorNumber] ?? CRM[data.errorNumber]) : undefined;
+		const detail = data?.detail ?? "";
+		const text = Array.isArray(entry)
+			? entry.find((candidate) => !candidate.when || candidate.when.test(detail))
+			: entry;
 		if (text && data?.detail) {
 			const captured = text.match?.exec(data.detail)?.[1] ?? "";
 			// A captured catalog name (a field's label, a department) is Polish in the database: shown translated.

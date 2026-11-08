@@ -87,10 +87,10 @@ abstract class IntegrationTest {
                     listOf(3, 300, 100, 7, 1000).forEachIndexed { i, v -> ps.setInt(i + 6, v) }
                     ps.execute()
                 }
-                c.prepareStatement("EXEC seed.desk_run @password_hash = ?, @tickets = ?, @random_seed = ?").use { ps ->
+                // The desk with Halcyon's histories, replayed in the past - the same seed as CRM_MODE=seed.
+                c.prepareStatement("EXEC seed.desk_run @password_hash = ?, @stories = ?").use { ps ->
                     ps.setObject(1, hash, Types.VARCHAR)
-                    ps.setInt(2, 60)
-                    ps.setInt(3, 7)
+                    ps.setObject(2, crm.seed.DESK_STORIES.readText(), Types.NVARCHAR)
                     ps.execute()
                 }
             }
