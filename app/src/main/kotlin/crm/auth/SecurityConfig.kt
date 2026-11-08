@@ -81,6 +81,8 @@ class SecurityConfig {
                 authorize("/v3/api-docs/**", permitAll)
                 authorize("/swagger-ui/**", permitAll)
                 authorize("/swagger-ui.html", permitAll)
+                // System pages (ADR-0012); the procedures check the administrator again.
+                authorize("/api/system/**", hasRole("ADMIN"))
                 authorize(HttpMethod.GET, "/api/users/**", hasAnyRole("ADMIN", "MANAGER"))
                 authorize("/api/users/**", hasRole("ADMIN"))
                 authorize("/api/**", authenticated)

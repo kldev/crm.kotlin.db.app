@@ -29,6 +29,8 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   category reports and the agents' work with XLSX, PDF and CSV exports, campaigns linked to recruitment tickets.
 - Charts (ADR-0011): flow in and out, backlog, deadlines kept, SLA use per priority, by category, the queue now,
   agents and a weekday x hour heatmap, each with a table view; reports and charts use the whole screen width.
+- System pages for administrators (ADR-0012): status with HTTP answers per hour or day, codes and failures, the log,
+  the database (sessions with blocking, tables, the event store) and the monitoring queues with "run now".
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -169,6 +171,7 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET/PUT /api/desk/tickets/{id}/fields`, `GET …/linked` | `desk_ticket_field_list`, `desk_ticket_update_fields`, `desk_ticket_linked_list` | all |
 | `GET /api/desk/reports/categories/{slug}[/export.{csv,xlsx,pdf}]`, `GET /api/desk/reports/agents[/export.…]` | `desk_report_category`, `desk_report_agents`, `desk_report_period_list` | all |
 | `GET /api/desk/charts?range=DAYS_7\|DAYS_30\|WEEKS_12&categoryKey=` | `desk_chart_tickets` | all |
+| `GET /api/system/status`, `/requests`, `/logs`, `/database`, `/queues`, `POST /api/system/jobs/{name}/run` | `monitoring_http_*`, `monitoring_request_list`, `monitoring_log_list`, `monitoring_db_*` (signed) | ADMIN |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
@@ -195,6 +198,7 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51120-51124 | attachment: no name, type not allowed, empty, over 20 MB, more than 10 per ticket | 400 |
 | 51130-51146 | report data: field of another subcategory, required, length, date, e-mail, amount, IBAN, count, multi-choice, choice, ticket number, identity document and PESEL rules, no report data | 400 |
 | 51150 | report period: from <= to, at most a year | 400 |
+| 51160 | monitoring cleanup: cutoff and batch size | 400 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
 | 51410-51413 | ticket, person, agent, attachment not found | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
@@ -262,7 +266,9 @@ gets error 229 on tables and on `seed`), login and lockout, clients, projects, s
 over HTTP, the service desk (rules of every action, three agents taking one ticket at once, deadlines, lists in two
 phases, the public form, attachments on a real RustFS: refused types, the limit of 10, refused uploads deleted from
 the bucket, download headers), report data (every kind and the PESEL / IBAN rules, changes listed in the event),
-the reports and their CSV / XLSX / PDF exports, the charts' numbers agreeing with each other and the lists, and the seed.
+the reports and their CSV / XLSX / PDF exports, the charts' numbers agreeing with each other and the lists, the
+monitoring (answers and log recorded, admin only, the signed procedures seeing the server while the app login does
+not), and the seed.
 
 ## Configuration
 
@@ -271,7 +277,9 @@ database URL and logins (`CRM_DB_*`), pool size (`CRM_DB_POOL_SIZE`), session ti
 lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_ADMIN_*`), seed (`CRM_SEED_*`;
 `CRM_SEED_DESK_TICKETS`, and `CRM_SEED_DESK_ONLY=true` to add the desk to an already seeded database), dev login
 (`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`), attachments bucket (`CRM_S3_ENDPOINT`,
-`CRM_S3_ACCESS_KEY`, `CRM_S3_SECRET_KEY`, `CRM_S3_BUCKET`, `CRM_S3_REGION`).
+`CRM_S3_ACCESS_KEY`, `CRM_S3_SECRET_KEY`, `CRM_S3_BUCKET`, `CRM_S3_REGION`), monitoring (`CRM_MONITORING_ENABLED`,
+`_QUEUE_CAPACITY`, `_FLUSH_INTERVAL`, `_WRITE_BATCH_SIZE`, `_RETENTION`, `_CLEANUP_INTERVAL`, `_CLEANUP_BATCH_SIZE`,
+`_LOG_LEVEL`).
 
 ## Build
 

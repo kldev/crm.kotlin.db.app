@@ -54,6 +54,16 @@ crm:
     access-key: ${CRM_S3_ACCESS_KEY:}
     secret-key: ${CRM_S3_SECRET_KEY:}
     bucket: ${CRM_S3_BUCKET:crm-attachments}
+  # The application reports on itself (ADR-0012): HTTP answers and the log, written from bounded queues.
+  monitoring:
+    enabled: ${CRM_MONITORING_ENABLED:true}
+    queue-capacity: ${CRM_MONITORING_QUEUE_CAPACITY:10000}
+    flush-interval: ${CRM_MONITORING_FLUSH_INTERVAL:2s}
+    write-batch-size: ${CRM_MONITORING_WRITE_BATCH_SIZE:500}
+    retention: ${CRM_MONITORING_RETENTION:14d}
+    cleanup-interval: ${CRM_MONITORING_CLEANUP_INTERVAL:1h}
+    cleanup-batch-size: ${CRM_MONITORING_CLEANUP_BATCH_SIZE:5000}
+    log-level: ${CRM_MONITORING_LOG_LEVEL:INFO}
 
 management:
   endpoints:

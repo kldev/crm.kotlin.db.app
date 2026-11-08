@@ -26,6 +26,10 @@ import { Route as AppDeskPeopleRouteImport } from './routes/_app/desk.people'
 import { Route as AppDeskPoolRouteImport } from './routes/_app/desk.pool'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app/projects.index'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app/projects.$projectId'
+import { Route as AppSystemDatabaseRouteImport } from './routes/_app/system.database'
+import { Route as AppSystemLogsRouteImport } from './routes/_app/system.logs'
+import { Route as AppSystemQueuesRouteImport } from './routes/_app/system.queues'
+import { Route as AppSystemStatusRouteImport } from './routes/_app/system.status'
 import { Route as AppTeamsIndexRouteImport } from './routes/_app/teams.index'
 import { Route as AppTeamsTeamIdRouteImport } from './routes/_app/teams.$teamId'
 import { Route as AppDeskReportsIndexRouteImport } from './routes/_app/desk.reports.index'
@@ -117,6 +121,26 @@ const AppProjectsProjectIdRoute = AppProjectsProjectIdRouteImport.update({
   path: '/projects/$projectId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSystemDatabaseRoute = AppSystemDatabaseRouteImport.update({
+  id: '/system/database',
+  path: '/system/database',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSystemLogsRoute = AppSystemLogsRouteImport.update({
+  id: '/system/logs',
+  path: '/system/logs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSystemQueuesRoute = AppSystemQueuesRouteImport.update({
+  id: '/system/queues',
+  path: '/system/queues',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSystemStatusRoute = AppSystemStatusRouteImport.update({
+  id: '/system/status',
+  path: '/system/status',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTeamsIndexRoute = AppTeamsIndexRouteImport.update({
   id: '/teams/',
   path: '/teams/',
@@ -162,6 +186,10 @@ export interface FileRoutesByFullPath {
   '/desk/people': typeof AppDeskPeopleRoute
   '/desk/pool': typeof AppDeskPoolRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
+  '/system/database': typeof AppSystemDatabaseRoute
+  '/system/logs': typeof AppSystemLogsRoute
+  '/system/queues': typeof AppSystemQueuesRoute
+  '/system/status': typeof AppSystemStatusRoute
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients/': typeof AppClientsIndexRoute
   '/desk/': typeof AppDeskIndexRoute
@@ -186,6 +214,10 @@ export interface FileRoutesByTo {
   '/desk/people': typeof AppDeskPeopleRoute
   '/desk/pool': typeof AppDeskPoolRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
+  '/system/database': typeof AppSystemDatabaseRoute
+  '/system/logs': typeof AppSystemLogsRoute
+  '/system/queues': typeof AppSystemQueuesRoute
+  '/system/status': typeof AppSystemStatusRoute
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients': typeof AppClientsIndexRoute
   '/desk': typeof AppDeskIndexRoute
@@ -212,6 +244,10 @@ export interface FileRoutesById {
   '/_app/desk/people': typeof AppDeskPeopleRoute
   '/_app/desk/pool': typeof AppDeskPoolRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
+  '/_app/system/database': typeof AppSystemDatabaseRoute
+  '/_app/system/logs': typeof AppSystemLogsRoute
+  '/_app/system/queues': typeof AppSystemQueuesRoute
+  '/_app/system/status': typeof AppSystemStatusRoute
   '/_app/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/desk/': typeof AppDeskIndexRoute
@@ -238,6 +274,10 @@ export interface FileRouteTypes {
     | '/desk/people'
     | '/desk/pool'
     | '/projects/$projectId'
+    | '/system/database'
+    | '/system/logs'
+    | '/system/queues'
+    | '/system/status'
     | '/teams/$teamId'
     | '/clients/'
     | '/desk/'
@@ -262,6 +302,10 @@ export interface FileRouteTypes {
     | '/desk/people'
     | '/desk/pool'
     | '/projects/$projectId'
+    | '/system/database'
+    | '/system/logs'
+    | '/system/queues'
+    | '/system/status'
     | '/teams/$teamId'
     | '/clients'
     | '/desk'
@@ -287,6 +331,10 @@ export interface FileRouteTypes {
     | '/_app/desk/people'
     | '/_app/desk/pool'
     | '/_app/projects/$projectId'
+    | '/_app/system/database'
+    | '/_app/system/logs'
+    | '/_app/system/queues'
+    | '/_app/system/status'
     | '/_app/teams/$teamId'
     | '/_app/clients/'
     | '/_app/desk/'
@@ -425,6 +473,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsProjectIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/system/database': {
+      id: '/_app/system/database'
+      path: '/system/database'
+      fullPath: '/system/database'
+      preLoaderRoute: typeof AppSystemDatabaseRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/system/logs': {
+      id: '/_app/system/logs'
+      path: '/system/logs'
+      fullPath: '/system/logs'
+      preLoaderRoute: typeof AppSystemLogsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/system/queues': {
+      id: '/_app/system/queues'
+      path: '/system/queues'
+      fullPath: '/system/queues'
+      preLoaderRoute: typeof AppSystemQueuesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/system/status': {
+      id: '/_app/system/status'
+      path: '/system/status'
+      fullPath: '/system/status'
+      preLoaderRoute: typeof AppSystemStatusRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/teams/': {
       id: '/_app/teams/'
       path: '/teams'
@@ -482,6 +558,10 @@ interface AppRouteChildren {
   AppDeskPeopleRoute: typeof AppDeskPeopleRoute
   AppDeskPoolRoute: typeof AppDeskPoolRoute
   AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
+  AppSystemDatabaseRoute: typeof AppSystemDatabaseRoute
+  AppSystemLogsRoute: typeof AppSystemLogsRoute
+  AppSystemQueuesRoute: typeof AppSystemQueuesRoute
+  AppSystemStatusRoute: typeof AppSystemStatusRoute
   AppTeamsTeamIdRoute: typeof AppTeamsTeamIdRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppDeskIndexRoute: typeof AppDeskIndexRoute
@@ -505,6 +585,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppDeskPeopleRoute: AppDeskPeopleRoute,
   AppDeskPoolRoute: AppDeskPoolRoute,
   AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,
+  AppSystemDatabaseRoute: AppSystemDatabaseRoute,
+  AppSystemLogsRoute: AppSystemLogsRoute,
+  AppSystemQueuesRoute: AppSystemQueuesRoute,
+  AppSystemStatusRoute: AppSystemStatusRoute,
   AppTeamsTeamIdRoute: AppTeamsTeamIdRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
   AppDeskIndexRoute: AppDeskIndexRoute,

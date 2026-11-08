@@ -74,3 +74,13 @@ export const publicDeskKeys = {
 	catalog: () => [...publicDeskKeys.all, "catalog"] as const,
 	people: () => [...publicDeskKeys.all, "people"] as const,
 };
+
+/** System pages (ADR-0012), administrators only. */
+export const systemKeys = {
+	all: ["system"] as const,
+	status: (range: string) => [...systemKeys.all, "status", range] as const,
+	requests: (filters: object) => [...systemKeys.all, "requests", filters] as const,
+	logs: (filters: object) => [...systemKeys.all, "logs", filters] as const,
+	database: () => [...systemKeys.all, "database"] as const,
+	queues: () => [...systemKeys.all, "queues"] as const,
+};

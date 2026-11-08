@@ -2,18 +2,22 @@ import { Button, Chip, Drawer, Dropdown, Label, Separator, toast } from "@heroui
 import { useMutation } from "@tanstack/react-query";
 import { Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import {
+	Activity,
 	BriefcaseBusiness,
 	Building2,
 	ChartColumn,
 	Contact,
+	Database,
 	FileSpreadsheet,
 	Headset,
 	Inbox,
 	KeyRound,
 	LayoutDashboard,
+	ListOrdered,
 	ListTodo,
 	LogOut,
 	Menu,
+	ScrollText,
 	SquarePlus,
 	Tickets,
 	UserCog,
@@ -46,7 +50,11 @@ interface NavItem {
 		| "/desk/agents"
 		| "/desk/people"
 		| "/desk/reports"
-		| "/desk/charts";
+		| "/desk/charts"
+		| "/system/status"
+		| "/system/logs"
+		| "/system/database"
+		| "/system/queues";
 	label: (t: I18n["t"]) => string;
 	icon: typeof LayoutDashboard;
 	visible?: (role: Role) => boolean;
@@ -81,6 +89,35 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/desk/charts", label: (t) => t("Wykresy", "Charts"), icon: ChartColumn },
 		],
 	},
+	{
+		section: (t) => t("System", "System"),
+		items: [
+			{
+				to: "/system/status",
+				label: (t) => t("Status systemu", "System status"),
+				icon: Activity,
+				visible: can.seeSystem,
+			},
+			{
+				to: "/system/logs",
+				label: (t) => t("Logi", "Logs"),
+				icon: ScrollText,
+				visible: can.seeSystem,
+			},
+			{
+				to: "/system/database",
+				label: (t) => t("Baza danych", "Database"),
+				icon: Database,
+				visible: can.seeSystem,
+			},
+			{
+				to: "/system/queues",
+				label: (t) => t("Kolejki", "Queues"),
+				icon: ListOrdered,
+				visible: can.seeSystem,
+			},
+		],
+	},
 ];
 
 function Brand() {
@@ -101,14 +138,16 @@ function Navigation({ role, onNavigate }: { role: Role; onNavigate?: () => void 
 	const { t } = useI18n();
 	return (
 		<nav className="flex flex-col gap-1 px-3" aria-label={t("Główna", "Main")}>
-			{NAV.map((group) => (
-				<div key={group.section(t)} className="flex flex-col gap-1 pb-4">
-					<p className="px-3 pb-2 font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
-						{group.section(t)}
-					</p>
-					<NavLinks items={group.items} role={role} onNavigate={onNavigate} />
-				</div>
-			))}
+			{NAV.filter((group) => group.items.some((item) => !item.visible || item.visible(role))).map(
+				(group) => (
+					<div key={group.section(t)} className="flex flex-col gap-1 pb-4">
+						<p className="px-3 pb-2 font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
+							{group.section(t)}
+						</p>
+						<NavLinks items={group.items} role={role} onNavigate={onNavigate} />
+					</div>
+				),
+			)}
 		</nav>
 	);
 }

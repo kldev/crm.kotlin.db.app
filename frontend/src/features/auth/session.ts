@@ -41,4 +41,6 @@ export const can = {
 	deleteClients: (role: Role) => role === "ADMIN" || role === "MANAGER",
 	assignClients: (role: Role) => role !== "SALES",
 	createTeams: (role: Role) => role === "ADMIN",
+	/** The system pages (ADR-0012). */
+	seeSystem: (role: Role) => role === "ADMIN",
 };

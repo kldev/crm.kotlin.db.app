@@ -5,5 +5,6 @@ export * from './desk-charts/desk-charts.ts';
 export * from './desk-reports/desk-reports.ts';
 export * from './projects/projects.ts';
 export * from './public-desk/public-desk.ts';
+export * from './system/system.ts';
 export * from './teams/teams.ts';
 export * from './users/users.ts';
