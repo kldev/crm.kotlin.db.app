@@ -1,0 +1,60 @@
+# Defaults are production-safe; local values come from infrastructure/.env (docker compose).
+spring:
+  application:
+    name: crm
+  main:
+    banner-mode: off
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    # The application login: EXECUTE on schema `app` only (ADR-0002).
+    url: ${CRM_DB_URL:jdbc:sqlserver://localhost:1433;databaseName=crm;encrypt=true;trustServerCertificate=true}
+    username: ${CRM_DB_APP_USER:crm_app}
+    password: ${CRM_DB_APP_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${CRM_DB_POOL_SIZE:30}
+      minimum-idle: ${CRM_DB_POOL_MIN_IDLE:5}
+      connection-timeout: ${CRM_DB_CONNECTION_TIMEOUT_MS:5000}
+  flyway:
+    # Migrations run only in CRM_MODE=migrate (application-migrate.yml) with the migrator login.
+    enabled: false
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  servlet:
+    session:
+      timeout: ${CRM_SESSION_TIMEOUT:30m}
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${CRM_COOKIE_SECURE:false}
+
+crm:
+  auth:
+    max-failed-logins: ${CRM_LOGIN_MAX_FAILED:5}
+    lock-minutes: ${CRM_LOGIN_LOCK_MINUTES:15}
+    admin-login: ${CRM_ADMIN_LOGIN:}
+    admin-password: ${CRM_ADMIN_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: database
+  health:
+    db:
+      # Replaced by DatabaseHealthIndicator (EXEC app.health_ping).
+      enabled: false
+
+springdoc:
+  swagger-ui:
+    enabled: ${CRM_SWAGGER_UI:true}

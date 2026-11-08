@@ -1,0 +1,24 @@
+# CRM_MODE=seed: EXEC seed.run with the migrator login (the application login cannot run schema `seed`).
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    username: ${CRM_DB_MIGRATOR_USER:crm_migrator}
+    password: ${CRM_DB_MIGRATOR_PASSWORD:}
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 0
+      connection-timeout: 30000
+
+crm:
+  seed:
+    clients: ${CRM_SEED_CLIENTS:5000000}
+    admins: ${CRM_SEED_ADMINS:10}
+    managers: ${CRM_SEED_MANAGERS:490}
+    sales: ${CRM_SEED_SALES:4500}
+    team-size: ${CRM_SEED_TEAM_SIZE:5}
+    projects: ${CRM_SEED_PROJECTS:5000000}
+    comments: ${CRM_SEED_COMMENTS:2000000}
+    random-seed: ${CRM_SEED_RANDOM_SEED:42}
+    batch-size: ${CRM_SEED_BATCH_SIZE:500000}
+    password: ${CRM_SEED_PASSWORD:}

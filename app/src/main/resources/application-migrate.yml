@@ -1,0 +1,12 @@
+# CRM_MODE=migrate: Flyway with the migrator login, no web server; the process exits after migrating.
+spring:
+  main:
+    web-application-type: none
+  flyway:
+    enabled: true
+    url: ${CRM_DB_URL:jdbc:sqlserver://localhost:1433;databaseName=crm;encrypt=true;trustServerCertificate=true}
+    user: ${CRM_DB_MIGRATOR_USER:crm_migrator}
+    password: ${CRM_DB_MIGRATOR_PASSWORD:}
+    locations: classpath:db/migration
+    placeholders:
+      app_user: ${CRM_DB_APP_USER:crm_app}
