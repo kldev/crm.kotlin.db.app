@@ -1,5 +1,5 @@
 /*
-  Seed (ADR-0019): @trips business trips (10 000 by default) over the last half year and the next month - salespeople
+  Seed (ADR-0019): exactly @trips business trips (20 125 by default; fewer only when fifty a person would be exceeded) over the last half year and the next month - salespeople
   visiting their clients and going to trade fairs, marketing to fairs (some abroad), project owners to their projects'
   sites - with transport, meals, nights, expenses and a status that follows the date (future: planned; past: mostly
   approved and paid, some waiting or returned). Settled by crm.trip_compute. Only into an empty table; deterministic.
@@ -7,7 +7,7 @@
 */
 CREATE OR ALTER PROCEDURE seed.trips_run
     @random_seed int = 2026,
-    @trips       int = 10000
+    @trips       int = 20125
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
@@ -59,7 +59,8 @@ BEGIN
            tr.transport, IIF(tr.transport = 'COMPANY_CAR' AND @cc > 0, (SELECT id FROM @cars WHERE n = h.h3 % NULLIF(@cc, 0)), NULL),
            IIF(tr.transport = 'PRIVATE_CAR', IIF(h.h4 % 5 = 0, 'CAR_LE_900', 'CAR_GT_900'), NULL),
            IIF(tr.transport = 'PRIVATE_CAR', 40 + h.h2 % 560, NULL), h.h1, h.h2, h.h3, h.h4, x.entity
-    FROM GENERATE_SERIES(0, @trips - 1) AS s
+    -- A fifth more than needed: rows without a traveller or a company drop out below, the rest is cut to @trips.
+    FROM GENERATE_SERIES(0, @trips + @trips / 5) AS s
     CROSS APPLY (SELECT HASHBYTES('SHA2_256', CONCAT(@random_seed, ':trip:', s.value)) AS b) AS hb
     CROSS APPLY (SELECT CAST(SUBSTRING(hb.b, 1, 4) AS int) & 0x7FFFFFFF AS h1, CAST(SUBSTRING(hb.b, 5, 4) AS int) & 0x7FFFFFFF AS h2,
                         CAST(SUBSTRING(hb.b, 9, 4) AS int) & 0x7FFFFFFF AS h3, CAST(SUBSTRING(hb.b, 13, 4) AS int) & 0x7FFFFFFF AS h4) AS h
@@ -92,12 +93,14 @@ BEGIN
     WHERE x.user_id IS NOT NULL;
 
     DELETE @plan WHERE entity IS NULL OR NOT EXISTS (SELECT 1 FROM crm.legal_entities WHERE id = entity);
+    DELETE p FROM @plan AS p WHERE p.n NOT IN (SELECT TOP (@trips) n FROM @plan ORDER BY n);
 
     INSERT crm.trips (number, traveller_user_id, legal_entity_id, purpose, client_id, project_id, event_name, description,
                       destination, country, starts_at, ends_at, transport, car_id, vehicle, kilometres, breakfasts, lunches,
                       dinners, lump_nights, local_transport, advance, status, submitted_at, decided_by, decided_at,
                       decision_note, paid_at, currency, created_by, updated_by, created_at)
-    SELECT CONCAT('DEL/', YEAR(p.starts_at), '/', RIGHT(CONCAT('000', ROW_NUMBER() OVER (PARTITION BY YEAR(p.starts_at) ORDER BY p.starts_at, p.n)), 4)),
+    -- Four digits, more from 10 000 on - as app.trip_create numbers them.
+    SELECT CONCAT('DEL/', YEAR(p.starts_at), '/', RIGHT(CONCAT('000', q.seq), IIF(q.seq > 9999, LEN(q.seq), 4))),
            p.user_id, p.entity, p.purpose, p.client_id, p.project_id, p.event_name,
            CASE p.purpose WHEN 'CLIENT_VISIT' THEN N'Spotkanie handlowe u klienta.' WHEN 'TRADE_FAIR' THEN N'Stoisko firmy i spotkania z klientami.'
                           WHEN 'PROJECT_SITE' THEN N'Nadzór nad realizacją projektu.' ELSE N'Szkolenie zewnętrzne.' END,
@@ -111,7 +114,8 @@ BEGIN
            IIF(s.status = 'RETURNED', N'Brak faktury za hotel - dołącz dokument.', NULL),
            IIF(s.status = 'PAID', DATEADD(DAY, 9, p.ends_at), NULL), 'PLN', p.user_id, p.user_id,
            DATEADD(DAY, -7, p.starts_at)
-    FROM @plan AS p
+    FROM (SELECT x.*, ROW_NUMBER() OVER (PARTITION BY YEAR(x.starts_at) ORDER BY x.starts_at, x.n) AS seq FROM @plan AS x) AS p
+    CROSS APPLY (SELECT p.seq) AS q
     CROSS APPLY (SELECT CASE WHEN p.ends_at > @now THEN 'PLANNED'
                              WHEN p.h4 % 100 < 10 THEN 'PLANNED' WHEN p.h4 % 100 < 25 THEN 'SUBMITTED'
                              WHEN p.h4 % 100 < 30 THEN 'RETURNED' WHEN p.h4 % 100 < 55 THEN 'APPROVED'

@@ -110,7 +110,7 @@ After the seed log in as `perf.sales.0001`, `perf.manager.0001` or `perf.admin.0
 The seed runs only on an empty database (error 51060 otherwise); start over with `./start.sh --clean --seed`.
 It also seeds the service desk (`seed.desk_run`: ten agents such as `anna.nowak`, 40 people and Halcyon's 238 ticket
 histories replayed at their moments in the past, `CRM_SEED_DESK_STORIES`). The same step seeds the newer modules at a smaller scale - about 10 000 records each: tasks, deals with ~25 000
-activities and their next steps, offers with their lines, a fleet of 2 000 cars with ~10 000 handovers, and ~10 000 business trips - each
+activities and their next steps, offers with their lines, a fleet of 2 000 cars with ~10 000 handovers, and 20 125 business trips - each
 only into an empty table.
 That part is idempotent; for a database seeded before the desk existed run only it:
 `CRM_SEED_DESK_ONLY=true docker compose --profile seed run --rm seed`.

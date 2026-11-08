@@ -26,7 +26,8 @@ export function FormDrawer({
 		<FormIdContext.Provider value={formId}>
 			<Drawer>
 				<Drawer.Backdrop isOpen onOpenChange={(open) => !open && onClose()}>
-					<Drawer.Content placement="right" className="w-full sm:max-w-md">
+					{/* 1.5 x the default 28rem: the forms have two-column rows (dates, amounts) that need the room. */}
+					<Drawer.Content placement="right" className="w-full sm:max-w-[42rem]">
 						<Drawer.Dialog>
 							<Drawer.CloseTrigger />
 							<Drawer.Header>

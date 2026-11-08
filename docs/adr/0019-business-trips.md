@@ -33,7 +33,7 @@ Minister of Infrastructure's regulation of 2023). Ambit System has no such modul
   SUBMITTED; a planned trip can be cancelled. The traveller (or a manager) plans, corrects and submits; ADMIN and
   MANAGER approve, return and pay - never their own trip. Everybody sees their own trips, managers all of them, with
   "to approve" as a list of its own.
-- **Seed**: about 10 000 trips over seven months (at most fifty a person) - client visits, fairs (some abroad),
+- **Seed**: 20 125 trips over seven months (at most fifty a person) - client visits, fairs (some abroad),
   project sites, other - with expenses, in every state.
 
 ## Consequences

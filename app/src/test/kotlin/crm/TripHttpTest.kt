@@ -142,5 +142,7 @@ class TripHttpTest : IntegrationTest() {
         assertTrue(all.size > 20, "trips: ${all.size}")
         assertTrue(all.map { it["purpose"].asString() }.toSet().containsAll(listOf("CLIENT_VISIT", "TRADE_FAIR")), all.map { it["purpose"].asString() }.toSet().toString())
         assertTrue(manager.get("/api/trips?scope=ALL&status=PAID").body!!["items"].list().isNotEmpty(), "paid")
+        // Numbers stay unique past 9 999 a year: the seed numbers as app.trip_create does.
+        assertEquals(scalar<Int>("SELECT COUNT(*) FROM crm.trips"), scalar<Int>("SELECT COUNT(DISTINCT number) FROM crm.trips"))
     }
 }
