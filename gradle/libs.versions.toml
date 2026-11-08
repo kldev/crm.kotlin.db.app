@@ -1,7 +1,7 @@
 [versions]
-kotlin = "2.4.0"
-spring-boot = "4.1.0"
-springdoc = "3.0.3"
+kotlin = "2.4.21"
+spring-boot = "4.1.2"
+springdoc = "3.2.0"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

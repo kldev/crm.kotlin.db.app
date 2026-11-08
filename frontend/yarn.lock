@@ -230,19 +230,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@biomejs/biome@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/biome@npm:2.5.13"
+"@biomejs/biome@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/biome@npm:2.6.6"
   dependencies:
-    "@biomejs/cli-darwin-arm64": "npm:2.5.13"
-    "@biomejs/cli-darwin-x64": "npm:2.5.13"
-    "@biomejs/cli-linux-arm64": "npm:2.5.13"
-    "@biomejs/cli-linux-arm64-musl": "npm:2.5.13"
-    "@biomejs/cli-linux-x64": "npm:2.5.13"
-    "@biomejs/cli-linux-x64-musl": "npm:2.5.13"
-    "@biomejs/cli-win32-arm64": "npm:2.5.13"
-    "@biomejs/cli-win32-x64": "npm:2.5.13"
+    "@biomejs/cli-android-arm64": "npm:2.6.6"
+    "@biomejs/cli-android-x64": "npm:2.6.6"
+    "@biomejs/cli-darwin-arm64": "npm:2.6.6"
+    "@biomejs/cli-darwin-x64": "npm:2.6.6"
+    "@biomejs/cli-linux-arm64": "npm:2.6.6"
+    "@biomejs/cli-linux-arm64-musl": "npm:2.6.6"
+    "@biomejs/cli-linux-x64": "npm:2.6.6"
+    "@biomejs/cli-linux-x64-musl": "npm:2.6.6"
+    "@biomejs/cli-win32-arm64": "npm:2.6.6"
+    "@biomejs/cli-win32-x64": "npm:2.6.6"
   dependenciesMeta:
+    "@biomejs/cli-android-arm64":
+      optional: true
+    "@biomejs/cli-android-x64":
+      optional: true
     "@biomejs/cli-darwin-arm64":
       optional: true
     "@biomejs/cli-darwin-x64":
@@ -261,62 +267,76 @@ __metadata:
       optional: true
   bin:
     biome: bin/biome
-  checksum: 10c0/3a6267f4610aa94b16ab03e49e0921e219b5de449b6bc4cefe414e100bc83b12b9223407eb2b08dab47faed8782204a638cc149bbc577fa66cba7a7aab3e7d71
+  checksum: 10c0/1040bceed5464784420157781daabb3408017b5ced3acd7cbe86934b9e8ef41638b6544fde21a64b7353afaa4d6be390938fb40d5c17f698df1e349b2b0b70ea
   languageName: node
   linkType: hard
 
-"@biomejs/cli-darwin-arm64@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-darwin-arm64@npm:2.5.13"
+"@biomejs/cli-android-arm64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-android-arm64@npm:2.6.6"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@biomejs/cli-android-x64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-android-x64@npm:2.6.6"
+  conditions: os=android & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@biomejs/cli-darwin-arm64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-darwin-arm64@npm:2.6.6"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-darwin-x64@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-darwin-x64@npm:2.5.13"
+"@biomejs/cli-darwin-x64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-darwin-x64@npm:2.6.6"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-arm64-musl@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.5.13"
+"@biomejs/cli-linux-arm64-musl@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.6.6"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-arm64@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-linux-arm64@npm:2.5.13"
+"@biomejs/cli-linux-arm64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-linux-arm64@npm:2.6.6"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-x64-musl@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-linux-x64-musl@npm:2.5.13"
+"@biomejs/cli-linux-x64-musl@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-linux-x64-musl@npm:2.6.6"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-x64@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-linux-x64@npm:2.5.13"
+"@biomejs/cli-linux-x64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-linux-x64@npm:2.6.6"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@biomejs/cli-win32-arm64@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-win32-arm64@npm:2.5.13"
+"@biomejs/cli-win32-arm64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-win32-arm64@npm:2.6.6"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-win32-x64@npm:2.5.13":
-  version: 2.5.13
-  resolution: "@biomejs/cli-win32-x64@npm:2.5.13"
+"@biomejs/cli-win32-x64@npm:2.6.6":
+  version: 2.6.6
+  resolution: "@biomejs/cli-win32-x64@npm:2.6.6"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -554,7 +574,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@heroui/react@npm:^3.2.6":
+"@heroui/react@npm:^3.2.7":
   version: 3.2.7
   resolution: "@heroui/react@npm:3.2.7"
   dependencies:
@@ -578,7 +598,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@heroui/styles@npm:3.2.7, @heroui/styles@npm:^3.2.6":
+"@heroui/styles@npm:3.2.7, @heroui/styles@npm:^3.2.7":
   version: 3.2.7
   resolution: "@heroui/styles@npm:3.2.7"
   dependencies:
@@ -1539,7 +1559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tailwindcss/vite@npm:^4.1.18":
+"@tailwindcss/vite@npm:^4.3.5":
   version: 4.3.5
   resolution: "@tailwindcss/vite@npm:4.3.5"
   dependencies:
@@ -1608,7 +1628,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^5.104.5":
+"@tanstack/react-query@npm:^5.107.1":
   version: 5.107.1
   resolution: "@tanstack/react-query@npm:5.107.1"
   dependencies:
@@ -1920,7 +1940,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.20.0":
+"axios@npm:^1.21.0":
   version: 1.21.0
   resolution: "axios@npm:1.21.0"
   dependencies:
@@ -2063,17 +2083,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "crm-frontend@workspace:."
   dependencies:
-    "@biomejs/biome": "npm:2.5.13"
+    "@biomejs/biome": "npm:2.6.6"
     "@fontsource-variable/inter": "npm:^5.3.0"
     "@fontsource/cormorant-garamond": "npm:^5.3.0"
-    "@heroui/react": "npm:^3.2.6"
-    "@heroui/styles": "npm:^3.2.6"
+    "@heroui/react": "npm:^3.2.7"
+    "@heroui/styles": "npm:^3.2.7"
     "@internationalized/date": "npm:^3.12.4"
     "@react-aria/ssr": "npm:^3.10.1"
     "@react-aria/utils": "npm:^3.34.1"
-    "@tailwindcss/vite": "npm:^4.1.18"
+    "@tailwindcss/vite": "npm:^4.3.5"
     "@tanstack/react-form": "npm:^1.33.5"
-    "@tanstack/react-query": "npm:^5.104.5"
+    "@tanstack/react-query": "npm:^5.107.1"
     "@tanstack/react-router": "npm:^1.170.46"
     "@tanstack/router-cli": "npm:^1.167.46"
     "@tanstack/router-plugin": "npm:^1.168.48"
@@ -2081,17 +2101,17 @@ __metadata:
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
     "@vitejs/plugin-react": "npm:^6.2.1"
-    axios: "npm:^1.20.0"
-    lucide-react: "npm:^1.45.0"
+    axios: "npm:^1.21.0"
+    lucide-react: "npm:^1.70.0"
     orval: "npm:^8.46.0"
-    react: "npm:^19.2.0"
+    react: "npm:^19.3.1"
     react-aria: "npm:^3.53.1"
     react-aria-components: "npm:^1.22.1"
-    react-dom: "npm:^19.2.0"
-    tailwindcss: "npm:^4.1.18"
+    react-dom: "npm:^19.3.1"
+    tailwindcss: "npm:^4.3.5"
     typescript: "npm:^6.0.2"
-    vite: "npm:^8.0.0"
-    zod: "npm:^4.3.6"
+    vite: "npm:^8.3.6"
+    zod: "npm:^4.6.7"
   languageName: unknown
   linkType: soft
 
@@ -2811,7 +2831,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^1.45.0":
+"lucide-react@npm:^1.70.0":
   version: 1.70.0
   resolution: "lucide-react@npm:1.70.0"
   peerDependencies:
@@ -3142,7 +3162,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^19.2.0":
+"react-dom@npm:^19.3.1":
   version: 19.3.1
   resolution: "react-dom@npm:19.3.1"
   dependencies:
@@ -3191,7 +3211,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^19.2.0":
+"react@npm:^19.3.1":
   version: 19.3.1
   resolution: "react@npm:19.3.1"
   checksum: 10c0/f0ed036d1223562c09c8347858ca712733ea6e27a30db709ee9c3f3f176d3e9e767afce735d59956addf3d030102e256bba82dea635fc1bdb0e01107e98fef10
@@ -3384,7 +3404,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:4.3.5, tailwindcss@npm:^4.1.18":
+"tailwindcss@npm:4.3.5, tailwindcss@npm:^4.3.5":
   version: 4.3.5
   resolution: "tailwindcss@npm:4.3.5"
   checksum: 10c0/a02a1759cc3aaad5d9b5da7919bc2d5570432960e0f933be752185ced814fc8a193885effd9628bc3067c81552c13293e469b8e46e5a43b148dbfc97f00b5994
@@ -3566,7 +3586,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^8.0.0":
+"vite@npm:^8.3.6":
   version: 8.3.6
   resolution: "vite@npm:8.3.6"
   dependencies:
@@ -3682,7 +3702,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^4.3.6, zod@npm:^4.5.4, zod@npm:^4.6.7":
+"zod@npm:^4.5.4, zod@npm:^4.6.7":
   version: 4.6.7
   resolution: "zod@npm:4.6.7"
   checksum: 10c0/4ce2eb14034317b7254e347ca37b5ad591cf8333147030cf05b9b5d31692d45073f7f2747aa50cf8c6b29012194d2b22978cecc89969cf34a0d18e89d0ee7d7b

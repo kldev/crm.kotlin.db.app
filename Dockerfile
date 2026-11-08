@@ -11,7 +11,7 @@ RUN yarn build
 
 # The Gradle image has the same Gradle as the wrapper (gradle/wrapper/gradle-wrapper.properties), so the build
 # does not download a distribution.
-FROM gradle:9.7.1-jdk25 AS build
+FROM gradle:9.8.2-jdk25 AS build
 WORKDIR /workspace
 
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
