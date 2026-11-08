@@ -79,6 +79,7 @@ services:
       CRM_LOGIN_LOCK_MINUTES: ${CRM_LOGIN_LOCK_MINUTES:-15}
       # Local stack: one-click login as a seeded user on the login page. Never set it on a shared server.
       CRM_DEV_LOGIN: ${CRM_DEV_LOGIN:-true}
+      CRM_DESK_PUBLIC_REPORTS_PER_MINUTE: ${CRM_DESK_PUBLIC_REPORTS_PER_MINUTE:-30}
       JAVA_TOOL_OPTIONS: ${CRM_APP_JAVA_OPTIONS:-}
     ports:
       - "127.0.0.1:${CRM_HTTP_PORT:-8088}:8080"
@@ -104,6 +105,8 @@ services:
       CRM_SEED_COMMENTS: ${CRM_SEED_COMMENTS:-2000000}
       CRM_SEED_RANDOM_SEED: ${CRM_SEED_RANDOM_SEED:-42}
       CRM_SEED_BATCH_SIZE: ${CRM_SEED_BATCH_SIZE:-500000}
+      CRM_SEED_DESK_TICKETS: ${CRM_SEED_DESK_TICKETS:-200}
+      CRM_SEED_DESK_ONLY: ${CRM_SEED_DESK_ONLY:-false}
     restart: "no"
 
   # Opt-in: ./start.sh --k6 <script>; results go to perf/results/.

@@ -11,14 +11,23 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppClientsClientIdRouteImport } from './routes/_app/clients.$clientId'
+import { Route as AppDeskIndexRouteImport } from './routes/_app/desk.index'
+import { Route as AppDeskAgentsRouteImport } from './routes/_app/desk.agents'
+import { Route as AppDeskAllRouteImport } from './routes/_app/desk.all'
+import { Route as AppDeskMineRouteImport } from './routes/_app/desk.mine'
+import { Route as AppDeskNewRouteImport } from './routes/_app/desk.new'
+import { Route as AppDeskPeopleRouteImport } from './routes/_app/desk.people'
+import { Route as AppDeskPoolRouteImport } from './routes/_app/desk.pool'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app/projects.index'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app/projects.$projectId'
 import { Route as AppTeamsIndexRouteImport } from './routes/_app/teams.index'
 import { Route as AppTeamsTeamIdRouteImport } from './routes/_app/teams.$teamId'
+import { Route as AppDeskTicketsTicketIdRouteImport } from './routes/_app/desk.tickets.$ticketId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -27,6 +36,11 @@ const AppRoute = AppRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -49,6 +63,41 @@ const AppClientsClientIdRoute = AppClientsClientIdRouteImport.update({
   path: '/clients/$clientId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDeskIndexRoute = AppDeskIndexRouteImport.update({
+  id: '/desk/',
+  path: '/desk/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskAgentsRoute = AppDeskAgentsRouteImport.update({
+  id: '/desk/agents',
+  path: '/desk/agents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskAllRoute = AppDeskAllRouteImport.update({
+  id: '/desk/all',
+  path: '/desk/all',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskMineRoute = AppDeskMineRouteImport.update({
+  id: '/desk/mine',
+  path: '/desk/mine',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskNewRoute = AppDeskNewRouteImport.update({
+  id: '/desk/new',
+  path: '/desk/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskPeopleRoute = AppDeskPeopleRouteImport.update({
+  id: '/desk/people',
+  path: '/desk/people',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskPoolRoute = AppDeskPoolRouteImport.update({
+  id: '/desk/pool',
+  path: '/desk/pool',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -69,82 +118,142 @@ const AppTeamsTeamIdRoute = AppTeamsTeamIdRouteImport.update({
   path: '/teams/$teamId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDeskTicketsTicketIdRoute = AppDeskTicketsTicketIdRouteImport.update({
+  id: '/desk/tickets/$ticketId',
+  path: '/desk/tickets/$ticketId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
+  '/report': typeof ReportRoute
   '/users': typeof AppUsersRoute
   '/clients/$clientId': typeof AppClientsClientIdRoute
+  '/desk/agents': typeof AppDeskAgentsRoute
+  '/desk/all': typeof AppDeskAllRoute
+  '/desk/mine': typeof AppDeskMineRoute
+  '/desk/new': typeof AppDeskNewRoute
+  '/desk/people': typeof AppDeskPeopleRoute
+  '/desk/pool': typeof AppDeskPoolRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients/': typeof AppClientsIndexRoute
+  '/desk/': typeof AppDeskIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/teams/': typeof AppTeamsIndexRoute
+  '/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/report': typeof ReportRoute
   '/users': typeof AppUsersRoute
   '/': typeof AppIndexRoute
   '/clients/$clientId': typeof AppClientsClientIdRoute
+  '/desk/agents': typeof AppDeskAgentsRoute
+  '/desk/all': typeof AppDeskAllRoute
+  '/desk/mine': typeof AppDeskMineRoute
+  '/desk/new': typeof AppDeskNewRoute
+  '/desk/people': typeof AppDeskPeopleRoute
+  '/desk/pool': typeof AppDeskPoolRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients': typeof AppClientsIndexRoute
+  '/desk': typeof AppDeskIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/teams': typeof AppTeamsIndexRoute
+  '/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/report': typeof ReportRoute
   '/_app/users': typeof AppUsersRoute
   '/_app/': typeof AppIndexRoute
   '/_app/clients/$clientId': typeof AppClientsClientIdRoute
+  '/_app/desk/agents': typeof AppDeskAgentsRoute
+  '/_app/desk/all': typeof AppDeskAllRoute
+  '/_app/desk/mine': typeof AppDeskMineRoute
+  '/_app/desk/new': typeof AppDeskNewRoute
+  '/_app/desk/people': typeof AppDeskPeopleRoute
+  '/_app/desk/pool': typeof AppDeskPoolRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/_app/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/_app/clients/': typeof AppClientsIndexRoute
+  '/_app/desk/': typeof AppDeskIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/_app/teams/': typeof AppTeamsIndexRoute
+  '/_app/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
+    | '/report'
     | '/users'
     | '/clients/$clientId'
+    | '/desk/agents'
+    | '/desk/all'
+    | '/desk/mine'
+    | '/desk/new'
+    | '/desk/people'
+    | '/desk/pool'
     | '/projects/$projectId'
     | '/teams/$teamId'
     | '/clients/'
+    | '/desk/'
     | '/projects/'
     | '/teams/'
+    | '/desk/tickets/$ticketId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/report'
     | '/users'
     | '/'
     | '/clients/$clientId'
+    | '/desk/agents'
+    | '/desk/all'
+    | '/desk/mine'
+    | '/desk/new'
+    | '/desk/people'
+    | '/desk/pool'
     | '/projects/$projectId'
     | '/teams/$teamId'
     | '/clients'
+    | '/desk'
     | '/projects'
     | '/teams'
+    | '/desk/tickets/$ticketId'
   id:
     | '__root__'
     | '/_app'
     | '/login'
+    | '/report'
     | '/_app/users'
     | '/_app/'
     | '/_app/clients/$clientId'
+    | '/_app/desk/agents'
+    | '/_app/desk/all'
+    | '/_app/desk/mine'
+    | '/_app/desk/new'
+    | '/_app/desk/people'
+    | '/_app/desk/pool'
     | '/_app/projects/$projectId'
     | '/_app/teams/$teamId'
     | '/_app/clients/'
+    | '/_app/desk/'
     | '/_app/projects/'
     | '/_app/teams/'
+    | '/_app/desk/tickets/$ticketId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ReportRoute: typeof ReportRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -161,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -191,6 +307,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientsClientIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/desk/': {
+      id: '/_app/desk/'
+      path: '/desk'
+      fullPath: '/desk/'
+      preLoaderRoute: typeof AppDeskIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/agents': {
+      id: '/_app/desk/agents'
+      path: '/desk/agents'
+      fullPath: '/desk/agents'
+      preLoaderRoute: typeof AppDeskAgentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/all': {
+      id: '/_app/desk/all'
+      path: '/desk/all'
+      fullPath: '/desk/all'
+      preLoaderRoute: typeof AppDeskAllRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/mine': {
+      id: '/_app/desk/mine'
+      path: '/desk/mine'
+      fullPath: '/desk/mine'
+      preLoaderRoute: typeof AppDeskMineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/new': {
+      id: '/_app/desk/new'
+      path: '/desk/new'
+      fullPath: '/desk/new'
+      preLoaderRoute: typeof AppDeskNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/people': {
+      id: '/_app/desk/people'
+      path: '/desk/people'
+      fullPath: '/desk/people'
+      preLoaderRoute: typeof AppDeskPeopleRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/pool': {
+      id: '/_app/desk/pool'
+      path: '/desk/pool'
+      fullPath: '/desk/pool'
+      preLoaderRoute: typeof AppDeskPoolRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/projects/': {
       id: '/_app/projects/'
       path: '/projects'
@@ -219,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeamsTeamIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/desk/tickets/$ticketId': {
+      id: '/_app/desk/tickets/$ticketId'
+      path: '/desk/tickets/$ticketId'
+      fullPath: '/desk/tickets/$ticketId'
+      preLoaderRoute: typeof AppDeskTicketsTicketIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -226,22 +398,38 @@ interface AppRouteChildren {
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppClientsClientIdRoute: typeof AppClientsClientIdRoute
+  AppDeskAgentsRoute: typeof AppDeskAgentsRoute
+  AppDeskAllRoute: typeof AppDeskAllRoute
+  AppDeskMineRoute: typeof AppDeskMineRoute
+  AppDeskNewRoute: typeof AppDeskNewRoute
+  AppDeskPeopleRoute: typeof AppDeskPeopleRoute
+  AppDeskPoolRoute: typeof AppDeskPoolRoute
   AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
   AppTeamsTeamIdRoute: typeof AppTeamsTeamIdRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
+  AppDeskIndexRoute: typeof AppDeskIndexRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
   AppTeamsIndexRoute: typeof AppTeamsIndexRoute
+  AppDeskTicketsTicketIdRoute: typeof AppDeskTicketsTicketIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppClientsClientIdRoute: AppClientsClientIdRoute,
+  AppDeskAgentsRoute: AppDeskAgentsRoute,
+  AppDeskAllRoute: AppDeskAllRoute,
+  AppDeskMineRoute: AppDeskMineRoute,
+  AppDeskNewRoute: AppDeskNewRoute,
+  AppDeskPeopleRoute: AppDeskPeopleRoute,
+  AppDeskPoolRoute: AppDeskPoolRoute,
   AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,
   AppTeamsTeamIdRoute: AppTeamsTeamIdRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
+  AppDeskIndexRoute: AppDeskIndexRoute,
   AppProjectsIndexRoute: AppProjectsIndexRoute,
   AppTeamsIndexRoute: AppTeamsIndexRoute,
+  AppDeskTicketsTicketIdRoute: AppDeskTicketsTicketIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -249,6 +437,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  ReportRoute: ReportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

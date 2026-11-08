@@ -41,6 +41,10 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleWrongPassword(error: WrongCurrentPasswordException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.message!!).apply { title = "Validation failed" }
 
+    @ExceptionHandler(crm.desk.TooManyPublicReportsException::class)
+    fun handleTooManyReports(error: crm.desk.TooManyPublicReportsException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, error.message!!).apply { title = "Too many requests" }
+
     @ExceptionHandler(InvalidCursorException::class)
     fun handleCursor(error: InvalidCursorException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.message ?: "Invalid cursor.").apply {

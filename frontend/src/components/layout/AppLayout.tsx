@@ -4,10 +4,16 @@ import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import {
 	BriefcaseBusiness,
 	Building2,
+	Contact,
+	Headset,
+	Inbox,
 	KeyRound,
 	LayoutDashboard,
+	ListTodo,
 	LogOut,
 	Menu,
+	SquarePlus,
+	Tickets,
 	UserCog,
 	UsersRound,
 } from "lucide-react";
@@ -19,21 +25,56 @@ import {
 	ChangePasswordDrawer,
 } from "#/features/auth/ChangePasswordDrawer";
 import { can, type Role, useForgetSession, useMe } from "#/features/auth/session";
+import { DeskCounters } from "#/features/desk/components/DeskCounters";
 import { roleLabel } from "#/features/types";
+import { type I18n, useI18n } from "#/i18n";
+import { LanguageSwitch } from "#/i18n/LanguageSwitch";
 
 interface NavItem {
-	to: "/" | "/clients" | "/projects" | "/teams" | "/users";
-	label: string;
+	to:
+		| "/"
+		| "/clients"
+		| "/projects"
+		| "/teams"
+		| "/users"
+		| "/desk/pool"
+		| "/desk/mine"
+		| "/desk/all"
+		| "/desk/new"
+		| "/desk/agents"
+		| "/desk/people";
+	label: (t: I18n["t"]) => string;
 	icon: typeof LayoutDashboard;
 	visible?: (role: Role) => boolean;
 }
 
-const NAV: NavItem[] = [
-	{ to: "/", label: "Overview", icon: LayoutDashboard },
-	{ to: "/clients", label: "Clients", icon: Building2 },
-	{ to: "/projects", label: "Projects", icon: BriefcaseBusiness },
-	{ to: "/teams", label: "Teams", icon: UsersRound },
-	{ to: "/users", label: "Users", icon: UserCog, visible: can.seeUsers },
+const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
+	{
+		section: (t) => t("CRM", "CRM"),
+		items: [
+			{ to: "/", label: (t) => t("Przegląd", "Overview"), icon: LayoutDashboard },
+			{ to: "/clients", label: (t) => t("Klienci", "Clients"), icon: Building2 },
+			{ to: "/projects", label: (t) => t("Projekty", "Projects"), icon: BriefcaseBusiness },
+			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
+			{
+				to: "/users",
+				label: (t) => t("Użytkownicy", "Users"),
+				icon: UserCog,
+				visible: can.seeUsers,
+			},
+		],
+	},
+	{
+		section: (t) => t("Service desk", "Service desk"),
+		items: [
+			{ to: "/desk/pool", label: (t) => t("Pula", "Pool"), icon: Inbox },
+			{ to: "/desk/mine", label: (t) => t("Moje zgłoszenia", "My tickets"), icon: ListTodo },
+			{ to: "/desk/all", label: (t) => t("Wszystkie", "All tickets"), icon: Tickets },
+			{ to: "/desk/new", label: (t) => t("Nowe zgłoszenie", "New ticket"), icon: SquarePlus },
+			{ to: "/desk/agents", label: (t) => t("Agenci", "Agents"), icon: Headset },
+			{ to: "/desk/people", label: (t) => t("Osoby", "People"), icon: Contact },
+		],
+	},
 ];
 
 function Brand() {
@@ -51,29 +92,54 @@ function Brand() {
 }
 
 function Navigation({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
+	const { t } = useI18n();
 	return (
-		<nav className="flex flex-col gap-1 px-3" aria-label="Main">
-			<p className="px-3 pb-2 font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
-				Workspace
-			</p>
-			{NAV.filter((item) => !item.visible || item.visible(role)).map((item) => (
-				<Link
-					key={item.to}
-					to={item.to}
-					onClick={onNavigate}
-					activeOptions={{ exact: item.to === "/" }}
-					className="group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover data-[status=active]:bg-sidebar-active data-[status=active]:text-champagne"
-				>
-					<span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-champagne opacity-0 transition-opacity group-data-[status=active]:opacity-100" />
-					<item.icon className="size-4" strokeWidth={1.75} />
-					{item.label}
-				</Link>
+		<nav className="flex flex-col gap-1 px-3" aria-label={t("Główna", "Main")}>
+			{NAV.map((group) => (
+				<div key={group.section(t)} className="flex flex-col gap-1 pb-4">
+					<p className="px-3 pb-2 font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
+						{group.section(t)}
+					</p>
+					<NavLinks items={group.items} role={role} onNavigate={onNavigate} />
+				</div>
 			))}
 		</nav>
 	);
 }
 
+function NavLinks({
+	items,
+	role,
+	onNavigate,
+}: {
+	items: NavItem[];
+	role: Role;
+	onNavigate?: () => void;
+}) {
+	const { t } = useI18n();
+	return (
+		<>
+			{items
+				.filter((item) => !item.visible || item.visible(role))
+				.map((item) => (
+					<Link
+						key={item.to}
+						to={item.to}
+						onClick={onNavigate}
+						activeOptions={{ exact: item.to === "/" }}
+						className="group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover data-[status=active]:bg-sidebar-active data-[status=active]:text-champagne"
+					>
+						<span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-champagne opacity-0 transition-opacity group-data-[status=active]:opacity-100" />
+						<item.icon className="size-4" strokeWidth={1.75} />
+						{item.label(t)}
+					</Link>
+				))}
+		</>
+	);
+}
+
 function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
+	const { t } = useI18n();
 	const me = useMe();
 	const navigate = useNavigate();
 	const forget = useForgetSession();
@@ -88,7 +154,11 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 	return (
 		<Dropdown>
 			<Dropdown.Trigger>
-				<Button variant="ghost" className="h-auto gap-3 px-2 py-1.5" aria-label="Account">
+				<Button
+					variant="ghost"
+					className="h-auto gap-3 px-2 py-1.5"
+					aria-label={t("Konto", "Account")}
+				>
 					<UserAvatar name={me.displayName} />
 					<span className="hidden text-left leading-tight sm:block">
 						<span className="block text-sm font-medium text-foreground">{me.displayName}</span>
@@ -103,20 +173,20 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 						if (key === "logout") logout.mutate();
 					}}
 				>
-					<Dropdown.Item id="role" isDisabled textValue="Role">
-						<Label>Signed in as</Label>
+					<Dropdown.Item id="role" isDisabled textValue={t("Rola", "Role")}>
+						<Label>{t("Zalogowano jako", "Signed in as")}</Label>
 						<Chip size="sm" variant="soft">
 							{roleLabel[me.role]}
 						</Chip>
 					</Dropdown.Item>
 					<Separator />
-					<Dropdown.Item id="password" textValue="Change password">
+					<Dropdown.Item id="password" textValue={t("Zmień hasło", "Change password")}>
 						<KeyRound className="size-4" />
-						<Label>Change password</Label>
+						<Label>{t("Zmień hasło", "Change password")}</Label>
 					</Dropdown.Item>
-					<Dropdown.Item id="logout" textValue="Log out" variant="danger">
+					<Dropdown.Item id="logout" textValue={t("Wyloguj", "Log out")} variant="danger">
 						<LogOut className="size-4" />
-						<Label>Log out</Label>
+						<Label>{t("Wyloguj", "Log out")}</Label>
 					</Dropdown.Item>
 				</Dropdown.Menu>
 			</Dropdown.Popover>
@@ -125,6 +195,7 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 }
 
 export function AppLayout() {
+	const { t } = useI18n();
 	const me = useMe();
 	const [mobileNav, setMobileNav] = useState(false);
 	const passwordDrawer = useRef<ChangePasswordCommand>(null);
@@ -135,7 +206,10 @@ export function AppLayout() {
 				<Brand />
 				<Navigation role={me.role} />
 				<p className="mt-auto px-6 pb-6 text-[11px] leading-relaxed text-sidebar-muted">
-					Every read and write is a T-SQL procedure.
+					{t(
+						"Każdy odczyt i zapis to procedura T-SQL.",
+						"Every read and write is a T-SQL procedure.",
+					)}
 				</p>
 			</aside>
 
@@ -156,12 +230,14 @@ export function AppLayout() {
 						isIconOnly
 						variant="ghost"
 						className="lg:hidden"
-						aria-label="Open navigation"
+						aria-label={t("Otwórz nawigację", "Open navigation")}
 						onPress={() => setMobileNav(true)}
 					>
 						<Menu className="size-5" />
 					</Button>
-					<div className="ml-auto">
+					<DeskCounters />
+					<div className="ml-auto flex items-center gap-3">
+						<LanguageSwitch />
 						<UserMenu onChangePassword={() => passwordDrawer.current?.open()} />
 					</div>
 				</header>
@@ -172,7 +248,7 @@ export function AppLayout() {
 
 			<ChangePasswordDrawer
 				ref={passwordDrawer}
-				onSuccess={() => toast.success("Password changed")}
+				onSuccess={() => toast.success(t("Hasło zmienione", "Password changed"))}
 			/>
 		</div>
 	);

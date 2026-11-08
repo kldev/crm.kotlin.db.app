@@ -6,6 +6,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import axios from "axios";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { LanguageProvider } from "#/i18n";
 import { routeTree } from "#/routeTree.gen";
 
 const queryClient = new QueryClient({
@@ -39,9 +40,11 @@ if (!root) throw new Error("#root is missing in index.html");
 
 createRoot(root).render(
 	<StrictMode>
-		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router} />
-			<Toast.Provider placement="bottom end" />
-		</QueryClientProvider>
+		<LanguageProvider>
+			<QueryClientProvider client={queryClient}>
+				<RouterProvider router={router} />
+				<Toast.Provider placement="bottom end" />
+			</QueryClientProvider>
+		</LanguageProvider>
 	</StrictMode>,
 );

@@ -1,4 +1,5 @@
 import { Label, ListBox, Select } from "@heroui/react";
+import { useI18n } from "#/i18n";
 
 const ANY = "__any";
 
@@ -16,6 +17,8 @@ export function SelectFilter({
 	onChange: (value: string | undefined) => void;
 	className?: string;
 }) {
+	const { t } = useI18n();
+	const any = t("Dowolne", "Any");
 	return (
 		<Select
 			className={className}
@@ -30,8 +33,8 @@ export function SelectFilter({
 			</Select.Trigger>
 			<Select.Popover>
 				<ListBox>
-					<ListBox.Item id={ANY} textValue="Any">
-						Any
+					<ListBox.Item id={ANY} textValue={any}>
+						{any}
 						<ListBox.ItemIndicator />
 					</ListBox.Item>
 					{options.map((o) => (

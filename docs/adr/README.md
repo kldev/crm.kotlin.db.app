@@ -8,5 +8,7 @@
 | [0004](0004-one-seed-for-performance.md) | One configurable seed for performance tests | Accepted |
 | [0005](0005-teams-projects-stages.md) | Teams, projects, stages and comments; read views | Accepted |
 | [0006](0006-react-frontend-served-by-spring.md) | React frontend served by Spring Boot | Accepted |
+| [0007](0007-service-desk-event-stream.md) | Service desk: a ticket is an event stream, decided by procedures | Accepted |
+| [0008](0008-polish-and-english-ui.md) | Polish and English in the web app | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

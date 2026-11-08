@@ -22,4 +22,8 @@ data class SeedProperties(
     val randomSeed: Int = 42,
     @field:Min(1_000) @field:Max(2_000_000) val batchSize: Int = 500_000,
     val password: String? = null,
+    /** Service desk (ADR-0007): generated tickets, only into an empty desk. CRM_SEED_DESK_TICKETS. */
+    @field:Min(0) @field:Max(100_000) val deskTickets: Int = 200,
+    /** CRM_SEED_DESK_ONLY=true: only the desk seed (idempotent), for a database whose CRM data is already seeded. */
+    val deskOnly: Boolean = false,
 )

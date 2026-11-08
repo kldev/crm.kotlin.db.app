@@ -17,3 +17,13 @@ fun ResultSet.getLocalDateTimeOrNull(column: String): LocalDateTime? = getObject
 fun ResultSet.getLocalDate(column: String): LocalDate = getObject(column, LocalDate::class.java)
 
 fun ResultSet.getRowVersion(column: String = "row_version"): String = RowVersion.format(getBytes(column))
+
+/** A datetime2 column stored in UTC (the desk stores every instant so) as an Instant. */
+fun ResultSet.getInstant(column: String): java.time.Instant =
+    getObject(column, LocalDateTime::class.java).toInstant(java.time.ZoneOffset.UTC)
+
+fun ResultSet.getInstantOrNull(column: String): java.time.Instant? =
+    getObject(column, LocalDateTime::class.java)?.toInstant(java.time.ZoneOffset.UTC)
+
+/** An instant as the UTC LocalDateTime a datetime2 parameter expects. */
+fun java.time.Instant.toUtcLocalDateTime(): LocalDateTime = LocalDateTime.ofInstant(this, java.time.ZoneOffset.UTC)

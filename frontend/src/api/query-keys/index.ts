@@ -1,9 +1,12 @@
 import type {
 	CountClientsParams,
 	CountProjectsParams,
+	CountTicketsParams,
+	ListDeskAgentsParams,
 	ListUsersParams,
 	SearchClientsParams,
 	SearchProjectsParams,
+	SearchTicketsParams,
 } from "#/api/models";
 
 /*
@@ -44,4 +47,26 @@ export const teamKeys = {
 export const userKeys = {
 	all: ["users"] as const,
 	list: (filters: Omit<ListUsersParams, "cursor">) => [...userKeys.all, "list", filters] as const,
+};
+
+/** Service desk. Every ticket action invalidates the whole area: lists, counters, the ticket and its timeline. */
+export const deskKeys = {
+	all: ["desk"] as const,
+	catalog: () => [...deskKeys.all, "catalog"] as const,
+	list: (filters: Omit<SearchTicketsParams, "cursor">) =>
+		[...deskKeys.all, "list", filters] as const,
+	count: (filters: CountTicketsParams) => [...deskKeys.all, "count", filters] as const,
+	counters: () => [...deskKeys.all, "counters"] as const,
+	detail: (id: number) => [...deskKeys.all, "detail", id] as const,
+	events: (id: number) => [...deskKeys.all, "events", id] as const,
+	agents: (filters: Omit<ListDeskAgentsParams, "cursor">) =>
+		[...deskKeys.all, "agents", filters] as const,
+	people: () => [...deskKeys.all, "people"] as const,
+};
+
+/** The public form (no session): its own keys, so signing in or out never mixes them with the agents' data. */
+export const publicDeskKeys = {
+	all: ["public-desk"] as const,
+	catalog: () => [...publicDeskKeys.all, "catalog"] as const,
+	people: () => [...publicDeskKeys.all, "people"] as const,
 };

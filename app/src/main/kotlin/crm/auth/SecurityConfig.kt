@@ -73,6 +73,8 @@ class SecurityConfig {
                 authorize(HttpMethod.POST, "/api/auth/login", permitAll)
                 // Answers 404 unless CRM_DEV_LOGIN=true (AuthController).
                 authorize("/api/auth/dev-login", permitAll)
+                // The public report form of the service desk (ADR-0007): catalog, names, new tickets only.
+                authorize("/api/public/**", permitAll)
                 authorize("/actuator/health/**", permitAll)
                 // Error dispatches keep their real status (otherwise denyAll would turn every error into 403).
                 authorize("/error", permitAll)

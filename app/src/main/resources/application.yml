@@ -39,6 +39,8 @@ crm:
     admin-password: ${CRM_ADMIN_PASSWORD:}
     # Local development only: POST /api/auth/dev-login logs in as any active user without a password.
     dev-login: ${CRM_DEV_LOGIN:false}
+  desk:
+    public-reports-per-minute: ${CRM_DESK_PUBLIC_REPORTS_PER_MINUTE:30}
 
 management:
   endpoints:

@@ -1,6 +1,7 @@
 # crm.kotlin.db.app
 
-A small CRM: users, clients, teams and the projects that teams deliver for clients, with stages and comments.
+A small CRM: users, clients, teams and the projects that teams deliver for clients, with stages and comments - and a
+**service desk** (ported from Halcyon): requests to the company's teams, one event stream per ticket (ADR-0007).
 **Kotlin + Spring Boot 4** for the HTTP API and identity, **all data logic in plain T-SQL procedures** on
 **SQL Server 2025 Express**. No ORM, no generated endpoints: every endpoint is written by hand and calls exactly
 one procedure with `EXEC app.<procedure>`.
@@ -18,6 +19,12 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   client details with its projects, projects with stage, team and overdue filters, project details with the stage
   path, stage changes with a comment, comments and stage history, teams with delivery statistics from the indexed
   view and membership, users (ADMIN/MANAGER).
+- Service desk: the pool, my tickets and all tickets (filters in the URL, open by deadline then resolved, total on
+  request), counters of overdue / due soon / pool / mine in the top bar, a new ticket registered by an agent (dated
+  back up to 30 days), the ticket page (take, resolve, hand over, return, priority with the new deadline, the person
+  doing the work, comments, the timeline from the event stream), agents and people. The public form
+  <http://127.0.0.1:8088/report> needs no sign-in and gives the requester the ticket number.
+- Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
 
@@ -29,7 +36,7 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
 | Controllers (`app/src/main/kotlin/crm/*/…Controller.kt`) | request validation, paging cursors, one repository call |
 | Repositories (`…Repository.kt`) | one method = one `EXEC app.<procedure>` through `JdbcClient` |
 | `app` schema (`app/src/main/resources/db/migration/R__app_*.sql`) | every rule: validation, visibility, state changes, concurrency |
-| `crm` schema (`V1__…`, `V3__…`) | tables, the view `crm.v_projects`, the indexed view `crm.v_team_project_stats` |
+| `crm` schema (`V1__…`, `V3__…`, `V5__…`) | tables, the view `crm.v_projects`, the indexed view `crm.v_team_project_stats`, the desk's event stream `crm.ticket_events` and its read model `crm.tickets` |
 
 The application's database login has **only** `EXECUTE` on schema `app` (ADR-0002). `./gradlew check` fails if an
 ORM or query mapper reaches the classpath.
@@ -72,6 +79,9 @@ CRM_SEED_CLIENTS=10000 CRM_SEED_PROJECTS=10000 CRM_SEED_COMMENTS=5000 ./start.sh
 
 After the seed log in as `perf.sales.0001`, `perf.manager.0001` or `perf.admin.0001` with `CRM_SEED_PASSWORD`.
 The seed runs only on an empty database (error 51060 otherwise); start over with `./start.sh --clean --seed`.
+It also seeds the service desk (`seed.desk_run`: ten agents such as `anna.nowak`, 40 people, `CRM_SEED_DESK_TICKETS`
+tickets). That part is idempotent; for a database seeded before the desk existed run only it:
+`CRM_SEED_DESK_ONLY=true docker compose --profile seed run --rm seed`.
 
 ### 3. Day to day
 
@@ -146,6 +156,12 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET/POST /api/projects/{id}/comments` | `project_comment_list`, `project_comment_add` | all visible |
 | `GET/POST /api/teams`, `GET /api/teams/{id}/members`, `GET /api/teams/{id}/stats` | `team_list`, `team_create`, `team_member_list`, `team_project_stats` | all; create: ADMIN |
 | `POST/DELETE /api/teams/{id}/members[/{userId}]` | `team_member_add`, `team_member_remove` | ADMIN, team lead |
+| `GET /api/desk/catalog` | `desk_catalog_list`, `desk_priority_list` | all |
+| `GET /api/desk/tickets`, `/count`, `/counters` | `desk_ticket_search`, `desk_ticket_count`, `desk_ticket_counters` | all |
+| `POST /api/desk/tickets`, `GET /api/desk/tickets/{id}`, `/by-number/{number}`, `/{id}/events` | `desk_ticket_report`, `desk_ticket_get`, `desk_ticket_find`, `desk_ticket_event_list` | all |
+| `POST /api/desk/tickets/{id}/take`, `/hand-over`, `/return`, `/priority`, `/resolve`, `/comments`, `/handler` | `desk_ticket_take`, `_hand_over`, `_return`, `_change_priority`, `_resolve`, `_comment`, `_assign_handler` | all (the rules of the assignee in the procedures) |
+| `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
+| `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
 Lists are keyset-paged: pass `nextCursor` from a page as `cursor` for the next one. Updates need the
 `rowVersion` from the last read (409 when someone changed the row in the meantime).
@@ -165,6 +181,13 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51030-51034 | project: name, stage, dates, budget, comment text | 400 |
 | 51035-51038 | team: lead must be an active manager, name, owner must be a team member, member must be active | 400 |
 | 51050, 51060 | seed: invalid parameter, database already seeded | 400 |
+| 51100-51110 | desk ticket: title, description, category, subcategory (retired), priority, report date (future, > 30 days back), requester | 400 |
+| 51111-51116 | desk: reason, comment, hand over to yourself, handler outside the department, list filter | 400 |
+| 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
+| 51410-51412 | ticket, person, agent not found | 404 |
+| 51910 | ticket already in progress with another agent (someone was faster) | 409 |
+| 51911, 51912 | ticket already resolved / still in the pool (take it first) | 409 |
+| 51913 | the ticket's stream changed meanwhile | 409 |
 | 51301 | role not allowed | 403 |
 | 51302 | own account not active | 403 |
 | 51303 | sales user works only on own clients | 403 |
@@ -221,16 +244,19 @@ Details, per-endpoint latencies and logical reads per procedure: [perf/README.md
 
 ## Tests
 
-`./gradlew build` runs 41 tests on a real SQL Server 2025 Express (Testcontainers, the same image as compose):
+`./gradlew build` runs the tests on a real SQL Server 2025 Express (Testcontainers, the same image as compose):
 architecture rules (no SQL text in Kotlin, only `EXEC app.*`, no ORM imports), database permissions (the app login
 gets error 229 on tables and on `seed`), login and lockout, clients, projects, stages, comments and the indexed view
-over HTTP, and the seed.
+over HTTP, the service desk (rules of every action, three agents taking one ticket at once, deadlines, lists in two
+phases, the public form), and the seed.
 
 ## Configuration
 
 All settings are environment variables (see `infrastructure/.env-sample` and `app/src/main/resources/application.yml`):
 database URL and logins (`CRM_DB_*`), pool size (`CRM_DB_POOL_SIZE`), session timeout (`CRM_SESSION_TIMEOUT`),
-lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_ADMIN_*`), seed (`CRM_SEED_*`).
+lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_ADMIN_*`), seed (`CRM_SEED_*`;
+`CRM_SEED_DESK_TICKETS`, and `CRM_SEED_DESK_ONLY=true` to add the desk to an already seeded database), dev login
+(`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`).
 
 ## Build
 
