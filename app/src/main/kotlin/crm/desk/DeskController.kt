@@ -20,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -174,6 +175,27 @@ class DeskController(
         @PathVariable id: Long,
         @Valid @RequestBody body: AssignHandlerRequest,
     ): TicketResponse = desk.assignHandler(actor.id, id, body)
+
+    @Operation(summary = "The ticket's report data: current values in the subcategory's order.")
+    @GetMapping("/tickets/{id}/fields")
+    fun listTicketFields(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): List<TicketFieldResponse> =
+        desk.fields(actor.id, id)
+
+    @Operation(
+        summary = "Fill in or correct the report data (any agent, any state). `values` is the whole new set; " +
+            "an empty value clears a field.",
+    )
+    @PutMapping("/tickets/{id}/fields")
+    fun updateTicketFields(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @PathVariable id: Long,
+        @Valid @RequestBody body: UpdateFieldsRequest,
+    ): TicketResponse = desk.updateFields(actor.id, id, body.values!!)
+
+    @Operation(summary = "Marketing campaigns ordered for this ticket (their related-ticket is its number).")
+    @GetMapping("/tickets/{id}/linked")
+    fun listLinkedTickets(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): List<TicketResponse> =
+        desk.linked(actor.id, id)
 
     @Operation(summary = "The ticket's attachments, oldest first.")
     @GetMapping("/tickets/{id}/attachments")

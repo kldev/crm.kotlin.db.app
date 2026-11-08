@@ -27,6 +27,7 @@ import {
 } from "../types";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { CategoryIcon } from "./CategoryIcon";
+import { FieldInputs, type FieldValues } from "./FieldInputs";
 
 export interface ReportValues {
 	categoryKey: string;
@@ -60,17 +61,28 @@ export function ReportForm({
 	isPending,
 	error,
 	onSubmit,
+	initial,
 }: {
 	catalog: DeskCatalog;
 	people: PublicPerson[];
 	mode: "agent" | "public";
 	isPending: boolean;
 	error: unknown;
-	onSubmit: (values: ReportValues, files: File[]) => void;
+	onSubmit: (values: ReportValues, files: File[], fields: FieldValues) => void;
+	/** Values to start from (a link such as "order a campaign" fills them). */
+	initial?: Partial<
+		Pick<ReportValues, "categoryKey" | "subcategoryKey" | "title" | "description">
+	> & {
+		fields?: FieldValues;
+	};
 }) {
 	const i18n = useI18n();
 	const { t, n } = i18n;
 	const [files, setFiles] = useState<File[]>([]);
+	const [fieldValues, setFieldValues] = useState<FieldValues>(initial?.fields ?? {});
+	const definitionsOf = (subcategoryKey: string) =>
+		catalog.categories.flatMap((c) => c.subcategories).find((s) => s.key === subcategoryKey)
+			?.fields ?? [];
 	const schema = useMemo(
 		() =>
 			z
@@ -108,17 +120,27 @@ export function ReportForm({
 
 	const form = useAppForm({
 		defaultValues: {
-			categoryKey: "",
-			subcategoryKey: "",
-			title: "",
-			description: "",
+			categoryKey: initial?.categoryKey ?? "",
+			subcategoryKey: initial?.subcategoryKey ?? "",
+			title: initial?.title ?? "",
+			description: initial?.description ?? "",
 			priority: "MEDIUM",
 			requesterPersonId: null,
 			requesterIncognito: false,
 			reportedAt: mode === "agent" ? localNow() : "",
 		} as ReportValues,
 		validators: { onChange: schema },
-		onSubmit: ({ value }) => onSubmit(value, files),
+		// Only the chosen subcategory's fields travel; values typed for another topic are dropped.
+		onSubmit: ({ value }) => {
+			const keys = new Set(definitionsOf(value.subcategoryKey).map((f) => f.key));
+			onSubmit(
+				value,
+				files,
+				Object.fromEntries(
+					Object.entries(fieldValues).filter(([k, v]) => keys.has(k) && v.trim() !== ""),
+				),
+			);
+		},
 	});
 
 	return (
@@ -212,6 +234,18 @@ export function ReportForm({
 									</div>
 								)}
 							</form.Field>
+						</Step>
+					);
+				}}
+			</form.Subscribe>
+
+			<form.Subscribe selector={(st) => st.values.subcategoryKey}>
+				{(subcategoryKey) => {
+					const definitions = definitionsOf(subcategoryKey);
+					if (definitions.length === 0) return null;
+					return (
+						<Step title={t("Dane do raportu", "Report data")}>
+							<FieldInputs fields={definitions} values={fieldValues} onChange={setFieldValues} />
 						</Step>
 					);
 				}}
@@ -380,13 +414,15 @@ export function ReportForm({
 	);
 }
 
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+function Step({ n, title, children }: { n?: number; title: string; children: React.ReactNode }) {
 	return (
 		<section className="flex flex-col gap-3">
 			<h2 className="flex items-center gap-3 font-display text-2xl font-semibold text-foreground">
-				<span className="flex size-7 items-center justify-center rounded-full bg-accent-soft font-mono text-xs text-ink">
-					{n}
-				</span>
+				{n ? (
+					<span className="flex size-7 items-center justify-center rounded-full bg-accent-soft font-mono text-xs text-ink">
+						{n}
+					</span>
+				) : null}
 				{title}
 			</h2>
 			{children}

@@ -17,13 +17,16 @@ import {
 	handOverTicket,
 	listDeskAgents,
 	listDeskPeople,
+	listLinkedTickets,
 	listTicketAttachments,
 	listTicketEvents,
+	listTicketFields,
 	reportTicket,
 	resolveTicket,
 	returnTicket,
 	searchTickets,
 	takeTicket,
+	updateTicketFields,
 } from "#/api/endpoints/desk/desk";
 import { getPublicDeskCatalog, listPublicPeople } from "#/api/endpoints/public-desk/public-desk";
 import type {
@@ -143,6 +146,13 @@ function reportPublicWithFiles(body: PublicReportRequest, files: File[]) {
 	});
 }
 
+export const ticketFieldsQuery = (id: number) =>
+	queryOptions({ queryKey: deskKeys.fields(id), queryFn: () => listTicketFields(id) });
+
+/** Marketing campaigns ordered for a ticket (their related-ticket is its number). */
+export const linkedQuery = (id: number) =>
+	queryOptions({ queryKey: deskKeys.linked(id), queryFn: () => listLinkedTickets(id) });
+
 export const peopleQuery = () =>
 	queryOptions({ queryKey: deskKeys.people(), queryFn: () => listDeskPeople() });
 
@@ -171,6 +181,13 @@ export const useReportPublicTicket = () =>
 		mutationFn: (v: { body: PublicReportRequest; files: File[] }) =>
 			reportPublicWithFiles(v.body, v.files),
 	});
+
+export const useUpdateFields = (onSuccess?: OnTicket) =>
+	useDeskMutation(
+		(v: { id: number; values: Record<string, string> }) =>
+			updateTicketFields(v.id, { values: v.values }),
+		onSuccess,
+	);
 
 export const useAttachFiles = (onSuccess?: OnTicket) =>
 	useDeskMutation(

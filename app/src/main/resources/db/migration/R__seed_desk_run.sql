@@ -91,6 +91,9 @@ BEGIN
     SELECT s.subcategory_key, s.category_key, s.name FROM crm.desk_subcategories AS s
     JOIN crm.desk_categories AS c ON c.category_key = s.category_key
     WHERE s.is_active = 1
+      -- Generated tickets carry no report data, so only topics without required fields (as Halcyon's seed).
+      AND NOT EXISTS (SELECT 1 FROM crm.desk_subcategory_fields AS sf
+                      WHERE sf.subcategory_key = s.subcategory_key AND sf.is_required = 1)
     ORDER BY c.sort_order, s.sort_order;
     DECLARE @people TABLE (n int IDENTITY (0, 1) PRIMARY KEY, id int NOT NULL);
     INSERT @people (id) SELECT id FROM crm.people ORDER BY id;

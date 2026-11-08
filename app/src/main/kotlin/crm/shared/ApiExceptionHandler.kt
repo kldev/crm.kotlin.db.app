@@ -54,6 +54,10 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
         }
     }
 
+    @ExceptionHandler(crm.desk.reports.UnknownReportException::class)
+    fun handleUnknownReport(error: crm.desk.reports.UnknownReportException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, error.message!!).apply { title = "Not found" }
+
     @ExceptionHandler(InvalidCursorException::class)
     fun handleCursor(error: InvalidCursorException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.message ?: "Invalid cursor.").apply {

@@ -36,6 +36,27 @@ const DESK: Record<number, Text> = {
 	51122: { pl: "Plik „$1” jest pusty.", match: /"(.+)"/ },
 	51123: { pl: "Plik „$1” jest za duży. Limit to 20 MB.", match: /"(.+)"/ },
 	51124: { pl: "Zgłoszenie może mieć najwyżej 10 załączników." },
+	51130: { pl: "Pole „$1” nie należy do tej podkategorii.", match: /"(.+)"/ },
+	51131: { pl: "Uzupełnij pole „$1”.", match: /"(.+)"/ },
+	51132: { pl: "Pole „$1” może mieć najwyżej 200 znaków.", match: /"(.+)"/ },
+	51133: { pl: "Pole „$1” musi być datą (rrrr-mm-dd).", match: /"(.+)"/ },
+	51134: { pl: "Pole „$1” musi być adresem e-mail.", match: /"(.+)"/ },
+	51135: {
+		pl: "Pole „$1” musi być kwotą, np. 1 234,56 (najwyżej 2 miejsca po przecinku).",
+		match: /"(.+)"/,
+	},
+	51136: { pl: "Pole „$1” nie jest poprawnym numerem rachunku (IBAN).", match: /"(.+)"/ },
+	51137: { pl: "Pole „$1” musi być liczbą od 1 do 10000.", match: /"(.+)"/ },
+	51138: { pl: "Wartości „$1” nie ma na liście tego pola.", match: /^"([^"]+)"/ },
+	51139: { pl: "Wybierz wartość pola „$1” z listy.", match: /"(.+)"/ },
+	51140: { pl: "Pole „$1” musi być numerem zgłoszenia, np. HAL-1A2B3C4D.", match: /"(.+)"/ },
+	51141: { pl: "Wybierz rodzaj dokumentu, do którego należy numer." },
+	51142: { pl: "Przy „Brak dokumentów” nie podaje się numeru dokumentu." },
+	51143: { pl: "Podaj numer PESEL." },
+	51144: { pl: "Numer PESEL jest niepoprawny (11 cyfr z poprawną cyfrą kontrolną)." },
+	51145: { pl: "Podaj numer dowodu osobistego." },
+	51146: { pl: "Ta podkategoria nie ma danych do raportu." },
+	51150: { pl: "Wybierz okres najwyżej jednego roku (od <= do)." },
 	51310: { pl: "Tylko agent realizujący zgłoszenie ($1) może je przekazać.", match: /\((.+)\)/ },
 	51311: {
 		pl: "Tylko agent realizujący zgłoszenie ($1) może je oddać do puli.",
@@ -80,7 +101,13 @@ export function problemText(error: unknown, i18n: Pick<I18n, "lang" | "t" | "n">
 		const text = data?.errorNumber != null ? DESK[data.errorNumber] : undefined;
 		if (text && data?.detail) {
 			const captured = text.match?.exec(data.detail)?.[1] ?? "";
-			if (i18n.lang === "en") return (text.en ?? data.detail).replace("$1", captured);
+			// A captured catalog name (a field's label, a department) is Polish in the database: shown translated.
+			if (i18n.lang === "en")
+				return text.en
+					? text.en.replace("$1", captured)
+					: captured
+						? data.detail.replace(captured, i18n.n(captured))
+						: data.detail;
 			return text.pl.replace("$1", i18n.n(captured) || captured);
 		}
 	}

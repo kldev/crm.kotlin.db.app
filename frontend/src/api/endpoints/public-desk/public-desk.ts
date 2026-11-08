@@ -45,6 +45,9 @@ if(publicReportRequest?.requesterPersonId !== undefined && publicReportRequest.r
 if(publicReportRequest?.requesterIncognito !== undefined && publicReportRequest.requesterIncognito !== null) {
  formData.append(`requesterIncognito`, publicReportRequest.requesterIncognito.toString())
  }
+if(publicReportRequest?.fields !== undefined && publicReportRequest.fields !== null) {
+ formData.append(`fields`, publicReportRequest.fields);
+ }
 
       return customInstance<PublicReportResponse>(
       {url: `/api/public/desk/tickets`, method: 'POST',

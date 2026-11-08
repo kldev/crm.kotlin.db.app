@@ -4,6 +4,7 @@
   AGENT) and may date it back up to 30 days (a phone call this morning), never more than 5 minutes ahead.
   The requester is a person from crm.people XOR incognito. A new ticket starts in the pool.
   @attachments (JSON, ADR-0009): files already stored, recorded in the same transaction as the report.
+  @fields (JSON object, ADR-0010): the report data of the subcategory, checked by crm.desk_fields_check.
 */
 CREATE OR ALTER PROCEDURE crm.desk_ticket_create
     @actor_id            int,
@@ -16,7 +17,8 @@ CREATE OR ALTER PROCEDURE crm.desk_ticket_create
     @requester_person_id int,
     @requester_incognito bit,
     @ticket_id           bigint OUTPUT,
-    @attachments         nvarchar(max) = NULL
+    @attachments         nvarchar(max) = NULL,
+    @fields              nvarchar(max) = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
@@ -52,6 +54,9 @@ BEGIN
         DECLARE @retired nvarchar(400) = FORMATMESSAGE(N'Subcategory "%s" no longer takes new tickets.', @sub_name);
         THROW 51106, @retired, 1;
     END;
+
+    DECLARE @normalized nvarchar(max);
+    EXEC crm.desk_fields_check @subcategory_key, @fields, @normalized OUTPUT;
 
     DECLARE @sla int = (SELECT sla_minutes FROM crm.desk_priorities WHERE priority = @priority);
     IF @sla IS NULL
@@ -101,8 +106,12 @@ BEGIN
         'subcategory': @subcategory_key, 'priority': @priority, 'reportedAt': @reported_at,
         'requester': JSON_OBJECT('incognito': CAST(@requester_incognito AS bit), 'personId': @requester_person_id,
                                  'name': @requester_name),
-        'channel': @channel, 'registeredBy': @actor_name);
+        'channel': @channel, 'registeredBy': @actor_name,
+        'fields': JSON_QUERY(IIF(@normalized = N'{}', NULL, @normalized)));
     EXEC crm.desk_ticket_append @ticket_id, 0, 'TicketReported', @now, @actor_id, @actor_name, @data;
+
+    INSERT crm.ticket_fields (ticket_id, field_key, value)
+    SELECT @ticket_id, [key], [value] FROM OPENJSON(@normalized);
 
     IF @attachments IS NOT NULL
     BEGIN

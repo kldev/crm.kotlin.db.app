@@ -25,6 +25,8 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   doing the work, comments, attachments with image thumbnails, the timeline from the event stream), agents and people. The public form
   <http://127.0.0.1:8088/report> needs no sign-in, takes files with the report and gives the requester the ticket
   number. Attachments live in RustFS (S3, console <http://127.0.0.1:19001>), ADR-0009.
+- Report data per topic (PESEL, IBAN, amounts, dates, choices; ADR-0010) on the forms and the ticket page, five
+  category reports and the agents' work with XLSX, PDF and CSV exports, campaigns linked to recruitment tickets.
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -162,6 +164,8 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `POST /api/desk/tickets`, `GET /api/desk/tickets/{id}`, `/by-number/{number}`, `/{id}/events` | `desk_ticket_report`, `desk_ticket_get`, `desk_ticket_find`, `desk_ticket_event_list` | all |
 | `POST /api/desk/tickets/{id}/take`, `/hand-over`, `/return`, `/priority`, `/resolve`, `/comments`, `/handler` | `desk_ticket_take`, `_hand_over`, `_return`, `_change_priority`, `_resolve`, `_comment`, `_assign_handler` | all (the rules of the assignee in the procedures) |
 | `GET/POST /api/desk/tickets/{id}/attachments`, `GET …/attachments/{attachmentId}` | `desk_attachment_list`, `desk_attachment_check` + `desk_ticket_attach`, `desk_attachment_get` | all |
+| `GET/PUT /api/desk/tickets/{id}/fields`, `GET …/linked` | `desk_ticket_field_list`, `desk_ticket_update_fields`, `desk_ticket_linked_list` | all |
+| `GET /api/desk/reports/categories/{slug}[/export.{csv,xlsx,pdf}]`, `GET /api/desk/reports/agents[/export.…]` | `desk_report_category`, `desk_report_agents`, `desk_report_period_list` | all |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
@@ -186,6 +190,8 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51100-51110 | desk ticket: title, description, category, subcategory (retired), priority, report date (future, > 30 days back), requester | 400 |
 | 51111-51116 | desk: reason, comment, hand over to yourself, handler outside the department, list filter | 400 |
 | 51120-51124 | attachment: no name, type not allowed, empty, over 20 MB, more than 10 per ticket | 400 |
+| 51130-51146 | report data: field of another subcategory, required, length, date, e-mail, amount, IBAN, count, multi-choice, choice, ticket number, identity document and PESEL rules, no report data | 400 |
+| 51150 | report period: from <= to, at most a year | 400 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
 | 51410-51413 | ticket, person, agent, attachment not found | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
@@ -252,7 +258,8 @@ architecture rules (no SQL text in Kotlin, only `EXEC app.*`, no ORM imports), d
 gets error 229 on tables and on `seed`), login and lockout, clients, projects, stages, comments and the indexed view
 over HTTP, the service desk (rules of every action, three agents taking one ticket at once, deadlines, lists in two
 phases, the public form, attachments on a real RustFS: refused types, the limit of 10, refused uploads deleted from
-the bucket, download headers), and the seed.
+the bucket, download headers), report data (every kind and the PESEL / IBAN rules, changes listed in the event),
+the reports and their CSV / XLSX / PDF exports, and the seed.
 
 ## Configuration
 

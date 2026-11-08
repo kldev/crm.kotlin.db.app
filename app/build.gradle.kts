@@ -33,6 +33,9 @@ dependencies {
         exclude(group = "software.amazon.awssdk", module = "apache-client")
     }
     implementation("software.amazon.awssdk:url-connection-client")
+    // Desk report exports (ADR-0010): XLSX with Apache POI, PDF with OpenPDF (Lato embedded for Polish letters).
+    implementation(libs.poi.ooxml)
+    implementation(libs.openpdf)
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     runtimeOnly("com.microsoft.sqlserver:mssql-jdbc")

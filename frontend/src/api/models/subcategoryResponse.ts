@@ -4,6 +4,7 @@
  * OpenAPI definition
  * OpenAPI spec version: v0
  */
+import type { FieldDefinitionResponse } from './fieldDefinitionResponse.ts';
 
 export interface SubcategoryResponse {
   key: string;
@@ -11,4 +12,5 @@ export interface SubcategoryResponse {
   /** @nullable */
   market?: string | null;
   active: boolean;
+  fields: FieldDefinitionResponse[];
 }

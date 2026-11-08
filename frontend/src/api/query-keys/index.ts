@@ -60,6 +60,9 @@ export const deskKeys = {
 	detail: (id: number) => [...deskKeys.all, "detail", id] as const,
 	events: (id: number) => [...deskKeys.all, "events", id] as const,
 	attachments: (id: number) => [...deskKeys.all, "attachments", id] as const,
+	fields: (id: number) => [...deskKeys.all, "fields", id] as const,
+	linked: (id: number) => [...deskKeys.all, "linked", id] as const,
+	report: (kind: string, filters: object) => [...deskKeys.all, "report", kind, filters] as const,
 	agents: (filters: Omit<ListDeskAgentsParams, "cursor">) =>
 		[...deskKeys.all, "agents", filters] as const,
 	people: () => [...deskKeys.all, "people"] as const,

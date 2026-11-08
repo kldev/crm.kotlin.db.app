@@ -8,7 +8,8 @@ CREATE OR ALTER PROCEDURE app.desk_ticket_report
     @priority            varchar(8),
     @reported_at         datetime2(3),
     @requester_person_id int = NULL,
-    @requester_incognito bit = 0
+    @requester_incognito bit = 0,
+    @fields              nvarchar(max) = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
@@ -17,6 +18,6 @@ BEGIN
 
     DECLARE @ticket_id bigint;
     EXEC crm.desk_ticket_create @actor_id, @title, @description, @category_key, @subcategory_key, @priority,
-         @reported_at, @requester_person_id, @requester_incognito, @ticket_id OUTPUT;
+         @reported_at, @requester_person_id, @requester_incognito, @ticket_id OUTPUT, NULL, @fields;
     EXEC crm.desk_ticket_select @ticket_id;
 END;

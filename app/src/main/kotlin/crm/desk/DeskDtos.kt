@@ -65,6 +65,8 @@ data class ReportTicketRequest(
     @field:NotNull val reportedAt: Instant?,
     val requesterPersonId: Int?,
     val requesterIncognito: Boolean?,
+    /** Report data of the subcategory (ADR-0010), field key -> value; checked by the procedure. */
+    val fields: Map<String, String?>? = null,
 )
 
 data class PublicReportRequest(
@@ -75,6 +77,8 @@ data class PublicReportRequest(
     @field:NotBlank @field:Pattern(regexp = PRIORITIES) val priority: String?,
     val requesterPersonId: Int?,
     val requesterIncognito: Boolean?,
+    /** Report data as a JSON object (a multipart form field), field key -> value; checked by the procedure. */
+    @field:Size(max = 20000) val fields: String? = null,
 )
 
 /** What the public form tells the requester: the number to quote and the deadline. */
@@ -120,7 +124,31 @@ data class PersonResponse(
 /** A person as the public form shows them: no contacts. */
 data class PublicPerson(val id: Int, val firstName: String, val lastName: String, val department: String)
 
-data class SubcategoryResponse(val key: String, val name: String, val market: String?, val active: Boolean)
+data class SubcategoryResponse(
+    val key: String,
+    val name: String,
+    val market: String?,
+    val active: Boolean,
+    /** Report data the subcategory collects, in the form's order (ADR-0010). */
+    val fields: List<FieldDefinitionResponse> = emptyList(),
+)
+
+data class FieldDefinitionResponse(
+    val key: String,
+    /** Polish, like every catalog name; the UI translates it. */
+    val label: String,
+    /** TEXT, DATE, EMAIL, CHOICE, AMOUNT, IBAN, COUNT, MULTI_CHOICE or TICKET_NUMBER. */
+    val kind: String,
+    val placeholder: String?,
+    val required: Boolean,
+    val options: List<String>,
+    /** Options the form offers first (they are in `options` too). */
+    val favorites: List<String>,
+)
+
+data class TicketFieldResponse(val key: String, val value: String)
+
+data class UpdateFieldsRequest(@field:NotNull val values: Map<String, String?>?)
 
 data class CategoryResponse(
     val key: String,

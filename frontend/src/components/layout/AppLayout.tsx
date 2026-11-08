@@ -5,6 +5,7 @@ import {
 	BriefcaseBusiness,
 	Building2,
 	Contact,
+	FileSpreadsheet,
 	Headset,
 	Inbox,
 	KeyRound,
@@ -42,7 +43,8 @@ interface NavItem {
 		| "/desk/all"
 		| "/desk/new"
 		| "/desk/agents"
-		| "/desk/people";
+		| "/desk/people"
+		| "/desk/reports";
 	label: (t: I18n["t"]) => string;
 	icon: typeof LayoutDashboard;
 	visible?: (role: Role) => boolean;
@@ -73,6 +75,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/desk/new", label: (t) => t("Nowe zgłoszenie", "New ticket"), icon: SquarePlus },
 			{ to: "/desk/agents", label: (t) => t("Agenci", "Agents"), icon: Headset },
 			{ to: "/desk/people", label: (t) => t("Osoby", "People"), icon: Contact },
+			{ to: "/desk/reports", label: (t) => t("Raporty", "Reports"), icon: FileSpreadsheet },
 		],
 	},
 ];

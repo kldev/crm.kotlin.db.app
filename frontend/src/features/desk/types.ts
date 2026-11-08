@@ -180,6 +180,18 @@ export function describeEvent(
 				who: String(d.addedBy ?? who),
 			};
 		}
+		case "TicketFieldsUpdated": {
+			const changes =
+				(d.changes as { label: string; from: string | null; to: string | null }[]) ?? [];
+			const shown = (v: string | null) => (v ? i18n.n(v) : "-");
+			return {
+				title: t("Dane do raportu", "Report data"),
+				who,
+				text: changes
+					.map((c) => `${i18n.n(c.label)}: ${shown(c.from)} → ${shown(c.to)}`)
+					.join("; "),
+			};
+		}
 		case "TicketHandlerAssigned": {
 			const person = (d.person as Ref)?.name;
 			return {

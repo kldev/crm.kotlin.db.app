@@ -1,18 +1,22 @@
 import { Card, Skeleton, toast } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError } from "#/components/ui";
 import { useI18n } from "#/i18n";
 import { problemText } from "#/i18n/problems";
+import type { FieldValues } from "./components/FieldInputs";
 import { ReportForm, type ReportValues } from "./components/ReportForm";
 import { deskCatalogQuery, peopleQuery, useAttachFiles, useReportTicket } from "./hooks";
+
+const route = getRouteApi("/_app/desk/new");
 
 /**
  * An agent registers a ticket taken by phone or e-mail; it may be dated back up to 30 days. Files go right after the
  * report: the ticket exists by then, so a refused file is reported on the ticket's page and nothing is lost.
  */
 export function NewTicketPage() {
+	const prefill = route.useSearch();
 	const i18n = useI18n();
 	const { t } = i18n;
 	const navigate = useNavigate();
@@ -21,7 +25,7 @@ export function NewTicketPage() {
 	const report = useReportTicket();
 	const attach = useAttachFiles();
 
-	const submit = (v: ReportValues, files: File[]) =>
+	const submit = (v: ReportValues, files: File[], fields: FieldValues) =>
 		report.mutate(
 			{
 				title: v.title.trim(),
@@ -33,6 +37,7 @@ export function NewTicketPage() {
 				reportedAt: new Date(v.reportedAt).toISOString(),
 				requesterPersonId: v.requesterPersonId,
 				requesterIncognito: v.requesterIncognito,
+				fields,
 			},
 			{
 				onSuccess: async (ticket) => {
@@ -78,6 +83,15 @@ export function NewTicketPage() {
 							isPending={report.isPending || attach.isPending}
 							error={report.error}
 							onSubmit={submit}
+							initial={{
+								categoryKey: catalog.data.categories.find((c) =>
+									c.subcategories.some((s) => s.key === prefill.sub),
+								)?.key,
+								subcategoryKey: prefill.sub,
+								title: prefill.title,
+								description: prefill.desc,
+								fields: prefill.related ? { "related-ticket": prefill.related } : undefined,
+							}}
 						/>
 					)}
 				</Card.Content>

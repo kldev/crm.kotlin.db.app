@@ -27,6 +27,9 @@ import { Route as AppProjectsIndexRouteImport } from './routes/_app/projects.ind
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app/projects.$projectId'
 import { Route as AppTeamsIndexRouteImport } from './routes/_app/teams.index'
 import { Route as AppTeamsTeamIdRouteImport } from './routes/_app/teams.$teamId'
+import { Route as AppDeskReportsIndexRouteImport } from './routes/_app/desk.reports.index'
+import { Route as AppDeskReportsSlugRouteImport } from './routes/_app/desk.reports.$slug'
+import { Route as AppDeskReportsAgentsRouteImport } from './routes/_app/desk.reports.agents'
 import { Route as AppDeskTicketsTicketIdRouteImport } from './routes/_app/desk.tickets.$ticketId'
 
 const AppRoute = AppRouteImport.update({
@@ -118,6 +121,21 @@ const AppTeamsTeamIdRoute = AppTeamsTeamIdRouteImport.update({
   path: '/teams/$teamId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDeskReportsIndexRoute = AppDeskReportsIndexRouteImport.update({
+  id: '/desk/reports/',
+  path: '/desk/reports/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskReportsSlugRoute = AppDeskReportsSlugRouteImport.update({
+  id: '/desk/reports/$slug',
+  path: '/desk/reports/$slug',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskReportsAgentsRoute = AppDeskReportsAgentsRouteImport.update({
+  id: '/desk/reports/agents',
+  path: '/desk/reports/agents',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDeskTicketsTicketIdRoute = AppDeskTicketsTicketIdRouteImport.update({
   id: '/desk/tickets/$ticketId',
   path: '/desk/tickets/$ticketId',
@@ -142,7 +160,10 @@ export interface FileRoutesByFullPath {
   '/desk/': typeof AppDeskIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/teams/': typeof AppTeamsIndexRoute
+  '/desk/reports/$slug': typeof AppDeskReportsSlugRoute
+  '/desk/reports/agents': typeof AppDeskReportsAgentsRoute
   '/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
+  '/desk/reports/': typeof AppDeskReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -162,7 +183,10 @@ export interface FileRoutesByTo {
   '/desk': typeof AppDeskIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/teams': typeof AppTeamsIndexRoute
+  '/desk/reports/$slug': typeof AppDeskReportsSlugRoute
+  '/desk/reports/agents': typeof AppDeskReportsAgentsRoute
   '/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
+  '/desk/reports': typeof AppDeskReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -184,7 +208,10 @@ export interface FileRoutesById {
   '/_app/desk/': typeof AppDeskIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/_app/teams/': typeof AppTeamsIndexRoute
+  '/_app/desk/reports/$slug': typeof AppDeskReportsSlugRoute
+  '/_app/desk/reports/agents': typeof AppDeskReportsAgentsRoute
   '/_app/desk/tickets/$ticketId': typeof AppDeskTicketsTicketIdRoute
+  '/_app/desk/reports/': typeof AppDeskReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -206,7 +233,10 @@ export interface FileRouteTypes {
     | '/desk/'
     | '/projects/'
     | '/teams/'
+    | '/desk/reports/$slug'
+    | '/desk/reports/agents'
     | '/desk/tickets/$ticketId'
+    | '/desk/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -226,7 +256,10 @@ export interface FileRouteTypes {
     | '/desk'
     | '/projects'
     | '/teams'
+    | '/desk/reports/$slug'
+    | '/desk/reports/agents'
     | '/desk/tickets/$ticketId'
+    | '/desk/reports'
   id:
     | '__root__'
     | '/_app'
@@ -247,7 +280,10 @@ export interface FileRouteTypes {
     | '/_app/desk/'
     | '/_app/projects/'
     | '/_app/teams/'
+    | '/_app/desk/reports/$slug'
+    | '/_app/desk/reports/agents'
     | '/_app/desk/tickets/$ticketId'
+    | '/_app/desk/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -384,6 +420,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeamsTeamIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/desk/reports/': {
+      id: '/_app/desk/reports/'
+      path: '/desk/reports'
+      fullPath: '/desk/reports/'
+      preLoaderRoute: typeof AppDeskReportsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/reports/$slug': {
+      id: '/_app/desk/reports/$slug'
+      path: '/desk/reports/$slug'
+      fullPath: '/desk/reports/$slug'
+      preLoaderRoute: typeof AppDeskReportsSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/reports/agents': {
+      id: '/_app/desk/reports/agents'
+      path: '/desk/reports/agents'
+      fullPath: '/desk/reports/agents'
+      preLoaderRoute: typeof AppDeskReportsAgentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/desk/tickets/$ticketId': {
       id: '/_app/desk/tickets/$ticketId'
       path: '/desk/tickets/$ticketId'
@@ -410,7 +467,10 @@ interface AppRouteChildren {
   AppDeskIndexRoute: typeof AppDeskIndexRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
   AppTeamsIndexRoute: typeof AppTeamsIndexRoute
+  AppDeskReportsSlugRoute: typeof AppDeskReportsSlugRoute
+  AppDeskReportsAgentsRoute: typeof AppDeskReportsAgentsRoute
   AppDeskTicketsTicketIdRoute: typeof AppDeskTicketsTicketIdRoute
+  AppDeskReportsIndexRoute: typeof AppDeskReportsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -429,7 +489,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppDeskIndexRoute: AppDeskIndexRoute,
   AppProjectsIndexRoute: AppProjectsIndexRoute,
   AppTeamsIndexRoute: AppTeamsIndexRoute,
+  AppDeskReportsSlugRoute: AppDeskReportsSlugRoute,
+  AppDeskReportsAgentsRoute: AppDeskReportsAgentsRoute,
   AppDeskTicketsTicketIdRoute: AppDeskTicketsTicketIdRoute,
+  AppDeskReportsIndexRoute: AppDeskReportsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

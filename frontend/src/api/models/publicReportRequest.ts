@@ -38,4 +38,10 @@ export interface PublicReportRequest {
   requesterPersonId?: number | null;
   /** @nullable */
   requesterIncognito?: boolean | null;
+  /**
+     * @minLength 0
+     * @maxLength 20000
+     * @nullable
+     */
+  fields?: string | null;
 }

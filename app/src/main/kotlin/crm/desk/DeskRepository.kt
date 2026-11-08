@@ -29,7 +29,7 @@ data class TicketKey(val phase: Int, val time: Instant, val id: Long)
 
 /** The service desk (ADR-0007). Every method is one `EXEC app.desk_<procedure>`; the rules live in the procedures. */
 @Repository
-class DeskRepository(private val jdbc: JdbcClient) {
+class DeskRepository(private val jdbc: JdbcClient, private val json: tools.jackson.databind.json.JsonMapper) {
 
     private val ticketRow = RowMapper { rs, _ ->
         TicketResponse(
@@ -67,7 +67,8 @@ class DeskRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.desk_ticket_report @actor_id = :actorId, @title = :title, @description = :description, " +
                 "@category_key = :categoryKey, @subcategory_key = :subcategoryKey, @priority = :priority, " +
-                "@reported_at = :reportedAt, @requester_person_id = :personId, @requester_incognito = :incognito",
+                "@reported_at = :reportedAt, @requester_person_id = :personId, @requester_incognito = :incognito, " +
+                "@fields = :fields",
         )
             .param("actorId", actorId, Types.INTEGER)
             .param("title", body.title, Types.NVARCHAR)
@@ -78,6 +79,7 @@ class DeskRepository(private val jdbc: JdbcClient) {
             .param("reportedAt", body.reportedAt?.toUtcLocalDateTime(), Types.TIMESTAMP)
             .param("personId", body.requesterPersonId, Types.INTEGER)
             .param("incognito", body.requesterIncognito ?: false, Types.BIT)
+            .param("fields", body.fields?.let { json.writeValueAsString(it) }, Types.NVARCHAR)
             .query(ticketRow)
             .single()
 
@@ -85,9 +87,11 @@ class DeskRepository(private val jdbc: JdbcClient) {
         jdbc.sql(
             "EXEC app.desk_ticket_report_public @title = :title, @description = :description, " +
                 "@category_key = :categoryKey, @subcategory_key = :subcategoryKey, @priority = :priority, " +
-                "@requester_person_id = :personId, @requester_incognito = :incognito, @attachments = :attachments",
+                "@requester_person_id = :personId, @requester_incognito = :incognito, @attachments = :attachments, " +
+                "@fields = :fields",
         )
             .param("attachments", attachments, Types.NVARCHAR)
+            .param("fields", body.fields?.takeIf { it.isNotBlank() }, Types.NVARCHAR)
             .param("title", body.title, Types.NVARCHAR)
             .param("description", body.description, Types.NVARCHAR)
             .param("categoryKey", body.categoryKey, Types.VARCHAR)
@@ -227,6 +231,27 @@ class DeskRepository(private val jdbc: JdbcClient) {
             .query(ticketRow)
             .single()
 
+    fun fields(actorId: Int, ticketId: Long): List<TicketFieldResponse> =
+        jdbc.sql("EXEC app.desk_ticket_field_list @actor_id = :actorId, @ticket_id = :ticketId")
+            .param("actorId", actorId, Types.INTEGER)
+            .param("ticketId", ticketId, Types.BIGINT)
+            .query { rs, _ -> TicketFieldResponse(rs.getString("field_key"), rs.getString("value")) }
+            .list()
+
+    fun updateFields(actorId: Int, ticketId: Long, values: Map<String, String?>): TicketResponse =
+        action(
+            "EXEC app.desk_ticket_update_fields @actor_id = :actorId, @ticket_id = :ticketId, @values = :values",
+            actorId,
+            ticketId,
+        ) { param("values", json.writeValueAsString(values), Types.NVARCHAR) }
+
+    fun linked(actorId: Int, ticketId: Long): List<TicketResponse> =
+        jdbc.sql("EXEC app.desk_ticket_linked_list @actor_id = :actorId, @ticket_id = :ticketId")
+            .param("actorId", actorId, Types.INTEGER)
+            .param("ticketId", ticketId, Types.BIGINT)
+            .query(ticketRow)
+            .list()
+
     fun checkAttachment(fileName: String?, size: Long): CheckedFile =
         jdbc.sql("EXEC app.desk_attachment_check @file_name = :fileName, @size_bytes = :size")
             .param("fileName", fileName, Types.NVARCHAR)
@@ -324,9 +349,28 @@ class DeskRepository(private val jdbc: JdbcClient) {
                 )
             }
             .list()
+        val options = jdbc.sql("EXEC app.desk_field_option_list")
+            .query { rs, _ -> Triple(rs.getString("field_key"), rs.getString("option_value"), rs.getBoolean("is_favorite")) }
+            .list()
+            .groupBy { it.first }
+        val fields = jdbc.sql("EXEC app.desk_field_list")
+            .query { rs, _ ->
+                val key = rs.getString("field_key")
+                rs.getString("subcategory_key") to FieldDefinitionResponse(
+                    key = key,
+                    label = rs.getString("label"),
+                    kind = rs.getString("kind"),
+                    placeholder = rs.getString("placeholder"),
+                    required = rs.getBoolean("is_required"),
+                    options = options[key].orEmpty().map { it.second },
+                    favorites = options[key].orEmpty().filter { it.third }.map { it.second },
+                )
+            }
+            .list()
+            .groupBy({ it.first }, { it.second })
         // Rows come in catalog order; group them keeping it.
         val categories = rows.groupBy { it.category.key }.values.map { group ->
-            group.first().category.copy(subcategories = group.map { it.sub })
+            group.first().category.copy(subcategories = group.map { it.sub.copy(fields = fields[it.sub.key].orEmpty()) })
         }
         val priorities = jdbc.sql("EXEC app.desk_priority_list")
             .query { rs, _ -> PriorityResponse(rs.getString("priority"), rs.getInt("sla_minutes")) }

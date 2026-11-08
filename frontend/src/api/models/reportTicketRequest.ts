@@ -4,6 +4,7 @@
  * OpenAPI definition
  * OpenAPI spec version: v0
  */
+import type { ReportTicketRequestFields } from './reportTicketRequestFields.ts';
 
 export interface ReportTicketRequest {
   /**
@@ -40,4 +41,6 @@ export interface ReportTicketRequest {
   requesterPersonId?: number | null;
   /** @nullable */
   requesterIncognito?: boolean | null;
+  /** @nullable */
+  fields?: ReportTicketRequestFields;
 }

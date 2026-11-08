@@ -24,8 +24,10 @@ import type {
   StreamingResponseBody,
   TicketCounters,
   TicketEventResponse,
+  TicketFieldResponse,
   TicketResponse,
-  TotalResponse
+  TotalResponse,
+  UpdateFieldsRequest
 } from '../../models';
 
 import { customInstance } from '../../mutator.ts';
@@ -35,6 +37,31 @@ import type { BodyType } from '../../mutator.ts';
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+  /**
+ * @summary The ticket's report data: current values in the subcategory's order.
+ */
+export const listTicketFields = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<TicketFieldResponse[]>>,) => {
+      return customInstance<TicketFieldResponse[]>(
+      {url: `/api/desk/tickets/${id}/fields`, method: 'GET'
+    },
+      options);
+    }
+  /**
+ * @summary Fill in or correct the report data (any agent, any state). `values` is the whole new set; an empty value clears a field.
+ */
+export const updateTicketFields = (
+    id: number,
+    updateFieldsRequest: BodyType<UpdateFieldsRequest>,
+ options?: SecondParameter<typeof customInstance<TicketResponse>>,) => {
+      return customInstance<TicketResponse>(
+      {url: `/api/desk/tickets/${id}/fields`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateFieldsRequest
+    },
+      options);
+    }
   /**
  * @summary Tickets page. scope POOL / MINE / ALL; open tickets by deadline first, then resolved ones, newest first.
  */
@@ -193,6 +220,17 @@ export const getTicket = (
       options);
     }
   /**
+ * @summary Marketing campaigns ordered for this ticket (their related-ticket is its number).
+ */
+export const listLinkedTickets = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<TicketResponse[]>>,) => {
+      return customInstance<TicketResponse[]>(
+      {url: `/api/desk/tickets/${id}/linked`, method: 'GET'
+    },
+      options);
+    }
+  /**
  * @summary The ticket's events, oldest first: its timeline.
  */
 export const listTicketEvents = (
@@ -285,7 +323,9 @@ export const listDeskAgents = (
     },
       options);
     }
-  export type SearchTicketsResult = NonNullable<Awaited<ReturnType<typeof searchTickets>>>
+  export type ListTicketFieldsResult = NonNullable<Awaited<ReturnType<typeof listTicketFields>>>
+export type UpdateTicketFieldsResult = NonNullable<Awaited<ReturnType<typeof updateTicketFields>>>
+export type SearchTicketsResult = NonNullable<Awaited<ReturnType<typeof searchTickets>>>
 export type ReportTicketResult = NonNullable<Awaited<ReturnType<typeof reportTicket>>>
 export type TakeTicketResult = NonNullable<Awaited<ReturnType<typeof takeTicket>>>
 export type ReturnTicketResult = NonNullable<Awaited<ReturnType<typeof returnTicket>>>
@@ -297,6 +337,7 @@ export type CommentTicketResult = NonNullable<Awaited<ReturnType<typeof commentT
 export type ListTicketAttachmentsResult = NonNullable<Awaited<ReturnType<typeof listTicketAttachments>>>
 export type AttachTicketFilesResult = NonNullable<Awaited<ReturnType<typeof attachTicketFiles>>>
 export type GetTicketResult = NonNullable<Awaited<ReturnType<typeof getTicket>>>
+export type ListLinkedTicketsResult = NonNullable<Awaited<ReturnType<typeof listLinkedTickets>>>
 export type ListTicketEventsResult = NonNullable<Awaited<ReturnType<typeof listTicketEvents>>>
 export type DownloadTicketAttachmentResult = NonNullable<Awaited<ReturnType<typeof downloadTicketAttachment>>>
 export type GetTicketCountersResult = NonNullable<Awaited<ReturnType<typeof getTicketCounters>>>

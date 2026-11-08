@@ -11,12 +11,13 @@ CREATE OR ALTER PROCEDURE app.desk_ticket_report_public
     @priority            varchar(8),
     @requester_person_id int = NULL,
     @requester_incognito bit = 0,
-    @attachments         nvarchar(max) = NULL
+    @attachments         nvarchar(max) = NULL,
+    @fields              nvarchar(max) = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
     DECLARE @ticket_id bigint;
     EXEC crm.desk_ticket_create NULL, @title, @description, @category_key, @subcategory_key, @priority, NULL,
-         @requester_person_id, @requester_incognito, @ticket_id OUTPUT, @attachments;
+         @requester_person_id, @requester_incognito, @ticket_id OUTPUT, @attachments, @fields;
     SELECT id, number, deadline FROM crm.tickets WHERE id = @ticket_id;
 END;
