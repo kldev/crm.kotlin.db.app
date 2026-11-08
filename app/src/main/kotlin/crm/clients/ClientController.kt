@@ -13,7 +13,6 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.Pattern
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
 @Tag(name = "Clients")
-@Validated
 @RestController
 @RequestMapping("/api/clients")
 class ClientController(private val clients: ClientRepository) {

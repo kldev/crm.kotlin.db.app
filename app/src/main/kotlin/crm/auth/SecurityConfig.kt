@@ -72,6 +72,8 @@ class SecurityConfig {
                 authorize("/api/auth/csrf", permitAll)
                 authorize(HttpMethod.POST, "/api/auth/login", permitAll)
                 authorize("/actuator/health/**", permitAll)
+                // Error dispatches keep their real status (otherwise denyAll would turn every error into 403).
+                authorize("/error", permitAll)
                 authorize("/v3/api-docs/**", permitAll)
                 authorize("/swagger-ui/**", permitAll)
                 authorize("/swagger-ui.html", permitAll)

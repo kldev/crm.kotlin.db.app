@@ -51,7 +51,7 @@ class AuthController(
     private val passwordEncoder: PasswordEncoder,
     private val properties: AuthProperties,
 ) {
-    @Operation(summary = "Sets the XSRF-TOKEN cookie. Send its value as the X-XSRF-TOKEN header on POST/PUT/DELETE.")
+    @Operation(summary = "Sets the XSRF-TOKEN cookie. Send its value as the X-XSRF-TOKEN header with every write request.")
     @GetMapping("/csrf")
     fun csrf(token: CsrfToken): ResponseEntity<Void> {
         token.token // loading the deferred token writes the cookie

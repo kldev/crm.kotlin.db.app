@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController
 
 /** User administration: ADMIN writes, ADMIN and MANAGER read (also enforced in the procedures). */
 @Tag(name = "Users")
-@Validated
 @RestController
 @RequestMapping("/api/users")
 class UserController(

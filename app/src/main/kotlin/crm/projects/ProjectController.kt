@@ -12,7 +12,6 @@ import jakarta.validation.constraints.Min
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -26,7 +25,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 @Tag(name = "Projects")
-@Validated
 @RestController
 @RequestMapping("/api/projects")
 class ProjectController(private val projects: ProjectRepository) {
