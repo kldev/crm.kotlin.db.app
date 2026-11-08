@@ -108,6 +108,8 @@ services:
   k6:
     image: grafana/k6:latest
     profiles: ["perf"]
+    # Write results as the host user (start.sh sets K6_UID/K6_GID).
+    user: "${K6_UID:-1000}:${K6_GID:-1000}"
     depends_on:
       app:
         condition: service_healthy
@@ -115,6 +117,10 @@ services:
       BASE_URL: http://app:8080
       CRM_SEED_PASSWORD: ${CRM_SEED_PASSWORD}
       K6_SCRIPT: ${K6_SCRIPT:-crm-mixed.js}
+      VUS: ${K6_VUS:-200}
+      RAMP: ${K6_RAMP:-2m}
+      HOLD: ${K6_HOLD:-10m}
+      RAMP_DOWN: ${K6_RAMP_DOWN:-1m}
       RESULTS_DIR: /perf/results/${K6_RESULTS_NAME:-latest}
     volumes:
       - ../perf:/perf

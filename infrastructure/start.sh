@@ -41,7 +41,7 @@ fi
 
 if [[ -n "$k6" ]]; then
   name="${k6_name:-$(date +%F)-${k6%.js}}"
-  K6_SCRIPT="$k6" K6_RESULTS_NAME="$name" compose --profile perf run --rm k6
+  K6_UID=$(id -u) K6_GID=$(id -g) K6_SCRIPT="$k6" K6_RESULTS_NAME="$name" compose --profile perf run --rm k6
   echo "Results: perf/results/$name"
 fi
 
