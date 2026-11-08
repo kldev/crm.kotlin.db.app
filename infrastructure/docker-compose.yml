@@ -1,0 +1,125 @@
+# Local stack: SQL Server 2025 Express -> db-init (logins, sqlcmd) -> migrate (Flyway) -> app.
+# Opt-in profiles: `seed` (EXEC seed.run, millions of rows), `perf` (k6).
+# Values come from .env (copy .env-sample). Start with ./start.sh.
+name: crm
+
+x-app-env: &app-env
+  CRM_DB_URL: jdbc:sqlserver://mssql:1433;databaseName=${CRM_DB_NAME:-crm};encrypt=true;trustServerCertificate=true
+  CRM_DB_APP_USER: ${CRM_DB_APP_USER:-crm_app}
+  CRM_DB_APP_PASSWORD: ${CRM_DB_APP_PASSWORD:?set CRM_DB_APP_PASSWORD in .env}
+  CRM_DB_MIGRATOR_USER: ${CRM_DB_MIGRATOR_USER:-crm_migrator}
+  CRM_DB_MIGRATOR_PASSWORD: ${CRM_DB_MIGRATOR_PASSWORD:?set CRM_DB_MIGRATOR_PASSWORD in .env}
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      # Express edition on purpose: 50 GB per database, ~1.4 GB buffer pool, 4 cores (see README).
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${CRM_DB_HOST_PORT:-14333}:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # One-shot: database, logins and users (infrastructure/sql/init.sql). Idempotent.
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      # sqlcmd reads the password of -U from SQLCMDPASSWORD.
+      SQLCMDPASSWORD: ${MSSQL_SA_PASSWORD}
+      DB_NAME: ${CRM_DB_NAME:-crm}
+      MIGRATOR_LOGIN: ${CRM_DB_MIGRATOR_USER:-crm_migrator}
+      MIGRATOR_PASSWORD: ${CRM_DB_MIGRATOR_PASSWORD}
+      APP_LOGIN: ${CRM_DB_APP_USER:-crm_app}
+      APP_PASSWORD: ${CRM_DB_APP_PASSWORD}
+    volumes:
+      - ./sql/init.sql:/init/init.sql:ro
+    # sqlcmd takes the variables (DB_NAME, ...) from the environment.
+    entrypoint: ["/opt/mssql-tools18/bin/sqlcmd", "-S", "mssql", "-U", "sa", "-C", "-b", "-I", "-i", "/init/init.sql"]
+    command: []
+    restart: "no"
+
+  # One-shot: Flyway with the migrator login.
+  migrate:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: crm-app:local
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      CRM_MODE: migrate
+    restart: "no"
+
+  app:
+    image: crm-app:local
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      CRM_MODE: app
+      CRM_ADMIN_LOGIN: ${CRM_ADMIN_LOGIN:-admin}
+      CRM_ADMIN_PASSWORD: ${CRM_ADMIN_PASSWORD:?set CRM_ADMIN_PASSWORD in .env}
+      CRM_DB_POOL_SIZE: ${CRM_DB_POOL_SIZE:-30}
+      CRM_LOGIN_MAX_FAILED: ${CRM_LOGIN_MAX_FAILED:-5}
+      CRM_LOGIN_LOCK_MINUTES: ${CRM_LOGIN_LOCK_MINUTES:-15}
+      JAVA_TOOL_OPTIONS: ${CRM_APP_JAVA_OPTIONS:-}
+    ports:
+      - "127.0.0.1:${CRM_HTTP_PORT:-8088}:8080"
+    restart: unless-stopped
+
+  # One-shot, opt-in: ./start.sh --seed (defaults: 5M clients, 5M projects, 2M comments, 5000 users).
+  seed:
+    image: crm-app:local
+    profiles: ["seed"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      CRM_MODE: seed
+      CRM_SEED_PASSWORD: ${CRM_SEED_PASSWORD:?set CRM_SEED_PASSWORD in .env}
+      CRM_SEED_CLIENTS: ${CRM_SEED_CLIENTS:-5000000}
+      CRM_SEED_ADMINS: ${CRM_SEED_ADMINS:-10}
+      CRM_SEED_MANAGERS: ${CRM_SEED_MANAGERS:-490}
+      CRM_SEED_SALES: ${CRM_SEED_SALES:-4500}
+      CRM_SEED_TEAM_SIZE: ${CRM_SEED_TEAM_SIZE:-5}
+      CRM_SEED_PROJECTS: ${CRM_SEED_PROJECTS:-5000000}
+      CRM_SEED_COMMENTS: ${CRM_SEED_COMMENTS:-2000000}
+      CRM_SEED_RANDOM_SEED: ${CRM_SEED_RANDOM_SEED:-42}
+      CRM_SEED_BATCH_SIZE: ${CRM_SEED_BATCH_SIZE:-500000}
+    restart: "no"
+
+  # Opt-in: ./start.sh --k6 <script>; results go to perf/results/.
+  k6:
+    image: grafana/k6:latest
+    profiles: ["perf"]
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      BASE_URL: http://app:8080
+      CRM_SEED_PASSWORD: ${CRM_SEED_PASSWORD}
+      K6_SCRIPT: ${K6_SCRIPT:-crm-mixed.js}
+      RESULTS_DIR: /perf/results/${K6_RESULTS_NAME:-latest}
+    volumes:
+      - ../perf:/perf
+    entrypoint: ["sh", "-c", "mkdir -p \"$$RESULTS_DIR\" && k6 run /perf/k6/$$K6_SCRIPT"]
+    restart: "no"
+
+volumes:
+  mssql-data:
