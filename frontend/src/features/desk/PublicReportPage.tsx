@@ -84,18 +84,21 @@ export function PublicReportPage() {
 									people={people.data}
 									isPending={report.isPending}
 									error={report.error}
-									onSubmit={async (v) => {
+									onSubmit={async (v, files) => {
 										// The first write needs the XSRF-TOKEN cookie; this request sets it.
 										await getCsrfToken();
 										report.mutate(
 											{
-												title: v.title.trim(),
-												description: v.description.trim(),
-												categoryKey: v.categoryKey,
-												subcategoryKey: v.subcategoryKey,
-												priority: v.priority,
-												requesterPersonId: v.requesterPersonId,
-												requesterIncognito: v.requesterIncognito,
+												body: {
+													title: v.title.trim(),
+													description: v.description.trim(),
+													categoryKey: v.categoryKey,
+													subcategoryKey: v.subcategoryKey,
+													priority: v.priority,
+													requesterPersonId: v.requesterPersonId,
+													requesterIncognito: v.requesterIncognito,
+												},
+												files,
 											},
 											{ onSuccess: setSent },
 										);

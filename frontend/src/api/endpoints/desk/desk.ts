@@ -6,10 +6,13 @@
  */
 import type {
   AssignHandlerRequest,
+  AttachTicketFilesBody,
+  AttachmentResponse,
   ChangePriorityRequest,
   CommentRequest,
   CountTicketsParams,
   DeskCatalog,
+  DownloadTicketAttachmentParams,
   HandOverRequest,
   ListDeskAgentsParams,
   PageResponseAgentSummary,
@@ -18,6 +21,7 @@ import type {
   ReasonRequest,
   ReportTicketRequest,
   SearchTicketsParams,
+  StreamingResponseBody,
   TicketCounters,
   TicketEventResponse,
   TicketResponse,
@@ -149,6 +153,35 @@ export const commentTicket = (
       options);
     }
   /**
+ * @summary The ticket's attachments, oldest first.
+ */
+export const listTicketAttachments = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<AttachmentResponse[]>>,) => {
+      return customInstance<AttachmentResponse[]>(
+      {url: `/api/desk/tickets/${id}/attachments`, method: 'GET'
+    },
+      options);
+    }
+  /**
+ * @summary Attach files (any state): at most 10 per ticket, 20 MB each, images, PDF, Office, TXT/CSV, ZIP, MP4/MOV - never SVG or HTML.
+ */
+export const attachTicketFiles = (
+    id: number,
+    attachTicketFilesBody?: BodyType<AttachTicketFilesBody>,
+ options?: SecondParameter<typeof customInstance<TicketResponse>>,) => {const formData = new FormData();
+if(attachTicketFilesBody?.files !== undefined) {
+ attachTicketFilesBody?.files.forEach(value => formData.append(`files`, value));
+ }
+
+      return customInstance<TicketResponse>(
+      {url: `/api/desk/tickets/${id}/attachments`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  /**
  * @summary Ticket details.
  */
 export const getTicket = (
@@ -167,6 +200,20 @@ export const listTicketEvents = (
  options?: SecondParameter<typeof customInstance<TicketEventResponse[]>>,) => {
       return customInstance<TicketEventResponse[]>(
       {url: `/api/desk/tickets/${id}/events`, method: 'GET'
+    },
+      options);
+    }
+  /**
+ * @summary Download an attachment. Images and PDF inline (or with download=true as a file), the rest as a file; always nosniff and a sandbox CSP.
+ */
+export const downloadTicketAttachment = (
+    id: number,
+    attachmentId: string,
+    params?: DownloadTicketAttachmentParams,
+ options?: SecondParameter<typeof customInstance<StreamingResponseBody>>,) => {
+      return customInstance<StreamingResponseBody>(
+      {url: `/api/desk/tickets/${id}/attachments/${attachmentId}`, method: 'GET',
+        params
     },
       options);
     }
@@ -247,8 +294,11 @@ export type ChangeTicketPriorityResult = NonNullable<Awaited<ReturnType<typeof c
 export type AssignTicketHandlerResult = NonNullable<Awaited<ReturnType<typeof assignTicketHandler>>>
 export type HandOverTicketResult = NonNullable<Awaited<ReturnType<typeof handOverTicket>>>
 export type CommentTicketResult = NonNullable<Awaited<ReturnType<typeof commentTicket>>>
+export type ListTicketAttachmentsResult = NonNullable<Awaited<ReturnType<typeof listTicketAttachments>>>
+export type AttachTicketFilesResult = NonNullable<Awaited<ReturnType<typeof attachTicketFiles>>>
 export type GetTicketResult = NonNullable<Awaited<ReturnType<typeof getTicket>>>
 export type ListTicketEventsResult = NonNullable<Awaited<ReturnType<typeof listTicketEvents>>>
+export type DownloadTicketAttachmentResult = NonNullable<Awaited<ReturnType<typeof downloadTicketAttachment>>>
 export type GetTicketCountersResult = NonNullable<Awaited<ReturnType<typeof getTicketCounters>>>
 export type CountTicketsResult = NonNullable<Awaited<ReturnType<typeof countTickets>>>
 export type FindTicketResult = NonNullable<Awaited<ReturnType<typeof findTicket>>>

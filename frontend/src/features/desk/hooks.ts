@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import {
 	assignTicketHandler,
+	attachTicketFiles,
 	changeTicketPriority,
 	commentTicket,
 	countTickets,
@@ -16,6 +17,7 @@ import {
 	handOverTicket,
 	listDeskAgents,
 	listDeskPeople,
+	listTicketAttachments,
 	listTicketEvents,
 	reportTicket,
 	resolveTicket,
@@ -23,11 +25,7 @@ import {
 	searchTickets,
 	takeTicket,
 } from "#/api/endpoints/desk/desk";
-import {
-	getPublicDeskCatalog,
-	listPublicPeople,
-	reportPublicTicket,
-} from "#/api/endpoints/public-desk/public-desk";
+import { getPublicDeskCatalog, listPublicPeople } from "#/api/endpoints/public-desk/public-desk";
 import type {
 	AssignHandlerRequest,
 	ChangePriorityRequest,
@@ -35,10 +33,12 @@ import type {
 	PageResponseAgentSummary,
 	PageResponseTicketResponse,
 	PublicReportRequest,
+	PublicReportResponse,
 	ReportTicketRequest,
 	SearchTicketsParams,
 	TicketResponse,
 } from "#/api/models";
+import { customInstance } from "#/api/mutator";
 import { deskKeys, publicDeskKeys } from "#/api/query-keys";
 import type { TimelineEvent } from "./types";
 
@@ -119,6 +119,30 @@ export const agentsQuery = (search: string | undefined, size = 50) =>
 		getNextPageParam: (page) => page.nextCursor ?? undefined,
 	});
 
+export const attachmentsQuery = (id: number) =>
+	queryOptions({ queryKey: deskKeys.attachments(id), queryFn: () => listTicketAttachments(id) });
+
+/** Where an attachment opens: inline for images and PDF, `download` for a file to save. */
+export const attachmentUrl = (ticketId: number, attachmentId: string, download = false) =>
+	`/api/desk/tickets/${ticketId}/attachments/${attachmentId}${download ? "?download=true" : ""}`;
+
+/**
+ * The public report with its files in one multipart request. Written by hand: the generated client knows the form
+ * fields but not the `files` part (springdoc does not merge @ModelAttribute with @RequestPart).
+ */
+function reportPublicWithFiles(body: PublicReportRequest, files: File[]) {
+	const form = new FormData();
+	for (const [key, value] of Object.entries(body)) {
+		if (value !== undefined && value !== null) form.append(key, String(value));
+	}
+	for (const file of files) form.append("files", file);
+	return customInstance<PublicReportResponse>({
+		url: "/api/public/desk/tickets",
+		method: "POST",
+		data: form,
+	});
+}
+
 export const peopleQuery = () =>
 	queryOptions({ queryKey: deskKeys.people(), queryFn: () => listDeskPeople() });
 
@@ -143,7 +167,16 @@ export const useReportTicket = (onSuccess?: OnTicket) =>
 	useDeskMutation((body: ReportTicketRequest) => reportTicket(body), onSuccess);
 
 export const useReportPublicTicket = () =>
-	useMutation({ mutationFn: (body: PublicReportRequest) => reportPublicTicket(body) });
+	useMutation({
+		mutationFn: (v: { body: PublicReportRequest; files: File[] }) =>
+			reportPublicWithFiles(v.body, v.files),
+	});
+
+export const useAttachFiles = (onSuccess?: OnTicket) =>
+	useDeskMutation(
+		(v: { id: number; files: File[] }) => attachTicketFiles(v.id, { files: v.files }),
+		onSuccess,
+	);
 
 export const useTakeTicket = (onSuccess?: OnTicket) =>
 	useDeskMutation((id: number) => takeTicket(id), onSuccess);

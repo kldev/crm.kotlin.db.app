@@ -5,12 +5,17 @@ import crm.shared.Cursor
 import crm.shared.InvalidCursorException
 import crm.shared.PageResponse
 import crm.shared.TotalResponse
+import crm.storage.AttachmentStorage
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
+import org.springframework.http.ContentDisposition
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -18,10 +23,15 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.format.DateTimeParseException
+import java.util.UUID
 
 /**
  * The service desk for agents (ADR-0007): every active CRM user is an agent and sees every ticket.
@@ -30,7 +40,11 @@ import java.time.format.DateTimeParseException
 @Tag(name = "Desk")
 @RestController
 @RequestMapping("/api/desk")
-class DeskController(private val desk: DeskRepository) {
+class DeskController(
+    private val desk: DeskRepository,
+    private val attachments: DeskAttachments,
+    private val storage: AttachmentStorage,
+) {
 
     @Operation(summary = "Categories, subcategories and priorities with their SLA.")
     @GetMapping("/catalog")
@@ -160,6 +174,51 @@ class DeskController(private val desk: DeskRepository) {
         @PathVariable id: Long,
         @Valid @RequestBody body: AssignHandlerRequest,
     ): TicketResponse = desk.assignHandler(actor.id, id, body)
+
+    @Operation(summary = "The ticket's attachments, oldest first.")
+    @GetMapping("/tickets/{id}/attachments")
+    fun listTicketAttachments(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @PathVariable id: Long,
+    ): List<AttachmentResponse> = desk.attachments(actor.id, id)
+
+    @Operation(
+        summary = "Attach files (any state): at most 10 per ticket, 20 MB each, images, PDF, Office, TXT/CSV, ZIP, " +
+            "MP4/MOV - never SVG or HTML.",
+    )
+    @PostMapping("/tickets/{id}/attachments", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun attachTicketFiles(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @PathVariable id: Long,
+        @RequestPart("files") files: List<MultipartFile>,
+    ): TicketResponse = attachments.attach(actor.id, id, files)
+
+    @Operation(
+        summary = "Download an attachment. Images and PDF inline (or with download=true as a file), the rest as a file; " +
+            "always nosniff and a sandbox CSP.",
+    )
+    @GetMapping("/tickets/{id}/attachments/{attachmentId}")
+    fun downloadTicketAttachment(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @PathVariable id: Long,
+        @PathVariable attachmentId: UUID,
+        @RequestParam(defaultValue = "false") download: Boolean,
+    ): ResponseEntity<StreamingResponseBody> {
+        val file = desk.attachment(actor.id, id, attachmentId)
+        val disposition = (if (file.inline && !download) ContentDisposition.inline() else ContentDisposition.attachment())
+            .filename(file.fileName, StandardCharsets.UTF_8)
+            .build()
+        val body = StreamingResponseBody { out -> storage.open(file.storageKey).use { it.transferTo(out) } }
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(file.contentType))
+            .contentLength(file.size)
+            .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+            // The type is the one the extension allows; the browser must not guess another, nor run anything.
+            .header("X-Content-Type-Options", "nosniff")
+            .header("Content-Security-Policy", "sandbox")
+            .header(HttpHeaders.CACHE_CONTROL, "private, max-age=3600")
+            .body(body)
+    }
 
     @Operation(summary = "Agents (active CRM users) with their tickets in progress; by name, `search` = name prefix.")
     @GetMapping("/agents")

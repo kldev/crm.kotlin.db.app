@@ -28,6 +28,14 @@ const DESK: Record<number, Text> = {
 	51114: { pl: "Nie można przekazać zgłoszenia samemu sobie." },
 	51115: { pl: "Wybierz osobę z działu $1.", match: /department (.+)\.$/ },
 	51116: { pl: "Nieprawidłowy filtr listy." },
+	51120: { pl: "Plik nie ma nazwy." },
+	51121: {
+		pl: "Plik „$1” ma niedozwolony typ. Dozwolone: obrazy (PNG, JPG, GIF, WEBP), PDF, dokumenty Office, TXT/CSV, ZIP, MP4/MOV.",
+		match: /"(.+)"/,
+	},
+	51122: { pl: "Plik „$1” jest pusty.", match: /"(.+)"/ },
+	51123: { pl: "Plik „$1” jest za duży. Limit to 20 MB.", match: /"(.+)"/ },
+	51124: { pl: "Zgłoszenie może mieć najwyżej 10 załączników." },
 	51310: { pl: "Tylko agent realizujący zgłoszenie ($1) może je przekazać.", match: /\((.+)\)/ },
 	51311: {
 		pl: "Tylko agent realizujący zgłoszenie ($1) może je oddać do puli.",
@@ -44,6 +52,7 @@ const DESK: Record<number, Text> = {
 	51410: { pl: "Nie znaleziono zgłoszenia." },
 	51411: { pl: "Nie znaleziono osoby." },
 	51412: { pl: "Nie znaleziono agenta albo jego konto jest nieaktywne." },
+	51413: { pl: "Nie znaleziono załącznika." },
 	51910: {
 		pl: "Ktoś był szybszy: zgłoszenie jest już w realizacji u: $1.",
 		en: "Someone was faster: the ticket is already in progress with $1.",

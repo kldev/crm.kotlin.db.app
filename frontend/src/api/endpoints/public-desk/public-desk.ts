@@ -19,15 +19,37 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   /**
- * @summary Report a ticket (reported now, into the pool). 429 when too many were sent this minute.
+ * @summary Report a ticket (reported now, into the pool) with optional files, in one transaction. 429 when too many were sent this minute.
  */
 export const reportPublicTicket = (
-    publicReportRequest: BodyType<PublicReportRequest>,
- options?: SecondParameter<typeof customInstance<PublicReportResponse>>,) => {
+    publicReportRequest?: BodyType<PublicReportRequest>,
+ options?: SecondParameter<typeof customInstance<PublicReportResponse>>,) => {const formData = new FormData();
+if(publicReportRequest?.title !== undefined && publicReportRequest.title !== null) {
+ formData.append(`title`, publicReportRequest.title);
+ }
+if(publicReportRequest?.description !== undefined && publicReportRequest.description !== null) {
+ formData.append(`description`, publicReportRequest.description);
+ }
+if(publicReportRequest?.categoryKey !== undefined && publicReportRequest.categoryKey !== null) {
+ formData.append(`categoryKey`, publicReportRequest.categoryKey);
+ }
+if(publicReportRequest?.subcategoryKey !== undefined && publicReportRequest.subcategoryKey !== null) {
+ formData.append(`subcategoryKey`, publicReportRequest.subcategoryKey);
+ }
+if(publicReportRequest?.priority !== undefined && publicReportRequest.priority !== null) {
+ formData.append(`priority`, publicReportRequest.priority);
+ }
+if(publicReportRequest?.requesterPersonId !== undefined && publicReportRequest.requesterPersonId !== null) {
+ formData.append(`requesterPersonId`, publicReportRequest.requesterPersonId.toString())
+ }
+if(publicReportRequest?.requesterIncognito !== undefined && publicReportRequest.requesterIncognito !== null) {
+ formData.append(`requesterIncognito`, publicReportRequest.requesterIncognito.toString())
+ }
+
       return customInstance<PublicReportResponse>(
       {url: `/api/public/desk/tickets`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: publicReportRequest
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
     },
       options);
     }

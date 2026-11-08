@@ -22,8 +22,9 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
 - Service desk: the pool, my tickets and all tickets (filters in the URL, open by deadline then resolved, total on
   request), counters of overdue / due soon / pool / mine in the top bar, a new ticket registered by an agent (dated
   back up to 30 days), the ticket page (take, resolve, hand over, return, priority with the new deadline, the person
-  doing the work, comments, the timeline from the event stream), agents and people. The public form
-  <http://127.0.0.1:8088/report> needs no sign-in and gives the requester the ticket number.
+  doing the work, comments, attachments with image thumbnails, the timeline from the event stream), agents and people. The public form
+  <http://127.0.0.1:8088/report> needs no sign-in, takes files with the report and gives the requester the ticket
+  number. Attachments live in RustFS (S3, console <http://127.0.0.1:19001>), ADR-0009.
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -58,7 +59,7 @@ The SQL Server image is `linux/amd64`; on Apple Silicon enable Rosetta emulation
 ```bash
 cd infrastructure
 cp .env-sample .env   # fill in every empty password (strong: 8+ chars, upper/lower case, digit, symbol; no ')
-./start.sh            # mssql -> db-init (database, logins) -> migrate (Flyway) -> app
+./start.sh            # mssql -> db-init -> migrate (Flyway) -> app; rustfs -> rustfs-init (bucket) -> app
 ```
 
 Then open:
@@ -160,6 +161,7 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET /api/desk/tickets`, `/count`, `/counters` | `desk_ticket_search`, `desk_ticket_count`, `desk_ticket_counters` | all |
 | `POST /api/desk/tickets`, `GET /api/desk/tickets/{id}`, `/by-number/{number}`, `/{id}/events` | `desk_ticket_report`, `desk_ticket_get`, `desk_ticket_find`, `desk_ticket_event_list` | all |
 | `POST /api/desk/tickets/{id}/take`, `/hand-over`, `/return`, `/priority`, `/resolve`, `/comments`, `/handler` | `desk_ticket_take`, `_hand_over`, `_return`, `_change_priority`, `_resolve`, `_comment`, `_assign_handler` | all (the rules of the assignee in the procedures) |
+| `GET/POST /api/desk/tickets/{id}/attachments`, `GET …/attachments/{attachmentId}` | `desk_attachment_list`, `desk_attachment_check` + `desk_ticket_attach`, `desk_attachment_get` | all |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
@@ -183,8 +185,9 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51050, 51060 | seed: invalid parameter, database already seeded | 400 |
 | 51100-51110 | desk ticket: title, description, category, subcategory (retired), priority, report date (future, > 30 days back), requester | 400 |
 | 51111-51116 | desk: reason, comment, hand over to yourself, handler outside the department, list filter | 400 |
+| 51120-51124 | attachment: no name, type not allowed, empty, over 20 MB, more than 10 per ticket | 400 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
-| 51410-51412 | ticket, person, agent not found | 404 |
+| 51410-51413 | ticket, person, agent, attachment not found | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
 | 51911, 51912 | ticket already resolved / still in the pool (take it first) | 409 |
 | 51913 | the ticket's stream changed meanwhile | 409 |
@@ -248,7 +251,8 @@ Details, per-endpoint latencies and logical reads per procedure: [perf/README.md
 architecture rules (no SQL text in Kotlin, only `EXEC app.*`, no ORM imports), database permissions (the app login
 gets error 229 on tables and on `seed`), login and lockout, clients, projects, stages, comments and the indexed view
 over HTTP, the service desk (rules of every action, three agents taking one ticket at once, deadlines, lists in two
-phases, the public form), and the seed.
+phases, the public form, attachments on a real RustFS: refused types, the limit of 10, refused uploads deleted from
+the bucket, download headers), and the seed.
 
 ## Configuration
 
@@ -256,7 +260,8 @@ All settings are environment variables (see `infrastructure/.env-sample` and `ap
 database URL and logins (`CRM_DB_*`), pool size (`CRM_DB_POOL_SIZE`), session timeout (`CRM_SESSION_TIMEOUT`),
 lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_ADMIN_*`), seed (`CRM_SEED_*`;
 `CRM_SEED_DESK_TICKETS`, and `CRM_SEED_DESK_ONLY=true` to add the desk to an already seeded database), dev login
-(`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`).
+(`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`), attachments bucket (`CRM_S3_ENDPOINT`,
+`CRM_S3_ACCESS_KEY`, `CRM_S3_SECRET_KEY`, `CRM_S3_BUCKET`, `CRM_S3_REGION`).
 
 ## Build
 

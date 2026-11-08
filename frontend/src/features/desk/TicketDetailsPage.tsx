@@ -9,6 +9,7 @@ import { useMe } from "#/features/auth/session";
 import { useNow } from "#/hooks/useNow";
 import { useI18n } from "#/i18n";
 import { PriorityChip, StatusChip, TimeLeft } from "./components/Badges";
+import { TicketAttachments } from "./components/TicketAttachments";
 import { TicketDialogs, type TicketDialogsCommand } from "./components/TicketDialogs";
 import { Timeline } from "./components/Timeline";
 import { useCatalogNames } from "./components/useCatalogNames";
@@ -107,6 +108,8 @@ export function TicketDetailsPage() {
 							<p className="text-sm whitespace-pre-wrap text-foreground">{x.description}</p>
 						</Card.Content>
 					</Card>
+
+					<TicketAttachments ticket={x} />
 
 					<Card>
 						<Card.Header>

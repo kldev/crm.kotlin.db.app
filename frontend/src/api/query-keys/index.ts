@@ -59,6 +59,7 @@ export const deskKeys = {
 	counters: () => [...deskKeys.all, "counters"] as const,
 	detail: (id: number) => [...deskKeys.all, "detail", id] as const,
 	events: (id: number) => [...deskKeys.all, "events", id] as const,
+	attachments: (id: number) => [...deskKeys.all, "attachments", id] as const,
 	agents: (filters: Omit<ListDeskAgentsParams, "cursor">) =>
 		[...deskKeys.all, "agents", filters] as const,
 	people: () => [...deskKeys.all, "people"] as const,

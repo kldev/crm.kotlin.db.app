@@ -3,6 +3,7 @@
   @actor_id NULL = the public form (channel SELF_SERVICE, reported now); otherwise an agent registers it (channel
   AGENT) and may date it back up to 30 days (a phone call this morning), never more than 5 minutes ahead.
   The requester is a person from crm.people XOR incognito. A new ticket starts in the pool.
+  @attachments (JSON, ADR-0009): files already stored, recorded in the same transaction as the report.
 */
 CREATE OR ALTER PROCEDURE crm.desk_ticket_create
     @actor_id            int,
@@ -14,7 +15,8 @@ CREATE OR ALTER PROCEDURE crm.desk_ticket_create
     @reported_at         datetime2(3),
     @requester_person_id int,
     @requester_incognito bit,
-    @ticket_id           bigint OUTPUT
+    @ticket_id           bigint OUTPUT,
+    @attachments         nvarchar(max) = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
@@ -101,6 +103,13 @@ BEGIN
                                  'name': @requester_name),
         'channel': @channel, 'registeredBy': @actor_name);
     EXEC crm.desk_ticket_append @ticket_id, 0, 'TicketReported', @now, @actor_id, @actor_name, @data;
+
+    IF @attachments IS NOT NULL
+    BEGIN
+        DECLARE @version int = 1;
+        DECLARE @added_by nvarchar(201) = COALESCE(@actor_name, @requester_name, N'incognito');
+        EXEC crm.desk_ticket_add_attachments @ticket_id, @actor_id, @added_by, @attachments, @now, @version OUTPUT;
+    END;
 
     COMMIT;
 END;

@@ -9,7 +9,12 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-data class ApiResponse(val status: Int, val body: JsonNode?)
+data class ApiResponse(val status: Int, val body: JsonNode?, val headers: Map<String, List<String>> = emptyMap(), val bytes: ByteArray = ByteArray(0)) {
+    fun header(name: String): String? = headers.entries.firstOrNull { it.key.equals(name, ignoreCase = true) }?.value?.firstOrNull()
+}
+
+/** A part of a multipart request: a form field (`fileName` null) or a file. */
+data class Part(val name: String, val content: ByteArray, val fileName: String? = null, val contentType: String = "application/octet-stream")
 
 /**
  * A real HTTP client with its own cookie jar (session + XSRF-TOKEN), like a browser or k6 VU.
@@ -44,6 +49,40 @@ class ApiClient(private val baseUrl: String) {
     fun put(path: String, body: Any?) = send("PUT", path, body)
 
     fun delete(path: String) = send("DELETE", path, null)
+
+    /** multipart/form-data POST (with the CSRF header), like a browser's FormData. */
+    fun multipart(path: String, parts: List<Part>): ApiResponse {
+        val boundary = "----crmtest${System.nanoTime()}"
+        val body = java.io.ByteArrayOutputStream()
+        for (part in parts) {
+            body.write("--$boundary\r\n".toByteArray())
+            val file = part.fileName?.let { "; filename=\"$it\"" } ?: ""
+            body.write("Content-Disposition: form-data; name=\"${part.name}\"$file\r\n".toByteArray())
+            if (part.fileName != null) body.write("Content-Type: ${part.contentType}\r\n".toByteArray())
+            body.write("\r\n".toByteArray())
+            body.write(part.content)
+            body.write("\r\n".toByteArray())
+        }
+        body.write("--$boundary--\r\n".toByteArray())
+        val builder = HttpRequest.newBuilder(URI("$baseUrl$path"))
+            .header("Content-Type", "multipart/form-data; boundary=$boundary")
+            .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray()))
+        xsrf()?.let { builder.header("X-XSRF-TOKEN", it) }
+        return toApiResponse(http.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray()))
+    }
+
+    /** GET returning the raw bytes and headers (downloads). */
+    fun download(path: String): ApiResponse {
+        val request = HttpRequest.newBuilder(URI("$baseUrl$path")).GET().build()
+        return toApiResponse(http.send(request, HttpResponse.BodyHandlers.ofByteArray()))
+    }
+
+    private fun toApiResponse(response: HttpResponse<ByteArray>): ApiResponse {
+        val bytes = response.body()
+        val isJson = response.headers().firstValue("Content-Type").orElse("").contains("json")
+        val json = if (isJson && bytes.isNotEmpty()) runCatching { mapper.readTree(bytes) }.getOrNull() else null
+        return ApiResponse(response.statusCode(), json, response.headers().map(), bytes)
+    }
 
     private fun send(method: String, path: String, body: Any?, withCsrf: Boolean = true): ApiResponse {
         val builder = HttpRequest.newBuilder(URI("$baseUrl$path"))

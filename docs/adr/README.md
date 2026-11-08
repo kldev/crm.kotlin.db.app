@@ -10,5 +10,6 @@
 | [0006](0006-react-frontend-served-by-spring.md) | React frontend served by Spring Boot | Accepted |
 | [0007](0007-service-desk-event-stream.md) | Service desk: a ticket is an event stream, decided by procedures | Accepted |
 | [0008](0008-polish-and-english-ui.md) | Polish and English in the web app | Accepted |
+| [0009](0009-desk-attachments-in-s3.md) | Desk attachments in S3, recorded as events | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

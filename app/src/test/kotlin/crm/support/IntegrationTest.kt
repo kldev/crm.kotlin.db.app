@@ -66,6 +66,10 @@ abstract class IntegrationTest {
             registry.add("crm.auth.admin-password") { ADMIN_PASSWORD }
             registry.add("crm.auth.max-failed-logins") { MAX_FAILED }
             registry.add("crm.auth.lock-minutes") { 15 }
+            registry.add("crm.storage.endpoint") { RustFs.endpoint }
+            registry.add("crm.storage.access-key") { RustFs.ACCESS_KEY }
+            registry.add("crm.storage.secret-key") { RustFs.SECRET_KEY }
+            registry.add("crm.storage.bucket") { RustFs.BUCKET }
         }
 
         /** Seeds once per test run, after the Spring context (and so Flyway) has started. */

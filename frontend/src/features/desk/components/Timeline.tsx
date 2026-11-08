@@ -6,6 +6,7 @@ import {
 	Hand,
 	type LucideIcon,
 	MessageSquare,
+	Paperclip,
 	Undo2,
 	UserRoundCog,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
 	TicketResolved: CheckCheck,
 	TicketCommented: MessageSquare,
 	TicketHandlerAssigned: UserRoundCog,
+	TicketAttachmentAdded: Paperclip,
 };
 
 /** The ticket's stream as a timeline. Free text (comments, reasons) is shown as text, never as markup. */

@@ -20,6 +20,12 @@ spring:
     # Migrations run only in CRM_MODE=migrate (application-migrate.yml) with the migrator login.
     enabled: false
 
+  servlet:
+    multipart:
+      # One file up to 20 MB (the procedure's limit); a request with up to 10 of them and the form fields.
+      max-file-size: 20MB
+      max-request-size: 210MB
+
 server:
   port: ${PORT:8080}
   shutdown: graceful
@@ -41,6 +47,13 @@ crm:
     dev-login: ${CRM_DEV_LOGIN:false}
   desk:
     public-reports-per-minute: ${CRM_DESK_PUBLIC_REPORTS_PER_MINUTE:30}
+  # Desk attachments (ADR-0009): a private S3 bucket, path-style URLs (RustFS locally).
+  storage:
+    endpoint: ${CRM_S3_ENDPOINT:http://localhost:9000}
+    region: ${CRM_S3_REGION:us-east-1}
+    access-key: ${CRM_S3_ACCESS_KEY:}
+    secret-key: ${CRM_S3_SECRET_KEY:}
+    bucket: ${CRM_S3_BUCKET:crm-attachments}
 
 management:
   endpoints:
@@ -53,7 +66,7 @@ management:
         enabled: true
       group:
         readiness:
-          include: database
+          include: database,storage
   health:
     db:
       # Replaced by DatabaseHealthIndicator (EXEC app.health_ping).

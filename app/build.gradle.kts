@@ -26,6 +26,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-sqlserver")
     implementation(libs.springdoc.webmvc.ui)
+    // Desk attachments in S3 (RustFS locally, ADR-0009). The JDK HTTP client only: no Netty, no Apache client.
+    implementation(platform(libs.aws.sdk.bom))
+    implementation("software.amazon.awssdk:s3") {
+        exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
+        exclude(group = "software.amazon.awssdk", module = "apache-client")
+    }
+    implementation("software.amazon.awssdk:url-connection-client")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     runtimeOnly("com.microsoft.sqlserver:mssql-jdbc")

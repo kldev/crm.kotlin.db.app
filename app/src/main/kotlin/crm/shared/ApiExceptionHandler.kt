@@ -45,6 +45,15 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleTooManyReports(error: crm.desk.TooManyPublicReportsException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, error.message!!).apply { title = "Too many requests" }
 
+    /** The attachments bucket did not answer (ADR-0009). */
+    @ExceptionHandler(software.amazon.awssdk.core.exception.SdkException::class)
+    fun handleStorage(error: software.amazon.awssdk.core.exception.SdkException): ProblemDetail {
+        log.error("Attachment storage call failed", error)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "File storage is not available.").apply {
+            title = "Storage unavailable"
+        }
+    }
+
     @ExceptionHandler(InvalidCursorException::class)
     fun handleCursor(error: InvalidCursorException): ProblemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.message ?: "Invalid cursor.").apply {

@@ -1,6 +1,7 @@
 /*
   The public form (no sign-in): a person reports a ticket for themselves or incognito; reported now.
   Picking a name is not authentication (ADR-0007) - the form only creates tickets, so it returns just the number.
+  @attachments: the requester's files, already stored, recorded with the report in one transaction (ADR-0009).
 */
 CREATE OR ALTER PROCEDURE app.desk_ticket_report_public
     @title               nvarchar(4000),
@@ -9,12 +10,13 @@ CREATE OR ALTER PROCEDURE app.desk_ticket_report_public
     @subcategory_key     varchar(60),
     @priority            varchar(8),
     @requester_person_id int = NULL,
-    @requester_incognito bit = 0
+    @requester_incognito bit = 0,
+    @attachments         nvarchar(max) = NULL
 AS
 BEGIN
     SET NOCOUNT, XACT_ABORT ON;
     DECLARE @ticket_id bigint;
     EXEC crm.desk_ticket_create NULL, @title, @description, @category_key, @subcategory_key, @priority, NULL,
-         @requester_person_id, @requester_incognito, @ticket_id OUTPUT;
+         @requester_person_id, @requester_incognito, @ticket_id OUTPUT, @attachments;
     SELECT id, number, deadline FROM crm.tickets WHERE id = @ticket_id;
 END;

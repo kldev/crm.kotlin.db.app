@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Repository
 import java.sql.Types
 import java.time.Instant
+import java.util.UUID
 
 data class TicketFilter(
     /** POOL, MINE or ALL. */
@@ -80,12 +81,13 @@ class DeskRepository(private val jdbc: JdbcClient) {
             .query(ticketRow)
             .single()
 
-    fun reportPublic(body: PublicReportRequest): PublicReportResponse =
+    fun reportPublic(body: PublicReportRequest, attachments: String?): PublicReportResponse =
         jdbc.sql(
             "EXEC app.desk_ticket_report_public @title = :title, @description = :description, " +
                 "@category_key = :categoryKey, @subcategory_key = :subcategoryKey, @priority = :priority, " +
-                "@requester_person_id = :personId, @requester_incognito = :incognito",
+                "@requester_person_id = :personId, @requester_incognito = :incognito, @attachments = :attachments",
         )
+            .param("attachments", attachments, Types.NVARCHAR)
             .param("title", body.title, Types.NVARCHAR)
             .param("description", body.description, Types.NVARCHAR)
             .param("categoryKey", body.categoryKey, Types.VARCHAR)
@@ -225,6 +227,53 @@ class DeskRepository(private val jdbc: JdbcClient) {
             .query(ticketRow)
             .single()
 
+    fun checkAttachment(fileName: String?, size: Long): CheckedFile =
+        jdbc.sql("EXEC app.desk_attachment_check @file_name = :fileName, @size_bytes = :size")
+            .param("fileName", fileName, Types.NVARCHAR)
+            .param("size", size, Types.BIGINT)
+            .query { rs, _ -> CheckedFile(rs.getString("file_name"), rs.getString("content_type")) }
+            .single()
+
+    /** [attachments] is the JSON array of [StoredFile]s. */
+    fun attach(actorId: Int, ticketId: Long, attachments: String): TicketResponse =
+        action(
+            "EXEC app.desk_ticket_attach @actor_id = :actorId, @ticket_id = :ticketId, @attachments = :attachments",
+            actorId,
+            ticketId,
+        ) { param("attachments", attachments, Types.NVARCHAR) }
+
+    fun attachments(actorId: Int, ticketId: Long): List<AttachmentResponse> =
+        jdbc.sql("EXEC app.desk_attachment_list @actor_id = :actorId, @ticket_id = :ticketId")
+            .param("actorId", actorId, Types.INTEGER)
+            .param("ticketId", ticketId, Types.BIGINT)
+            .query { rs, _ ->
+                AttachmentResponse(
+                    id = UUID.fromString(rs.getString("attachment_id")),
+                    fileName = rs.getString("file_name"),
+                    contentType = rs.getString("content_type"),
+                    size = rs.getLong("size_bytes"),
+                    addedBy = rs.getString("added_by"),
+                    at = rs.getInstant("at"),
+                    inline = rs.getBoolean("is_inline"),
+                )
+            }
+            .list()
+
+    fun attachment(actorId: Int, ticketId: Long, attachmentId: UUID): AttachmentLocation =
+        jdbc.sql(
+            "EXEC app.desk_attachment_get @actor_id = :actorId, @ticket_id = :ticketId, @attachment_id = :attachmentId",
+        )
+            .param("actorId", actorId, Types.INTEGER)
+            .param("ticketId", ticketId, Types.BIGINT)
+            .param("attachmentId", attachmentId.toString(), Types.VARCHAR)
+            .query { rs, _ ->
+                AttachmentLocation(
+                    rs.getString("file_name"), rs.getString("content_type"), rs.getLong("size_bytes"),
+                    rs.getString("storage_key"), rs.getBoolean("is_inline"),
+                )
+            }
+            .single()
+
     fun agents(actorId: Int, search: String?, afterName: String?, afterId: Int?, pageSize: Int): List<AgentSummary> =
         jdbc.sql(
             "EXEC app.desk_agent_list @actor_id = :actorId, @search = :search, @after_name = :afterName, " +
@@ -282,6 +331,9 @@ class DeskRepository(private val jdbc: JdbcClient) {
         val priorities = jdbc.sql("EXEC app.desk_priority_list")
             .query { rs, _ -> PriorityResponse(rs.getString("priority"), rs.getInt("sla_minutes")) }
             .list()
-        return DeskCatalog(categories, priorities)
+        val extensions = jdbc.sql("EXEC app.desk_attachment_type_list")
+            .query { rs, _ -> rs.getString("extension") }
+            .list()
+        return DeskCatalog(categories, priorities, extensions)
     }
 }

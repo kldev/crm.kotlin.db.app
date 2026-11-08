@@ -10,4 +10,5 @@ import type { PriorityResponse } from './priorityResponse.ts';
 export interface DeskCatalog {
   categories: CategoryResponse[];
   priorities: PriorityResponse[];
+  attachmentExtensions: string[];
 }

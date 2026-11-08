@@ -261,12 +261,13 @@ class DeskHttpTest : IntegrationTest() {
         assertEquals(401, anonymous.get("/api/desk/tickets").status)
 
         anonymous.csrf()
-        val sent = anonymous.post(
+        // The form is multipart (ADR-0009: files go with the report); fields without files are fine.
+        val sent = anonymous.multipart(
             "/api/public/desk/tickets",
             mapOf(
                 "title" to "Test z formularza", "description" to "Drukarka", "categoryKey" to "it",
-                "subcategoryKey" to "it.hardware", "priority" to "LOW", "requesterIncognito" to true,
-            ),
+                "subcategoryKey" to "it.hardware", "priority" to "LOW", "requesterIncognito" to "true",
+            ).map { (k, v) -> crm.support.Part(k, v.toByteArray()) },
         )
         assertEquals(201, sent.status, sent.body.toString())
         val number = sent.body!!["number"].asString()

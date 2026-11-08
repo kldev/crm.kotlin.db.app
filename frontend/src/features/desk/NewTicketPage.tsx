@@ -4,19 +4,55 @@ import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError } from "#/components/ui";
 import { useI18n } from "#/i18n";
-import { ReportForm } from "./components/ReportForm";
-import { deskCatalogQuery, peopleQuery, useReportTicket } from "./hooks";
+import { problemText } from "#/i18n/problems";
+import { ReportForm, type ReportValues } from "./components/ReportForm";
+import { deskCatalogQuery, peopleQuery, useAttachFiles, useReportTicket } from "./hooks";
 
-/** An agent registers a ticket taken by phone or e-mail; it may be dated back up to 30 days. */
+/**
+ * An agent registers a ticket taken by phone or e-mail; it may be dated back up to 30 days. Files go right after the
+ * report: the ticket exists by then, so a refused file is reported on the ticket's page and nothing is lost.
+ */
 export function NewTicketPage() {
-	const { t } = useI18n();
+	const i18n = useI18n();
+	const { t } = i18n;
 	const navigate = useNavigate();
 	const catalog = useQuery(deskCatalogQuery());
 	const people = useQuery(peopleQuery());
-	const report = useReportTicket((ticket) => {
-		toast.success(t(`Zarejestrowano ${ticket.number}`, `Registered ${ticket.number}`));
-		void navigate({ to: "/desk/tickets/$ticketId", params: { ticketId: ticket.id } });
-	});
+	const report = useReportTicket();
+	const attach = useAttachFiles();
+
+	const submit = (v: ReportValues, files: File[]) =>
+		report.mutate(
+			{
+				title: v.title.trim(),
+				description: v.description.trim(),
+				categoryKey: v.categoryKey,
+				subcategoryKey: v.subcategoryKey,
+				priority: v.priority,
+				// datetime-local is the browser's time; Date turns it into the instant.
+				reportedAt: new Date(v.reportedAt).toISOString(),
+				requesterPersonId: v.requesterPersonId,
+				requesterIncognito: v.requesterIncognito,
+			},
+			{
+				onSuccess: async (ticket) => {
+					if (files.length > 0) {
+						try {
+							await attach.mutateAsync({ id: ticket.id, files });
+						} catch (error) {
+							toast.danger(
+								t(
+									`Zgłoszenie ${ticket.number} zapisane, ale pliki nie: ${problemText(error, i18n)}`,
+									`Ticket ${ticket.number} saved, but not the files: ${problemText(error, i18n)}`,
+								),
+							);
+						}
+					}
+					toast.success(t(`Zarejestrowano ${ticket.number}`, `Registered ${ticket.number}`));
+					void navigate({ to: "/desk/tickets/$ticketId", params: { ticketId: ticket.id } });
+				},
+			},
+		);
 
 	return (
 		<>
@@ -39,21 +75,9 @@ export function NewTicketPage() {
 							mode="agent"
 							catalog={catalog.data}
 							people={people.data}
-							isPending={report.isPending}
+							isPending={report.isPending || attach.isPending}
 							error={report.error}
-							onSubmit={(v) =>
-								report.mutate({
-									title: v.title.trim(),
-									description: v.description.trim(),
-									categoryKey: v.categoryKey,
-									subcategoryKey: v.subcategoryKey,
-									priority: v.priority,
-									// datetime-local is the browser's time; Date turns it into the instant.
-									reportedAt: new Date(v.reportedAt).toISOString(),
-									requesterPersonId: v.requesterPersonId,
-									requesterIncognito: v.requesterIncognito,
-								})
-							}
+							onSubmit={submit}
 						/>
 					)}
 				</Card.Content>

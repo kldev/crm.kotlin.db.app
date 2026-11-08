@@ -173,6 +173,13 @@ export function describeEvent(
 			};
 		case "TicketCommented":
 			return { title: t("Komentarz", "Comment"), who, text: String(d.text ?? "") };
+		case "TicketAttachmentAdded": {
+			const name = String(d.fileName ?? "");
+			return {
+				title: t(`Załącznik: ${name}`, `Attachment: ${name}`),
+				who: String(d.addedBy ?? who),
+			};
+		}
 		case "TicketHandlerAssigned": {
 			const person = (d.person as Ref)?.name;
 			return {
@@ -185,5 +192,63 @@ export function describeEvent(
 		}
 		default:
 			return { title: e.type, who };
+	}
+}
+
+/*
+ * Attachment limits, mirrored from crm.desk_attachment_normalize and crm.desk_ticket_add_attachments (ADR-0009):
+ * informative only - the picker refuses early, the procedure decides.
+ */
+export const ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024;
+export const ATTACHMENTS_PER_TICKET = 10;
+
+/** "12,4 MB" / "830 KB". */
+export function sizeText(bytes: number, { locale }: Pick<I18n, "locale">): string {
+	if (bytes >= 1024 * 1024)
+		return `${(bytes / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 1 })} MB`;
+	return `${Math.max(1, Math.floor(bytes / 1024))} KB`;
+}
+
+/** What to attach, said for the chosen team (as in Halcyon). */
+export function attachmentHint(categoryKey: string | undefined, { t }: Pick<I18n, "t">): string {
+	switch (categoryKey) {
+		case "it":
+			return t(
+				"Np. zrzut ekranu z błędem aplikacji albo plik z logiem",
+				"E.g. a screenshot of the application error or a log file",
+			);
+		case "marketing":
+			return t(
+				"Np. brief, logo, zdjęcia, materiały do kampanii",
+				"E.g. a brief, logo, photos, campaign materials",
+			);
+		case "legal":
+			return t(
+				"Np. projekt umowy, korespondencja, pismo",
+				"E.g. a draft contract, correspondence, a letter",
+			);
+		case "hr-abroad":
+		case "hr-poland":
+			return t(
+				"Np. skan dokumentu, zaświadczenie, formularz",
+				"E.g. a scanned document, a certificate, a form",
+			);
+		case "recruitment":
+			return t(
+				"Np. opis stanowiska, zamówienie klienta, CV kandydata",
+				"E.g. a job description, the client's order, a candidate's CV",
+			);
+		case "finance":
+			return t(
+				"Np. skan faktury, rachunek, potwierdzenie przelewu",
+				"E.g. a scanned invoice, a bill, a transfer confirmation",
+			);
+		case "legalization":
+			return t(
+				"Np. skan paszportu, wizy, umowy najmu, decyzji urzędu",
+				"E.g. a scan of the passport, visa, tenancy agreement, office decision",
+			);
+		default:
+			return t("Zrzuty ekranu, dokumenty, materiały", "Screenshots, documents, materials");
 	}
 }

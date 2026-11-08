@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import java.time.Instant
+import java.util.UUID
 
 const val PRIORITIES = "CRITICAL|HIGH|MEDIUM|LOW"
 
@@ -130,5 +131,38 @@ data class CategoryResponse(
 
 data class PriorityResponse(val priority: String, val slaMinutes: Int)
 
-/** Everything a form needs to offer: the catalog and the priorities with their SLA. */
-data class DeskCatalog(val categories: List<CategoryResponse>, val priorities: List<PriorityResponse>)
+/**
+ * Everything a form needs to offer: the catalog, the priorities with their SLA and the file extensions an attachment
+ * may have (for the file picker's accept attribute).
+ */
+data class DeskCatalog(
+    val categories: List<CategoryResponse>,
+    val priorities: List<PriorityResponse>,
+    val attachmentExtensions: List<String>,
+)
+
+data class AttachmentResponse(
+    val id: UUID,
+    val fileName: String,
+    val contentType: String,
+    val size: Long,
+    val addedBy: String,
+    val at: Instant,
+    /** Images and PDF open in the browser; the rest is downloaded. */
+    val inline: Boolean,
+)
+
+/** A file checked by the procedure: the name as stored and its type. */
+data class CheckedFile(val fileName: String, val contentType: String)
+
+/** A stored file the procedure records; serialised as the JSON the procedures read. */
+data class StoredFile(val id: UUID, val fileName: String, val size: Long, val storageKey: String)
+
+/** Where an attachment's bytes are and how to send them. */
+data class AttachmentLocation(
+    val fileName: String,
+    val contentType: String,
+    val size: Long,
+    val storageKey: String,
+    val inline: Boolean,
+)

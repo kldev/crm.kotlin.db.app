@@ -2,6 +2,7 @@
 kotlin = "2.4.21"
 spring-boot = "4.1.2"
 springdoc = "3.2.0"
+aws-sdk = "2.57.3"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -11,3 +12,4 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 [libraries]
 # Versions of the libraries below without version.ref come from the Spring Boot BOM.
 springdoc-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }

@@ -17,7 +17,15 @@ import type { DeskCatalog, PublicPerson } from "#/api/models";
 import { ApiError } from "#/components/ui";
 import { useAppForm } from "#/forms";
 import { useI18n } from "#/i18n";
-import { formatInstant, PRIORITIES, priorityLabel, slaLabel } from "../types";
+import {
+	ATTACHMENTS_PER_TICKET,
+	attachmentHint,
+	formatInstant,
+	PRIORITIES,
+	priorityLabel,
+	slaLabel,
+} from "../types";
+import { AttachmentPicker } from "./AttachmentPicker";
 import { CategoryIcon } from "./CategoryIcon";
 
 export interface ReportValues {
@@ -58,10 +66,11 @@ export function ReportForm({
 	mode: "agent" | "public";
 	isPending: boolean;
 	error: unknown;
-	onSubmit: (values: ReportValues) => void;
+	onSubmit: (values: ReportValues, files: File[]) => void;
 }) {
 	const i18n = useI18n();
 	const { t, n } = i18n;
+	const [files, setFiles] = useState<File[]>([]);
 	const schema = useMemo(
 		() =>
 			z
@@ -109,7 +118,7 @@ export function ReportForm({
 			reportedAt: mode === "agent" ? localNow() : "",
 		} as ReportValues,
 		validators: { onChange: schema },
-		onSubmit: ({ value }) => onSubmit(value),
+		onSubmit: ({ value }) => onSubmit(value, files),
 	});
 
 	return (
@@ -314,8 +323,22 @@ export function ReportForm({
 				</form.Field>
 			</Step>
 
+			<Step n={6} title={t("Załączniki (opcjonalnie)", "Attachments (optional)")}>
+				<form.Subscribe selector={(st) => st.values.categoryKey}>
+					{(categoryKey) => (
+						<AttachmentPicker
+							files={files}
+							onChange={setFiles}
+							extensions={catalog.attachmentExtensions}
+							room={ATTACHMENTS_PER_TICKET}
+							hint={attachmentHint(categoryKey, i18n)}
+						/>
+					)}
+				</form.Subscribe>
+			</Step>
+
 			{mode === "agent" ? (
-				<Step n={6} title={t("Kiedy zgłoszono?", "When was it reported?")}>
+				<Step n={7} title={t("Kiedy zgłoszono?", "When was it reported?")}>
 					<form.Field name="reportedAt">
 						{(field) => (
 							<TextField
