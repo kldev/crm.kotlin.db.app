@@ -12,5 +12,6 @@
 | [0008](0008-polish-and-english-ui.md) | Polish and English in the web app | Accepted |
 | [0009](0009-desk-attachments-in-s3.md) | Desk attachments in S3, recorded as events | Accepted |
 | [0010](0010-report-data-and-exports.md) | Report data of desk tickets, reports and exports | Accepted |
+| [0011](0011-desk-charts.md) | Desk charts drawn without a chart library | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

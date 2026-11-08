@@ -33,6 +33,10 @@ declare module "@tanstack/react-router" {
 	interface Register {
 		router: typeof router;
 	}
+	interface StaticDataRouteOption {
+		/** The page uses the whole screen width (wide tables, charts) instead of the readable column. */
+		wide?: boolean;
+	}
 }
 
 const root = document.getElementById("root");

@@ -1,6 +1,7 @@
 export * from './auth/auth.ts';
 export * from './clients/clients.ts';
 export * from './desk/desk.ts';
+export * from './desk-charts/desk-charts.ts';
 export * from './desk-reports/desk-reports.ts';
 export * from './projects/projects.ts';
 export * from './public-desk/public-desk.ts';

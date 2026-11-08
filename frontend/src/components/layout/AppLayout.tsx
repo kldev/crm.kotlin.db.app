@@ -1,9 +1,10 @@
 import { Button, Chip, Drawer, Dropdown, Label, Separator, toast } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
-import { Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import {
 	BriefcaseBusiness,
 	Building2,
+	ChartColumn,
 	Contact,
 	FileSpreadsheet,
 	Headset,
@@ -44,7 +45,8 @@ interface NavItem {
 		| "/desk/new"
 		| "/desk/agents"
 		| "/desk/people"
-		| "/desk/reports";
+		| "/desk/reports"
+		| "/desk/charts";
 	label: (t: I18n["t"]) => string;
 	icon: typeof LayoutDashboard;
 	visible?: (role: Role) => boolean;
@@ -76,6 +78,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/desk/agents", label: (t) => t("Agenci", "Agents"), icon: Headset },
 			{ to: "/desk/people", label: (t) => t("Osoby", "People"), icon: Contact },
 			{ to: "/desk/reports", label: (t) => t("Raporty", "Reports"), icon: FileSpreadsheet },
+			{ to: "/desk/charts", label: (t) => t("Wykresy", "Charts"), icon: ChartColumn },
 		],
 	},
 ];
@@ -199,6 +202,8 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 
 export function AppLayout() {
 	const { t } = useI18n();
+	// Wide pages (reports with many columns, charts) use the whole screen; the rest keep a readable width.
+	const wide = useMatches({ select: (matches) => matches.some((m) => m.staticData?.wide) });
 	const me = useMe();
 	const [mobileNav, setMobileNav] = useState(false);
 	const passwordDrawer = useRef<ChangePasswordCommand>(null);
@@ -244,7 +249,9 @@ export function AppLayout() {
 						<UserMenu onChangePassword={() => passwordDrawer.current?.open()} />
 					</div>
 				</header>
-				<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8">
+				<main
+					className={`mx-auto w-full flex-1 px-4 py-8 sm:px-8 ${wide ? "max-w-none" : "max-w-7xl"}`}
+				>
 					<Outlet />
 				</main>
 			</div>

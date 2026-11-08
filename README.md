@@ -27,6 +27,8 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   number. Attachments live in RustFS (S3, console <http://127.0.0.1:19001>), ADR-0009.
 - Report data per topic (PESEL, IBAN, amounts, dates, choices; ADR-0010) on the forms and the ticket page, five
   category reports and the agents' work with XLSX, PDF and CSV exports, campaigns linked to recruitment tickets.
+- Charts (ADR-0011): flow in and out, backlog, deadlines kept, SLA use per priority, by category, the queue now,
+  agents and a weekday x hour heatmap, each with a table view; reports and charts use the whole screen width.
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -166,6 +168,7 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET/POST /api/desk/tickets/{id}/attachments`, `GET …/attachments/{attachmentId}` | `desk_attachment_list`, `desk_attachment_check` + `desk_ticket_attach`, `desk_attachment_get` | all |
 | `GET/PUT /api/desk/tickets/{id}/fields`, `GET …/linked` | `desk_ticket_field_list`, `desk_ticket_update_fields`, `desk_ticket_linked_list` | all |
 | `GET /api/desk/reports/categories/{slug}[/export.{csv,xlsx,pdf}]`, `GET /api/desk/reports/agents[/export.…]` | `desk_report_category`, `desk_report_agents`, `desk_report_period_list` | all |
+| `GET /api/desk/charts?range=DAYS_7\|DAYS_30\|WEEKS_12&categoryKey=` | `desk_chart_tickets` | all |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
@@ -259,7 +262,7 @@ gets error 229 on tables and on `seed`), login and lockout, clients, projects, s
 over HTTP, the service desk (rules of every action, three agents taking one ticket at once, deadlines, lists in two
 phases, the public form, attachments on a real RustFS: refused types, the limit of 10, refused uploads deleted from
 the bucket, download headers), report data (every kind and the PESEL / IBAN rules, changes listed in the event),
-the reports and their CSV / XLSX / PDF exports, and the seed.
+the reports and their CSV / XLSX / PDF exports, the charts' numbers agreeing with each other and the lists, and the seed.
 
 ## Configuration
 

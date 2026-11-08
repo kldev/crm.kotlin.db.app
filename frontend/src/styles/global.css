@@ -147,3 +147,26 @@ body {
 	font-family: var(--font-mono);
 	font-variant-numeric: tabular-nums;
 }
+
+/*
+ * Chart colours (ADR-0011), validated with the dataviz palette checks against the light surface: two categorical
+ * slots (reported, resolved), the fixed status set (on time / due soon / late or overdue, always with an icon and a
+ * label), a neutral for "open", and a one-hue sequential ramp for the heatmap. Charts use these roles only.
+ */
+:root {
+	--viz-series-1: #2a78d6;
+	--viz-series-2: #eb6834;
+	--viz-good: #0ca30c;
+	--viz-warning: #fab219;
+	--viz-critical: #d03b3b;
+	--viz-neutral: #a9a69c;
+	--viz-grid: #e6e2da;
+	--viz-seq-0: #f3f1ec;
+	--viz-seq-1: #cde2fb;
+	--viz-seq-2: #9ec5f4;
+	--viz-seq-3: #6da7ec;
+	--viz-seq-4: #3987e5;
+	--viz-seq-5: #256abf;
+	--viz-seq-6: #184f95;
+	--viz-seq-7: #0d366b;
+}

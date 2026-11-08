@@ -19,6 +19,7 @@ import { Route as AppClientsClientIdRouteImport } from './routes/_app/clients.$c
 import { Route as AppDeskIndexRouteImport } from './routes/_app/desk.index'
 import { Route as AppDeskAgentsRouteImport } from './routes/_app/desk.agents'
 import { Route as AppDeskAllRouteImport } from './routes/_app/desk.all'
+import { Route as AppDeskChartsRouteImport } from './routes/_app/desk.charts'
 import { Route as AppDeskMineRouteImport } from './routes/_app/desk.mine'
 import { Route as AppDeskNewRouteImport } from './routes/_app/desk.new'
 import { Route as AppDeskPeopleRouteImport } from './routes/_app/desk.people'
@@ -79,6 +80,11 @@ const AppDeskAgentsRoute = AppDeskAgentsRouteImport.update({
 const AppDeskAllRoute = AppDeskAllRouteImport.update({
   id: '/desk/all',
   path: '/desk/all',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDeskChartsRoute = AppDeskChartsRouteImport.update({
+  id: '/desk/charts',
+  path: '/desk/charts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDeskMineRoute = AppDeskMineRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/clients/$clientId': typeof AppClientsClientIdRoute
   '/desk/agents': typeof AppDeskAgentsRoute
   '/desk/all': typeof AppDeskAllRoute
+  '/desk/charts': typeof AppDeskChartsRoute
   '/desk/mine': typeof AppDeskMineRoute
   '/desk/new': typeof AppDeskNewRoute
   '/desk/people': typeof AppDeskPeopleRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/clients/$clientId': typeof AppClientsClientIdRoute
   '/desk/agents': typeof AppDeskAgentsRoute
   '/desk/all': typeof AppDeskAllRoute
+  '/desk/charts': typeof AppDeskChartsRoute
   '/desk/mine': typeof AppDeskMineRoute
   '/desk/new': typeof AppDeskNewRoute
   '/desk/people': typeof AppDeskPeopleRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/_app/clients/$clientId': typeof AppClientsClientIdRoute
   '/_app/desk/agents': typeof AppDeskAgentsRoute
   '/_app/desk/all': typeof AppDeskAllRoute
+  '/_app/desk/charts': typeof AppDeskChartsRoute
   '/_app/desk/mine': typeof AppDeskMineRoute
   '/_app/desk/new': typeof AppDeskNewRoute
   '/_app/desk/people': typeof AppDeskPeopleRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/desk/agents'
     | '/desk/all'
+    | '/desk/charts'
     | '/desk/mine'
     | '/desk/new'
     | '/desk/people'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/desk/agents'
     | '/desk/all'
+    | '/desk/charts'
     | '/desk/mine'
     | '/desk/new'
     | '/desk/people'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/_app/clients/$clientId'
     | '/_app/desk/agents'
     | '/_app/desk/all'
+    | '/_app/desk/charts'
     | '/_app/desk/mine'
     | '/_app/desk/new'
     | '/_app/desk/people'
@@ -362,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/desk/all'
       fullPath: '/desk/all'
       preLoaderRoute: typeof AppDeskAllRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/desk/charts': {
+      id: '/_app/desk/charts'
+      path: '/desk/charts'
+      fullPath: '/desk/charts'
+      preLoaderRoute: typeof AppDeskChartsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/desk/mine': {
@@ -457,6 +476,7 @@ interface AppRouteChildren {
   AppClientsClientIdRoute: typeof AppClientsClientIdRoute
   AppDeskAgentsRoute: typeof AppDeskAgentsRoute
   AppDeskAllRoute: typeof AppDeskAllRoute
+  AppDeskChartsRoute: typeof AppDeskChartsRoute
   AppDeskMineRoute: typeof AppDeskMineRoute
   AppDeskNewRoute: typeof AppDeskNewRoute
   AppDeskPeopleRoute: typeof AppDeskPeopleRoute
@@ -479,6 +499,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppClientsClientIdRoute: AppClientsClientIdRoute,
   AppDeskAgentsRoute: AppDeskAgentsRoute,
   AppDeskAllRoute: AppDeskAllRoute,
+  AppDeskChartsRoute: AppDeskChartsRoute,
   AppDeskMineRoute: AppDeskMineRoute,
   AppDeskNewRoute: AppDeskNewRoute,
   AppDeskPeopleRoute: AppDeskPeopleRoute,
