@@ -1,6 +1,7 @@
 package crm.auth
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -8,7 +9,6 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
-import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 data class LoginRequest(
@@ -53,18 +54,18 @@ class AuthController(
 ) {
     @Operation(summary = "Sets the XSRF-TOKEN cookie. Send its value as the X-XSRF-TOKEN header with every write request.")
     @GetMapping("/csrf")
-    fun csrf(token: CsrfToken): ResponseEntity<Void> {
+    fun getCsrfToken(@Parameter(hidden = true) token: CsrfToken): ResponseEntity<Void> {
         token.token // loading the deferred token writes the cookie
         return ResponseEntity.noContent().build()
     }
 
-    @Operation(summary = "Log in with login and password; starts a session (cookie).")
+    @Operation(summary = "Log in with login and password; starts a session (cookie). 401 for any failure.")
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody body: LoginRequest,
         request: HttpServletRequest,
         response: HttpServletResponse,
-    ): ResponseEntity<Any> {
+    ): MeResponse {
         val login = body.login!!.trim().lowercase()
         val authentication = try {
             authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(login, body.password))
@@ -73,8 +74,7 @@ class AuthController(
                 auth.loginFailed(login, properties.maxFailedLogins, properties.lockMinutes)
             }
             // The same answer for an unknown login, a wrong password, a locked or a deactivated account.
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid login or password."))
+            throw InvalidLoginException()
         }
 
         val user = (authentication.principal as CrmUserDetails).withoutPassword()
@@ -88,25 +88,30 @@ class AuthController(
         SecurityContextHolder.getContextHolderStrategy().context = context
         contextRepository.saveContext(context, request, response)
 
-        return ResponseEntity.ok(MeResponse.from(user))
+        return MeResponse.from(user)
     }
 
     @Operation(summary = "The logged-in user.")
     @GetMapping("/me")
-    fun me(@AuthenticationPrincipal user: CrmUserDetails): MeResponse = MeResponse.from(user)
+    fun getMe(@AuthenticationPrincipal user: CrmUserDetails): MeResponse = MeResponse.from(user)
 
     @Operation(summary = "Change own password (requires the current one).")
     @PostMapping("/password")
-    fun changePassword(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun changeOwnPassword(
         @AuthenticationPrincipal user: CrmUserDetails,
         @Valid @RequestBody body: ChangePasswordRequest,
-    ): ResponseEntity<Any> {
+    ) {
         val current = auth.findForLogin(user.login)
         if (current == null || !passwordEncoder.matches(body.currentPassword, current.password)) {
-            return ResponseEntity.badRequest()
-                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Current password is not correct."))
+            throw WrongCurrentPasswordException()
         }
         auth.setPassword(user.id, user.id, passwordEncoder.encode(body.newPassword!!)!!)
-        return ResponseEntity.noContent().build()
     }
 }
+
+/** 401 "Invalid login or password." - one answer for every login failure. */
+class InvalidLoginException : RuntimeException("Invalid login or password.")
+
+/** 400 when the current password given to change it is wrong. */
+class WrongCurrentPasswordException : RuntimeException("Current password is not correct.")

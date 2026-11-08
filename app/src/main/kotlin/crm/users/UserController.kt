@@ -31,7 +31,7 @@ class UserController(
 ) {
     @Operation(summary = "Users page, ordered by id.")
     @GetMapping
-    fun list(
+    fun listUsers(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @RequestParam(required = false) role: String?,
         @RequestParam(required = false) cursor: String?,
@@ -45,7 +45,7 @@ class UserController(
     @Operation(summary = "Create a user.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(
+    fun createUser(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @Valid @RequestBody body: CreateUserRequest,
     ): UserResponse = users.create(
@@ -58,7 +58,7 @@ class UserController(
 
     @Operation(summary = "Change the role of a user (not your own).")
     @PutMapping("/{id}/role")
-    fun changeRole(
+    fun changeUserRole(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Int,
         @Valid @RequestBody body: ChangeRoleRequest,
@@ -66,7 +66,7 @@ class UserController(
 
     @Operation(summary = "Activate or deactivate a user (not yourself).")
     @PutMapping("/{id}/active")
-    fun setActive(
+    fun setUserActive(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Int,
         @Valid @RequestBody body: SetActiveRequest,
@@ -75,7 +75,7 @@ class UserController(
     @Operation(summary = "Set a new password for a user; clears a lockout.")
     @PutMapping("/{id}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun resetPassword(
+    fun resetUserPassword(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Int,
         @Valid @RequestBody body: ResetPasswordRequest,

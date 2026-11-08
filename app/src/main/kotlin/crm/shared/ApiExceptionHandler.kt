@@ -1,5 +1,7 @@
 package crm.shared
 
+import crm.auth.InvalidLoginException
+import crm.auth.WrongCurrentPasswordException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
 import org.springframework.http.HttpStatus
@@ -30,6 +32,14 @@ class ApiExceptionHandler : ResponseEntityExceptionHandler() {
             setProperty("errorNumber", number.takeIf { mapping.exposeMessage || it in setOf(2601, 2627, 547, 1205) })
         }
     }
+
+    @ExceptionHandler(InvalidLoginException::class)
+    fun handleInvalidLogin(error: InvalidLoginException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, error.message!!).apply { title = "Unauthorized" }
+
+    @ExceptionHandler(WrongCurrentPasswordException::class)
+    fun handleWrongPassword(error: WrongCurrentPasswordException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.message!!).apply { title = "Validation failed" }
 
     @ExceptionHandler(InvalidCursorException::class)
     fun handleCursor(error: InvalidCursorException): ProblemDetail =

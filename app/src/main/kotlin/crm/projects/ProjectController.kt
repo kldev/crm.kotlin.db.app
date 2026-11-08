@@ -34,7 +34,7 @@ class ProjectController(private val projects: ProjectRepository) {
             "and projects of their clients.",
     )
     @GetMapping
-    fun search(
+    fun searchProjects(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @RequestParam(required = false) stage: String?,
         @RequestParam(required = false) teamId: Int?,
@@ -61,20 +61,20 @@ class ProjectController(private val projects: ProjectRepository) {
 
     @Operation(summary = "Project details.")
     @GetMapping("/{id}")
-    fun get(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): ProjectResponse =
+    fun getProject(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): ProjectResponse =
         projects.get(actor.id, id)
 
     @Operation(summary = "Create a project (stage NEW). The owner must be a member of the team.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(
+    fun createProject(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @Valid @RequestBody body: CreateProjectRequest,
     ): ProjectResponse = projects.create(actor.id, body)
 
     @Operation(summary = "Update project details (not the stage). `rowVersion` from the last read is required.")
     @PutMapping("/{id}")
-    fun update(
+    fun updateProject(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Long,
         @Valid @RequestBody body: UpdateProjectRequest,
@@ -85,7 +85,7 @@ class ProjectController(private val projects: ProjectRepository) {
             "Allowed: NEW->ACCEPTED|DECLINED, ACCEPTED->ACTIVE|DECLINED, ACTIVE->ON_HOLD|CLOSED, ON_HOLD->ACTIVE|CLOSED.",
     )
     @PostMapping("/{id}/stage")
-    fun changeStage(
+    fun changeProjectStage(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Long,
         @Valid @RequestBody body: ChangeStageRequest,
@@ -93,12 +93,12 @@ class ProjectController(private val projects: ProjectRepository) {
 
     @Operation(summary = "Stage history of the project, newest first.")
     @GetMapping("/{id}/stages")
-    fun stageHistory(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): List<StageHistoryEntry> =
+    fun listProjectStages(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): List<StageHistoryEntry> =
         projects.stageHistory(actor.id, id)
 
     @Operation(summary = "Comments of the project, newest first.")
     @GetMapping("/{id}/comments")
-    fun comments(
+    fun listProjectComments(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Long,
         @RequestParam(required = false) cursor: String?,
@@ -112,7 +112,7 @@ class ProjectController(private val projects: ProjectRepository) {
     @Operation(summary = "Add a comment to the project.")
     @PostMapping("/{id}/comments")
     @ResponseStatus(HttpStatus.CREATED)
-    fun addComment(
+    fun addProjectComment(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Long,
         @Valid @RequestBody body: AddCommentRequest,

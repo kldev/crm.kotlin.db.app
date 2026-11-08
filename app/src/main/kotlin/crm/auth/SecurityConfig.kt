@@ -80,6 +80,8 @@ class SecurityConfig {
                 authorize(HttpMethod.GET, "/api/users/**", hasAnyRole("ADMIN", "MANAGER"))
                 authorize("/api/users/**", hasRole("ADMIN"))
                 authorize("/api/**", authenticated)
+                // The React app (static files and its client-side routes); its data comes from /api.
+                authorize(HttpMethod.GET, "/**", permitAll)
                 authorize(anyRequest, denyAll)
             }
         }

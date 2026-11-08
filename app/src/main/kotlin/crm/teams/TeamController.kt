@@ -29,7 +29,7 @@ class TeamController(private val teams: TeamRepository) {
 
     @Operation(summary = "Teams page, ordered by id.")
     @GetMapping
-    fun list(
+    fun listTeams(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "50") @Min(1) @Max(200) size: Int,
@@ -41,20 +41,20 @@ class TeamController(private val teams: TeamRepository) {
     @Operation(summary = "Create a team led by an active manager (ADMIN).")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(
+    fun createTeam(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @Valid @RequestBody body: CreateTeamRequest,
     ): TeamResponse = teams.create(actor.id, body.name!!, body.leadUserId!!)
 
     @Operation(summary = "Members of the team.")
     @GetMapping("/{id}/members")
-    fun members(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Int): List<TeamMemberResponse> =
+    fun listTeamMembers(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Int): List<TeamMemberResponse> =
         teams.members(actor.id, id)
 
     @Operation(summary = "Add a member (ADMIN or the team lead).")
     @PostMapping("/{id}/members")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun addMember(
+    fun addTeamMember(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Int,
         @Valid @RequestBody body: AddMemberRequest,
@@ -65,12 +65,12 @@ class TeamController(private val teams: TeamRepository) {
     @Operation(summary = "Remove a member (ADMIN or the team lead); not while they own open projects of the team.")
     @DeleteMapping("/{id}/members/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun removeMember(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Int, @PathVariable userId: Int) {
+    fun removeTeamMember(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Int, @PathVariable userId: Int) {
         teams.removeMember(actor.id, id, userId)
     }
 
     @Operation(summary = "Projects and budget of the team per stage (indexed view).")
     @GetMapping("/{id}/stats")
-    fun stats(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Int): List<TeamStageStats> =
+    fun getTeamStats(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Int): List<TeamStageStats> =
         teams.projectStats(actor.id, id)
 }

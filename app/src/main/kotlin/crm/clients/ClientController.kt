@@ -35,7 +35,7 @@ class ClientController(private val clients: ClientRepository) {
             "SALES users see only clients assigned to them.",
     )
     @GetMapping
-    fun search(
+    fun searchClients(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @RequestParam(required = false) namePrefix: String?,
         @RequestParam(required = false) nip: String?,
@@ -58,20 +58,20 @@ class ClientController(private val clients: ClientRepository) {
 
     @Operation(summary = "Client details.")
     @GetMapping("/{id}")
-    fun get(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): ClientResponse =
+    fun getClient(@AuthenticationPrincipal actor: CrmUserDetails, @PathVariable id: Long): ClientResponse =
         clients.get(actor.id, id)
 
     @Operation(summary = "Create a client. A SALES user creates clients assigned to themselves.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(
+    fun createClient(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @Valid @RequestBody body: ClientRequest,
     ): ClientResponse = clients.create(actor.id, body)
 
     @Operation(summary = "Update a client. `rowVersion` from the last read is required (409 when it changed).")
     @PutMapping("/{id}")
-    fun update(
+    fun updateClient(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Long,
         @Valid @RequestBody body: ClientRequest,
@@ -84,7 +84,7 @@ class ClientController(private val clients: ClientRepository) {
     @Operation(summary = "Delete a client without projects (MANAGER, ADMIN).")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun delete(
+    fun deleteClient(
         @AuthenticationPrincipal actor: CrmUserDetails,
         @PathVariable id: Long,
         @RequestParam @Pattern(regexp = RowVersion.PATTERN) rowVersion: String,
