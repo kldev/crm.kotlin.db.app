@@ -1,3 +1,5 @@
+# Backup of the GitHub Actions CI (removed from .github/workflows on purpose: verification is local, docker compose up).
+# To restore: git mv .github/ci.yml.bak .github/workflows/ci.yml
 name: CI
 
 on:
