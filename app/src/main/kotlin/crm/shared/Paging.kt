@@ -5,6 +5,12 @@ import java.util.Base64
 /** One page of a keyset-paged list. `nextCursor` is null on the last page; pass it back as `cursor`. */
 data class PageResponse<T>(val items: List<T>, val nextCursor: String?)
 
+/**
+ * Number of rows matching a list's filters. A separate call from the list on purpose: counting reads every matching
+ * row, so the client asks for it only when the user wants the total.
+ */
+data class TotalResponse(val total: Long)
+
 class InvalidCursorException(message: String) : RuntimeException(message)
 
 /**

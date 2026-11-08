@@ -7,10 +7,11 @@ import { problemMessage } from "#/api/mutator";
 import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, LoadMore, TableSkeleton, UserAvatar } from "#/components/ui";
 import { useMe } from "#/features/auth/session";
-import { projectsQuery } from "#/features/projects/hooks";
+import { projectsCountQuery, projectsQuery } from "#/features/projects/hooks";
 import { ProjectsTable } from "#/features/projects/ProjectsTable";
 import { type RoleName, roleLabel } from "#/features/types";
 import { useSalesUsers } from "#/features/users/hooks";
+import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
 import {
 	teamMembersQuery,
 	teamStatsQuery,
@@ -30,6 +31,7 @@ export function TeamDetailsPage() {
 	const members = useQuery(teamMembersQuery(teamId));
 	const stats = useQuery(teamStatsQuery(teamId));
 	const projects = useInfiniteQuery(projectsQuery({ teamId }, 10));
+	const projectsTotal = useOnDemandTotal(projectsCountQuery({ teamId }));
 	// The procedures allow ADMIN and the team lead to change membership.
 	const canManage = me.role === "ADMIN" || team?.leadUserId === me.id;
 
@@ -119,6 +121,7 @@ export function TeamDetailsPage() {
 							hasMore={projects.hasNextPage}
 							isLoading={projects.isFetchingNextPage}
 							onLoadMore={() => void projects.fetchNextPage()}
+							total={projectsTotal}
 						/>
 					</>
 				)}

@@ -6,6 +6,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import {
+	countClients,
 	createClient,
 	deleteClient,
 	getClient,
@@ -35,6 +36,13 @@ export const clientsQuery = (filters: ClientFilters, size = 25) =>
 			searchClients({ ...filters, size, cursor: pageParam }, { signal }),
 		initialPageParam: undefined,
 		getNextPageParam: (page) => page.nextCursor ?? undefined,
+	});
+
+/** Total for the same filters as the list. Runs only on request (useOnDemandTotal): it reads every matching row. */
+export const clientsCountQuery = (filters: ClientFilters) =>
+	queryOptions({
+		queryKey: clientKeys.count(filters),
+		queryFn: ({ signal }) => countClients(filters, { signal }),
 	});
 
 export const clientQuery = (id: number) =>

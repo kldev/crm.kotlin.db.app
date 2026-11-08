@@ -8,6 +8,7 @@ import {
 import {
 	addProjectComment,
 	changeProjectStage,
+	countProjects,
 	createProject,
 	getProject,
 	listProjectComments,
@@ -41,6 +42,13 @@ export const projectsQuery = (filters: ProjectFilters, size = 25) =>
 			searchProjects({ ...filters, size, cursor: pageParam }, { signal }),
 		initialPageParam: undefined,
 		getNextPageParam: (page) => page.nextCursor ?? undefined,
+	});
+
+/** Total for the same filters as the list. Runs only on request (useOnDemandTotal): it reads every matching row. */
+export const projectsCountQuery = (filters: ProjectFilters) =>
+	queryOptions({
+		queryKey: projectKeys.count(filters),
+		queryFn: ({ signal }) => countProjects(filters, { signal }),
 	});
 
 export const projectQuery = (id: number) =>

@@ -7,9 +7,11 @@
 import type {
   ClientRequest,
   ClientResponse,
+  CountClientsParams,
   DeleteClientParams,
   PageResponseClientSummary,
-  SearchClientsParams
+  SearchClientsParams,
+  TotalResponse
 } from '../../models';
 
 import { customInstance } from '../../mutator.ts';
@@ -82,8 +84,21 @@ export const createClient = (
     },
       options);
     }
+  /**
+ * @summary Number of clients matching the same filters as the list. Reads every matching row, so call it only when the user asks for the total.
+ */
+export const countClients = (
+    params?: CountClientsParams,
+ options?: SecondParameter<typeof customInstance<TotalResponse>>,) => {
+      return customInstance<TotalResponse>(
+      {url: `/api/clients/count`, method: 'GET',
+        params
+    },
+      options);
+    }
   export type GetClientResult = NonNullable<Awaited<ReturnType<typeof getClient>>>
 export type UpdateClientResult = NonNullable<Awaited<ReturnType<typeof updateClient>>>
 export type DeleteClientResult = NonNullable<Awaited<ReturnType<typeof deleteClient>>>
 export type SearchClientsResult = NonNullable<Awaited<ReturnType<typeof searchClients>>>
 export type CreateClientResult = NonNullable<Awaited<ReturnType<typeof createClient>>>
+export type CountClientsResult = NonNullable<Awaited<ReturnType<typeof countClients>>>

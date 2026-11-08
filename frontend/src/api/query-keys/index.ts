@@ -1,4 +1,10 @@
-import type { ListUsersParams, SearchClientsParams, SearchProjectsParams } from "#/api/models";
+import type {
+	CountClientsParams,
+	CountProjectsParams,
+	ListUsersParams,
+	SearchClientsParams,
+	SearchProjectsParams,
+} from "#/api/models";
 
 /*
  * Query keys, one factory per area. A mutation invalidates the whole area (`xKeys.all`), so every list and
@@ -13,6 +19,7 @@ export const clientKeys = {
 	all: ["clients"] as const,
 	list: (filters: Omit<SearchClientsParams, "cursor">) =>
 		[...clientKeys.all, "list", filters] as const,
+	count: (filters: CountClientsParams) => [...clientKeys.all, "count", filters] as const,
 	detail: (id: number) => [...clientKeys.all, "detail", id] as const,
 };
 
@@ -20,6 +27,7 @@ export const projectKeys = {
 	all: ["projects"] as const,
 	list: (filters: Omit<SearchProjectsParams, "cursor">) =>
 		[...projectKeys.all, "list", filters] as const,
+	count: (filters: CountProjectsParams) => [...projectKeys.all, "count", filters] as const,
 	detail: (id: number) => [...projectKeys.all, "detail", id] as const,
 	stages: (id: number) => [...projectKeys.all, "stages", id] as const,
 	comments: (id: number) => [...projectKeys.all, "comments", id] as const,

@@ -6,7 +6,8 @@ import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, LoadMore, SelectFilter, TableSkeleton } from "#/components/ui";
 import { teamsQuery } from "#/features/teams/hooks";
 import { STAGES, type Stage, stageLabel } from "#/features/types";
-import { projectsQuery } from "./hooks";
+import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
+import { projectsCountQuery, projectsQuery } from "./hooks";
 import { ProjectsTable } from "./ProjectsTable";
 
 const route = getRouteApi("/_app/projects/");
@@ -15,9 +16,9 @@ export function ProjectsPage() {
 	const search = route.useSearch();
 	const navigate = route.useNavigate();
 	const teams = useQuery(teamsQuery());
-	const query = useInfiniteQuery(
-		projectsQuery({ stage: search.stage, teamId: search.teamId, overdue: search.overdue }),
-	);
+	const filters = { stage: search.stage, teamId: search.teamId, overdue: search.overdue };
+	const query = useInfiniteQuery(projectsQuery(filters));
+	const total = useOnDemandTotal(projectsCountQuery(filters));
 	const projects = query.data?.pages.flatMap((p) => p.items) ?? [];
 
 	return (
@@ -84,6 +85,7 @@ export function ProjectsPage() {
 							hasMore={query.hasNextPage}
 							isLoading={query.isFetchingNextPage}
 							onLoadMore={() => void query.fetchNextPage()}
+							total={total}
 						/>
 					</>
 				)}

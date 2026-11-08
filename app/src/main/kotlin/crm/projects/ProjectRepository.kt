@@ -92,6 +92,23 @@ class ProjectRepository(private val jdbc: JdbcClient) {
             .query(projectRow)
             .list()
 
+    fun count(actorId: Int, filter: ProjectFilter): Long =
+        jdbc.sql(
+            "EXEC app.project_count @actor_id = :actorId, @stage = :stage, @team_id = :teamId, " +
+                "@client_id = :clientId, @owner_user_id = :ownerUserId, @overdue_only = :overdueOnly, " +
+                "@due_from = :dueFrom, @due_to = :dueTo",
+        )
+            .param("actorId", actorId, Types.INTEGER)
+            .param("stage", filter.stage, Types.VARCHAR)
+            .param("teamId", filter.teamId, Types.INTEGER)
+            .param("clientId", filter.clientId, Types.BIGINT)
+            .param("ownerUserId", filter.ownerUserId, Types.INTEGER)
+            .param("overdueOnly", filter.overdueOnly, Types.BIT)
+            .param("dueFrom", filter.dueFrom, Types.DATE)
+            .param("dueTo", filter.dueTo, Types.DATE)
+            .query { rs, _ -> rs.getLong("total") }
+            .single()
+
     fun get(actorId: Int, id: Long): ProjectResponse =
         jdbc.sql("EXEC app.project_get @actor_id = :actorId, @id = :id")
             .param("actorId", actorId, Types.INTEGER)

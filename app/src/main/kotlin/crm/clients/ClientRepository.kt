@@ -76,6 +76,20 @@ class ClientRepository(private val jdbc: JdbcClient) {
             .query(summaryRow)
             .list()
 
+    fun count(actorId: Int, filter: ClientFilter): Long =
+        jdbc.sql(
+            "EXEC app.client_count @actor_id = :actorId, @name_prefix = :namePrefix, @nip = :nip, " +
+                "@email = :email, @city = :city, @status = :status",
+        )
+            .param("actorId", actorId, Types.INTEGER)
+            .param("namePrefix", filter.namePrefix, Types.NVARCHAR)
+            .param("nip", filter.nip, Types.VARCHAR)
+            .param("email", filter.email, Types.VARCHAR)
+            .param("city", filter.city, Types.NVARCHAR)
+            .param("status", filter.status, Types.VARCHAR)
+            .query { rs, _ -> rs.getLong("total") }
+            .single()
+
     fun get(actorId: Int, id: Long): ClientResponse =
         jdbc.sql("EXEC app.client_get @actor_id = :actorId, @id = :id")
             .param("actorId", actorId, Types.INTEGER)

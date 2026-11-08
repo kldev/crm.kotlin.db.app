@@ -110,6 +110,25 @@ class ClientHttpTest : IntegrationTest() {
     }
 
     @Test
+    fun `count matches the filters and the visibility of the list`() {
+        val manager = loggedIn("perf.manager.0001")
+        val all = manager.get("/api/clients/count").body!!["total"].asLong()
+        assertEquals(scalar<Long>("SELECT COUNT_BIG(*) FROM crm.clients"), all)
+        val leadsInPoznan = manager.get("/api/clients/count?city=Poznań&status=LEAD").body!!["total"].asLong()
+        assertEquals(scalar<Long>("SELECT COUNT_BIG(*) FROM crm.clients WHERE city = N'Poznań' AND status = 'LEAD'"), leadsInPoznan)
+        val byName = manager.get("/api/clients/count?namePrefix=Z").body!!["total"].asLong()
+        assertEquals(scalar<Long>("SELECT COUNT_BIG(*) FROM crm.clients WHERE name LIKE N'Z%'"), byName)
+
+        val sales = loggedIn("perf.sales.0001")
+        val me = sales.get("/api/auth/me").body!!["id"].asInt()
+        assertEquals(
+            scalar<Long>("SELECT COUNT_BIG(*) FROM crm.clients WHERE assigned_user_id = ?", me),
+            sales.get("/api/clients/count").body!!["total"].asLong(),
+        )
+        assertEquals(400, sales.get("/api/clients/count?status=NOPE").status)
+    }
+
+    @Test
     fun `invalid cursor and page size are 400`() {
         val c = loggedIn("perf.manager.0001")
         assertEquals(400, c.get("/api/clients?cursor=%21%21%21").status)

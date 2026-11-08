@@ -22,9 +22,10 @@ import {
 	TableSkeleton,
 } from "#/components/ui";
 import { can, useMe } from "#/features/auth/session";
-import { projectsQuery } from "#/features/projects/hooks";
+import { projectsCountQuery, projectsQuery } from "#/features/projects/hooks";
 import { type ProjectFormCommand, ProjectFormDrawer } from "#/features/projects/ProjectFormDrawer";
 import { ProjectsTable } from "#/features/projects/ProjectsTable";
+import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
 import { formatDateTime } from "#/lib";
 import { type ClientFormCommand, ClientFormDrawer } from "./ClientFormDrawer";
 import { ClientStatusChip } from "./ClientStatusChip";
@@ -38,6 +39,7 @@ export function ClientDetailsPage() {
 	const navigate = useNavigate();
 	const client = useQuery(clientQuery(clientId));
 	const projects = useInfiniteQuery(projectsQuery({ clientId }, 10));
+	const projectsTotal = useOnDemandTotal(projectsCountQuery({ clientId }));
 	const clientDrawer = useRef<ClientFormCommand>(null);
 	const projectDrawer = useRef<ProjectFormCommand>(null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -169,6 +171,7 @@ export function ClientDetailsPage() {
 							hasMore={projects.hasNextPage}
 							isLoading={projects.isFetchingNextPage}
 							onLoadMore={() => void projects.fetchNextPage()}
+							total={projectsTotal}
 						/>
 					</>
 				)}

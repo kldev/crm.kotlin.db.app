@@ -5,6 +5,7 @@ import crm.shared.Cursor
 import crm.shared.InvalidCursorException
 import crm.shared.PageResponse
 import crm.shared.RowVersion
+import crm.shared.TotalResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -55,6 +56,21 @@ class ClientController(private val clients: ClientRepository) {
         val rows = clients.search(actor.id, filter, afterId, afterName, size)
         return Cursor.page(rows, size) { if (byName) Cursor.encode(it.id, it.name) else Cursor.encode(it.id) }
     }
+
+    @Operation(
+        summary = "Number of clients matching the same filters as the list. Reads every matching row, " +
+            "so call it only when the user asks for the total.",
+    )
+    @GetMapping("/count")
+    fun countClients(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @RequestParam(required = false) namePrefix: String?,
+        @RequestParam(required = false) nip: String?,
+        @RequestParam(required = false) email: String?,
+        @RequestParam(required = false) city: String?,
+        @RequestParam(required = false) status: String?,
+    ): TotalResponse =
+        TotalResponse(clients.count(actor.id, ClientFilter(namePrefix?.takeIf { it.isNotBlank() }, nip, email, city, status)))
 
     @Operation(summary = "Client details.")
     @GetMapping("/{id}")

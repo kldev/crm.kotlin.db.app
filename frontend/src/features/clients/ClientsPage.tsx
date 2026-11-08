@@ -7,10 +7,11 @@ import { PageHeader } from "#/components/layout/AppLayout";
 import { ApiError, EmptyState, LoadMore, SelectFilter, TableSkeleton } from "#/components/ui";
 import { CITIES, CLIENT_STATUSES, clientStatusLabel } from "#/features/types";
 import { useDebouncedValue } from "#/hooks/useDebouncedValue";
+import { useOnDemandTotal } from "#/hooks/useOnDemandTotal";
 import { formatRelative } from "#/lib";
 import { type ClientFormCommand, ClientFormDrawer } from "./ClientFormDrawer";
 import { ClientStatusChip } from "./ClientStatusChip";
-import { clientsQuery } from "./hooks";
+import { clientsCountQuery, clientsQuery } from "./hooks";
 
 const route = getRouteApi("/_app/clients/");
 
@@ -27,9 +28,9 @@ export function ClientsPage() {
 		void navigate({ search: (s) => ({ ...s, q: prefix || undefined }), replace: true });
 	}
 
-	const query = useInfiniteQuery(
-		clientsQuery({ namePrefix: search.q, city: search.city, status: search.status }),
-	);
+	const filters = { namePrefix: search.q, city: search.city, status: search.status };
+	const query = useInfiniteQuery(clientsQuery(filters));
+	const total = useOnDemandTotal(clientsCountQuery(filters));
 	const clients = query.data?.pages.flatMap((p) => p.items) ?? [];
 	const filtered = Boolean(search.q || search.city || search.status);
 
@@ -158,6 +159,7 @@ export function ClientsPage() {
 							hasMore={query.hasNextPage}
 							isLoading={query.isFetchingNextPage}
 							onLoadMore={() => void query.fetchNextPage()}
+							total={total}
 						/>
 					</>
 				)}

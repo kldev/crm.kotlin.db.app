@@ -161,6 +161,28 @@ class ProjectHttpTest : IntegrationTest() {
     }
 
     @Test
+    fun `count matches the list - all pages of a sales user and the overdue filter of a manager`() {
+        val sales = loggedIn("perf.sales.0001")
+        newProject(sales)
+        var shown = 0
+        var cursor: String? = null
+        do {
+            val page = sales.get("/api/projects?size=200" + (cursor?.let { "&cursor=$it" } ?: "")).body!!
+            shown += page["items"].list().size
+            cursor = page["nextCursor"].takeUnless { it == null || it.isNull }?.asString()
+        } while (cursor != null)
+        assertEquals(shown.toLong(), sales.get("/api/projects/count").body!!["total"].asLong())
+
+        val manager = loggedIn("perf.manager.0001")
+        val overdue = scalar<Long>(
+            "SELECT COUNT_BIG(*) FROM crm.projects WHERE stage IN ('NEW','ACCEPTED','ACTIVE','ON_HOLD') " +
+                "AND due_date < CAST(SYSUTCDATETIME() AS date)",
+        )
+        assertEquals(overdue, manager.get("/api/projects/count?overdue=true").body!!["total"].asLong())
+        assertEquals(400, manager.get("/api/projects/count?stage=NOPE").status)
+    }
+
+    @Test
     fun `team statistics from the indexed view match the projects table`() {
         val c = loggedIn("perf.manager.0001")
         val team = teamOf("perf.sales.0001")

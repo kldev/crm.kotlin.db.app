@@ -8,6 +8,7 @@ import type {
   AddCommentRequest,
   ChangeStageRequest,
   CommentResponse,
+  CountProjectsParams,
   CreateProjectRequest,
   ListProjectCommentsParams,
   PageResponseCommentResponse,
@@ -15,6 +16,7 @@ import type {
   ProjectResponse,
   SearchProjectsParams,
   StageHistoryEntry,
+  TotalResponse,
   UpdateProjectRequest
 } from '../../models';
 
@@ -127,6 +129,18 @@ export const listProjectStages = (
     },
       options);
     }
+  /**
+ * @summary Number of projects matching the same filters as the list. Reads every matching row, so call it only when the user asks for the total.
+ */
+export const countProjects = (
+    params?: CountProjectsParams,
+ options?: SecondParameter<typeof customInstance<TotalResponse>>,) => {
+      return customInstance<TotalResponse>(
+      {url: `/api/projects/count`, method: 'GET',
+        params
+    },
+      options);
+    }
   export type GetProjectResult = NonNullable<Awaited<ReturnType<typeof getProject>>>
 export type UpdateProjectResult = NonNullable<Awaited<ReturnType<typeof updateProject>>>
 export type SearchProjectsResult = NonNullable<Awaited<ReturnType<typeof searchProjects>>>
@@ -135,3 +149,4 @@ export type ChangeProjectStageResult = NonNullable<Awaited<ReturnType<typeof cha
 export type ListProjectCommentsResult = NonNullable<Awaited<ReturnType<typeof listProjectComments>>>
 export type AddProjectCommentResult = NonNullable<Awaited<ReturnType<typeof addProjectComment>>>
 export type ListProjectStagesResult = NonNullable<Awaited<ReturnType<typeof listProjectStages>>>
+export type CountProjectsResult = NonNullable<Awaited<ReturnType<typeof countProjects>>>

@@ -4,6 +4,7 @@ import crm.auth.CrmUserDetails
 import crm.shared.Cursor
 import crm.shared.InvalidCursorException
 import crm.shared.PageResponse
+import crm.shared.TotalResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -58,6 +59,23 @@ class ProjectController(private val projects: ProjectRepository) {
         val rows = projects.search(actor.id, filter, afterDueDate, afterId, size)
         return Cursor.page(rows, size) { Cursor.encode(it.dueDate, it.id) }
     }
+
+    @Operation(
+        summary = "Number of projects matching the same filters as the list. Reads every matching row, " +
+            "so call it only when the user asks for the total.",
+    )
+    @GetMapping("/count")
+    fun countProjects(
+        @AuthenticationPrincipal actor: CrmUserDetails,
+        @RequestParam(required = false) stage: String?,
+        @RequestParam(required = false) teamId: Int?,
+        @RequestParam(required = false) clientId: Long?,
+        @RequestParam(required = false) ownerUserId: Int?,
+        @RequestParam(defaultValue = "false") overdue: Boolean,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dueFrom: LocalDate?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dueTo: LocalDate?,
+    ): TotalResponse =
+        TotalResponse(projects.count(actor.id, ProjectFilter(stage, teamId, clientId, ownerUserId, overdue, dueFrom, dueTo)))
 
     @Operation(summary = "Project details.")
     @GetMapping("/{id}")
