@@ -56,7 +56,8 @@ tasks.test {
 // ADR-0002: no ORM and no query mapper may ever reach the classpath. `check` (and so `build`) fails if one does.
 val forbiddenDependencies = listOf(
     "jakarta.persistence",
-    "org.hibernate",
+    "org.hibernate.orm", // hibernate-validator (Bean Validation) is allowed, the ORM is not
+    "org.hibernate:hibernate-core",
     "org.springframework.data:spring-data-jpa",
     "org.springframework.data:spring-data-jdbc",
     "org.springframework.data:spring-data-relational",
