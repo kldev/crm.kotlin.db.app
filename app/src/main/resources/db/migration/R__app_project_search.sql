@@ -5,9 +5,9 @@
   Filters: stage, team, client, owner, due date range, overdue only. Each filter has an index that starts with it
   and ends with (due_date, id), so a page is a range seek plus TOP, whatever the size of crm.projects.
 
-  SALES: visible projects are a union of three small, indexed sets (own projects, projects of own teams, projects
-  of own clients). Building that set first is cheaper than testing visibility row by row while scanning
-  millions of projects in due-date order.
+  SALES: visible projects come from three indexed sources (own projects, projects of own teams, projects of own
+  clients); each source contributes only its first page, so the cost does not grow with the number of
+  visible projects.
 */
 CREATE OR ALTER PROCEDURE app.project_search
     @actor_id       int,
@@ -44,44 +44,78 @@ BEGIN
 
     IF @actor_role = 'SALES'
     BEGIN
-        DECLARE @visible TABLE (id bigint PRIMARY KEY);
+        /*
+          Visible = own projects + projects of own teams + projects of own clients. Each source has an index that
+          ends with (due_date, id), so each one returns only its first @page_size + 1 rows after the keyset, with
+          every filter applied; the page is the first @page_size + 1 of their union. Every filter must be inside
+          the branches: a filter applied after TOP would drop rows and break the page.
+        */
+        DECLARE @n int = @page_size + 1;
+        DECLARE @candidates TABLE (id bigint PRIMARY KEY, due_date date NOT NULL);
 
-        INSERT @visible (id)
-        SELECT p.id
-        FROM crm.projects AS p
-        WHERE p.owner_user_id = @actor_id
-          AND (@due_from IS NULL OR p.due_date >= @due_from)
+        INSERT @candidates (id, due_date)
+        SELECT id, due_date
+        FROM (
+            SELECT TOP (@n) p.id, p.due_date
+            FROM crm.projects AS p
+            WHERE p.owner_user_id = @actor_id
+              AND (@stage IS NULL OR p.stage = @stage)
+              AND (@team_id IS NULL OR p.team_id = @team_id)
+              AND (@client_id IS NULL OR p.client_id = @client_id)
+              AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
+              AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
+              AND (@due_from IS NULL OR p.due_date >= @due_from)
+              AND (@due_to IS NULL OR p.due_date <= @due_to)
+              AND (@after_due_date IS NULL OR p.due_date > @after_due_date
+                   OR (p.due_date = @after_due_date AND p.id > @after_id))
+            ORDER BY p.due_date, p.id
+        ) AS own
         UNION
-        SELECT p.id
+        SELECT t.id, t.due_date
         FROM crm.team_members AS tm
-        JOIN crm.projects AS p ON p.team_id = tm.team_id
+        CROSS APPLY (
+            SELECT TOP (@n) p.id, p.due_date
+            FROM crm.projects AS p
+            WHERE p.team_id = tm.team_id
+              AND (@stage IS NULL OR p.stage = @stage)
+              AND (@team_id IS NULL OR p.team_id = @team_id)
+              AND (@client_id IS NULL OR p.client_id = @client_id)
+              AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
+              AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
+              AND (@due_from IS NULL OR p.due_date >= @due_from)
+              AND (@due_to IS NULL OR p.due_date <= @due_to)
+              AND (@after_due_date IS NULL OR p.due_date > @after_due_date
+                   OR (p.due_date = @after_due_date AND p.id > @after_id))
+            ORDER BY p.due_date, p.id
+        ) AS t
         WHERE tm.user_id = @actor_id
-          AND (@due_from IS NULL OR p.due_date >= @due_from)
         UNION
-        SELECT p.id
+        SELECT cp.id, cp.due_date
         FROM crm.clients AS c
-        JOIN crm.projects AS p ON p.client_id = c.id
+        CROSS APPLY (
+            SELECT TOP (@n) p.id, p.due_date
+            FROM crm.projects AS p
+            WHERE p.client_id = c.id
+              AND (@stage IS NULL OR p.stage = @stage)
+              AND (@team_id IS NULL OR p.team_id = @team_id)
+              AND (@owner_user_id IS NULL OR p.owner_user_id = @owner_user_id)
+              AND (@overdue_only = 0 OR p.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
+              AND (@due_from IS NULL OR p.due_date >= @due_from)
+              AND (@due_to IS NULL OR p.due_date <= @due_to)
+              AND (@after_due_date IS NULL OR p.due_date > @after_due_date
+                   OR (p.due_date = @after_due_date AND p.id > @after_id))
+            ORDER BY p.due_date, p.id
+        ) AS cp
         WHERE c.assigned_user_id = @actor_id
-          AND (@due_from IS NULL OR p.due_date >= @due_from)
+          AND (@client_id IS NULL OR c.id = @client_id)
         OPTION (RECOMPILE);
 
-        SELECT TOP (@page_size + 1)
-               v.id, v.name, v.stage, v.start_date, v.due_date, v.budget, v.is_overdue, v.stage_changed_at,
+        SELECT v.id, v.name, v.stage, v.start_date, v.due_date, v.budget, v.is_overdue, v.stage_changed_at,
                v.client_id, v.client_name, v.client_city, v.team_id, v.team_name, v.owner_user_id, v.owner_login,
                v.owner_display_name, v.updated_at, v.row_version
-        FROM @visible AS vis
-        JOIN crm.v_projects AS v ON v.id = vis.id
-        WHERE (@stage IS NULL OR v.stage = @stage)
-          AND (@team_id IS NULL OR v.team_id = @team_id)
-          AND (@client_id IS NULL OR v.client_id = @client_id)
-          AND (@owner_user_id IS NULL OR v.owner_user_id = @owner_user_id)
-          AND (@overdue_only = 0 OR v.stage IN ('NEW', 'ACCEPTED', 'ACTIVE', 'ON_HOLD'))
-          AND (@due_from IS NULL OR v.due_date >= @due_from)
-          AND (@due_to IS NULL OR v.due_date <= @due_to)
-          AND (@after_due_date IS NULL OR v.due_date > @after_due_date
-               OR (v.due_date = @after_due_date AND v.id > @after_id))
-        ORDER BY v.due_date, v.id
-        OPTION (RECOMPILE);
+        FROM (SELECT TOP (@n) id, due_date FROM @candidates ORDER BY due_date, id) AS page
+        JOIN crm.v_projects AS v ON v.id = page.id
+        ORDER BY v.due_date, v.id;
         RETURN;
     END;
 
