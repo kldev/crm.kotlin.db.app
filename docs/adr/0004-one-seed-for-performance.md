@@ -1,6 +1,6 @@
 # 0004. One configurable seed for performance tests
 
-Status: Accepted (stage 1)
+Status: Accepted
 Date: 2026-11-08
 
 ## Decision
@@ -14,7 +14,6 @@ Date: 2026-11-08
   (hashed once by the application's encoder, so k6 uses the real login endpoint).
 - Refuses to run on a database with clients (51060); start again with `./start.sh --clean --seed`.
 
-## Planned, not done
-
-- k6 scenario with 200 virtual users and the measurement of logical reads per procedure; results committed in
-  `perf/results/`.
+- Load test: `perf/k6/crm-mixed.js`, 200 virtual users, thresholds p95 < 500 ms, p99 < 1 s, errors < 1%;
+  logical reads per procedure with `perf/sql/measure-reads.sql`. Every run is committed in `perf/results/` with a
+  report; a change made because of a run is measured again in the next run.

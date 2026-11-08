@@ -130,6 +130,24 @@ Measured with the defaults (2026-11-08, laptop: 16 cores, 30 GB RAM, Docker; SQL
 | Database files after the seed | 7.6 GB (data 2.4 GB, indexes 3.5 GB) - about 15% of the 50 GB Express limit |
 | Largest tables | projects 2.5 GB, clients 2.4 GB, stage history 0.5 GB, comments 0.4 GB |
 
+## Performance
+
+200 virtual users of mixed traffic for 13 minutes on the full data set, SQL Server Express on a laptop:
+
+| Run | p95 | p99 | Errors | Requests/s |
+|---|---:|---:|---:|---:|
+| baseline | 56.1 ms | 81.2 ms | 0.00% | 334 |
+| after read indexes (V4) | **8.5 ms** | **10.4 ms** | 0.00% | 338 |
+
+Details, per-endpoint latencies and logical reads per procedure: [perf/README.md](perf/README.md).
+
+## Tests
+
+`./gradlew build` runs 41 tests on a real SQL Server 2025 Express (Testcontainers, the same image as compose):
+architecture rules (no SQL text in Kotlin, only `EXEC app.*`, no ORM imports), database permissions (the app login
+gets error 229 on tables and on `seed`), login and lockout, clients, projects, stages, comments and the indexed view
+over HTTP, and the seed.
+
 ## Configuration
 
 All settings are environment variables (see `infrastructure/.env-sample` and `app/src/main/resources/application.yml`):
