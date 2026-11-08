@@ -104,3 +104,10 @@ export const taskKeys = {
 	detail: (id: number) => [...taskKeys.all, "detail", id] as const,
 	departments: () => [...taskKeys.all, "departments"] as const,
 };
+
+/** The sales pipeline (ADR-0015): the board for its filters and the stages. A write invalidates the area. */
+export const dealKeys = {
+	all: ["deals"] as const,
+	stages: () => [...dealKeys.all, "stages"] as const,
+	board: (filters: object) => [...dealKeys.all, "board", filters] as const,
+};

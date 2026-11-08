@@ -93,4 +93,6 @@ BEGIN
         EXEC seed.desk_replay @stories;
     -- The agents' departments and their plan of tasks (ADR-0014).
     EXEC seed.tasks_run;
+    -- A pipeline for the sales board (ADR-0015).
+    EXEC seed.deals_run;
 END;

@@ -16,5 +16,6 @@
 | [0012](0012-monitoring-and-system-pages.md) | The application reports on itself: HTTP answers, log, database, queues | Accepted |
 | [0013](0013-offers.md) | Offers from templates, printed in the Obsidian look | Accepted |
 | [0014](0014-tasks-calendar-and-timeline.md) | Tasks on a calendar and a timeline, without statuses | Accepted |
+| [0015](0015-sales-pipeline-kanban.md) | The sales pipeline as a kanban board | Accepted |
 
 An ADR describes the code as it is. A changed decision is a new ADR; the old one becomes `Superseded by NNNN`.

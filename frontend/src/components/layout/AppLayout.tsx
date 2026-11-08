@@ -13,6 +13,7 @@ import {
 	FileSpreadsheet,
 	Headset,
 	Inbox,
+	Kanban,
 	KeyRound,
 	LayoutDashboard,
 	ListOrdered,
@@ -46,6 +47,7 @@ interface NavItem {
 		| "/projects"
 		| "/offers"
 		| "/tasks"
+		| "/pipeline"
 		| "/teams"
 		| "/users"
 		| "/desk/pool"
@@ -73,6 +75,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/clients", label: (t) => t("Klienci", "Clients"), icon: Building2 },
 			{ to: "/projects", label: (t) => t("Projekty", "Projects"), icon: BriefcaseBusiness },
 			{ to: "/offers", label: (t) => t("Oferty", "Offers"), icon: FileSignature },
+			{ to: "/pipeline", label: (t) => t("Lejek sprzedaży", "Sales pipeline"), icon: Kanban },
 			{ to: "/tasks", label: (t) => t("Zadania", "Tasks"), icon: CalendarRange },
 			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
 			{
@@ -132,7 +135,7 @@ function Brand() {
 		<div className="flex items-center gap-3 px-5 pt-6 pb-8">
 			<img src="/favicon.svg" alt="" className="size-8" />
 			<div className="leading-tight">
-				<p className="font-display text-2xl font-semibold text-white">CRM</p>
+				<p className="font-display text-2xl font-semibold text-white">HAL</p>
 				<p className="font-mono text-[10px] tracking-[0.14em] text-sidebar-muted uppercase">
 					Kotlin · T-SQL
 				</p>

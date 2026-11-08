@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppPipelineRouteImport } from './routes/_app/pipeline'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
@@ -57,6 +58,11 @@ const ReportRoute = ReportRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPipelineRoute = AppPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTasksRoute = AppTasksRouteImport.update({
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/report': typeof ReportRoute
+  '/pipeline': typeof AppPipelineRoute
   '/tasks': typeof AppTasksRoute
   '/users': typeof AppUsersRoute
   '/clients/$clientId': typeof AppClientsClientIdRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/report': typeof ReportRoute
+  '/pipeline': typeof AppPipelineRoute
   '/tasks': typeof AppTasksRoute
   '/users': typeof AppUsersRoute
   '/': typeof AppIndexRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/report': typeof ReportRoute
+  '/_app/pipeline': typeof AppPipelineRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/users': typeof AppUsersRoute
   '/_app/': typeof AppIndexRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/report'
+    | '/pipeline'
     | '/tasks'
     | '/users'
     | '/clients/$clientId'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/report'
+    | '/pipeline'
     | '/tasks'
     | '/users'
     | '/'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/report'
+    | '/_app/pipeline'
     | '/_app/tasks'
     | '/_app/users'
     | '/_app/'
@@ -416,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pipeline': {
+      id: '/_app/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AppPipelineRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/tasks': {
@@ -604,6 +623,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppPipelineRoute: typeof AppPipelineRoute
   AppTasksRoute: typeof AppTasksRoute
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -634,6 +654,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppPipelineRoute: AppPipelineRoute,
   AppTasksRoute: AppTasksRoute,
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,

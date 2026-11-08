@@ -1,14 +1,14 @@
 import { Button, Chip, ListBox, SearchField, toast } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCheck, RotateCcw, Trash2, X } from "lucide-react";
+import { CheckCheck, RotateCcw, Trash2 } from "lucide-react";
 import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { z } from "zod";
-import { searchClients } from "#/api/endpoints/clients/clients";
 import { listDeskAgents } from "#/api/endpoints/desk/desk";
 import type { TaskResponse } from "#/api/models";
-import { clientKeys, deskKeys } from "#/api/query-keys";
+import { deskKeys } from "#/api/query-keys";
 import { ApiError, ConfirmDialog, FormDrawer } from "#/components/ui";
 import { useMe } from "#/features/auth/session";
+import { ClientPicker } from "#/features/clients/ClientPicker";
 import { useAppForm } from "#/forms";
 import { useDebouncedValue } from "#/hooks/useDebouncedValue";
 import { useI18n } from "#/i18n";
@@ -269,80 +269,6 @@ function PersonPicker({ value, onChange }: { value: Ref; onChange: (v: Ref) => v
 							<span className="flex w-full justify-between gap-3">
 								<span>{p.displayName}</span>
 								<span className="font-mono text-xs text-muted">{p.login}</span>
-							</span>
-						</ListBox.Item>
-					))}
-				</ListBox>
-			) : null}
-		</section>
-	);
-}
-
-/** An optional client the task is about; a salesperson finds only their own. */
-function ClientPicker({
-	value,
-	onChange,
-}: {
-	value: Ref | undefined;
-	onChange: (v: Ref | undefined) => void;
-}) {
-	const { t } = useI18n();
-	const [text, setText] = useState("");
-	const prefix = useDebouncedValue(text.trim(), 300);
-	const clients = useQuery({
-		queryKey: clientKeys.list({ namePrefix: prefix || undefined, size: 6 }),
-		queryFn: () => searchClients({ namePrefix: prefix || undefined, size: 6 }),
-		enabled: prefix.length > 0,
-	});
-	return (
-		<section className="flex flex-col gap-2">
-			<p className="text-sm font-medium">{t("Klient (opcjonalnie)", "Client (optional)")}</p>
-			{value ? (
-				<Chip variant="soft" className="self-start">
-					<span>{value.name}</span>
-					<button
-						type="button"
-						aria-label={t("Bez klienta", "No client")}
-						className="ml-1 text-muted hover:text-foreground"
-						onClick={() => onChange(undefined)}
-					>
-						<X className="size-3" />
-					</button>
-				</Chip>
-			) : null}
-			<SearchField
-				aria-label={t("Szukaj klienta", "Search clients")}
-				value={text}
-				onChange={setText}
-				fullWidth
-			>
-				<SearchField.Group>
-					<SearchField.SearchIcon />
-					<SearchField.Input
-						placeholder={t("Początek nazwy klienta…", "Start of the client's name…")}
-					/>
-					<SearchField.ClearButton />
-				</SearchField.Group>
-			</SearchField>
-			{prefix && clients.data ? (
-				<ListBox
-					aria-label={t("Klienci", "Clients")}
-					selectionMode="single"
-					className="max-h-44 overflow-y-auto rounded-md border border-separator"
-					onSelectionChange={(keys) => {
-						const key = keys === "all" ? undefined : [...keys][0];
-						const found = clients.data.items.find((c) => c.id === Number(key));
-						if (found) {
-							onChange({ id: found.id, name: found.name });
-							setText("");
-						}
-					}}
-				>
-					{clients.data.items.map((c) => (
-						<ListBox.Item key={c.id} id={c.id} textValue={c.name}>
-							<span className="flex w-full justify-between gap-3">
-								<span>{c.name}</span>
-								<span className="text-xs text-muted">{c.city ?? ""}</span>
 							</span>
 						</ListBox.Item>
 					))}
