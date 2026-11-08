@@ -24,6 +24,8 @@ import { Route as AppDeskMineRouteImport } from './routes/_app/desk.mine'
 import { Route as AppDeskNewRouteImport } from './routes/_app/desk.new'
 import { Route as AppDeskPeopleRouteImport } from './routes/_app/desk.people'
 import { Route as AppDeskPoolRouteImport } from './routes/_app/desk.pool'
+import { Route as AppOffersIndexRouteImport } from './routes/_app/offers.index'
+import { Route as AppOffersOfferIdRouteImport } from './routes/_app/offers.$offerId'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app/projects.index'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app/projects.$projectId'
 import { Route as AppSystemDatabaseRouteImport } from './routes/_app/system.database'
@@ -111,6 +113,16 @@ const AppDeskPoolRoute = AppDeskPoolRouteImport.update({
   path: '/desk/pool',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOffersIndexRoute = AppOffersIndexRouteImport.update({
+  id: '/offers/',
+  path: '/offers/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOffersOfferIdRoute = AppOffersOfferIdRouteImport.update({
+  id: '/offers/$offerId',
+  path: '/offers/$offerId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
   id: '/projects/',
   path: '/projects/',
@@ -185,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/desk/new': typeof AppDeskNewRoute
   '/desk/people': typeof AppDeskPeopleRoute
   '/desk/pool': typeof AppDeskPoolRoute
+  '/offers/$offerId': typeof AppOffersOfferIdRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/system/database': typeof AppSystemDatabaseRoute
   '/system/logs': typeof AppSystemLogsRoute
@@ -193,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients/': typeof AppClientsIndexRoute
   '/desk/': typeof AppDeskIndexRoute
+  '/offers/': typeof AppOffersIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/teams/': typeof AppTeamsIndexRoute
   '/desk/reports/$slug': typeof AppDeskReportsSlugRoute
@@ -213,6 +227,7 @@ export interface FileRoutesByTo {
   '/desk/new': typeof AppDeskNewRoute
   '/desk/people': typeof AppDeskPeopleRoute
   '/desk/pool': typeof AppDeskPoolRoute
+  '/offers/$offerId': typeof AppOffersOfferIdRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/system/database': typeof AppSystemDatabaseRoute
   '/system/logs': typeof AppSystemLogsRoute
@@ -221,6 +236,7 @@ export interface FileRoutesByTo {
   '/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/clients': typeof AppClientsIndexRoute
   '/desk': typeof AppDeskIndexRoute
+  '/offers': typeof AppOffersIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/teams': typeof AppTeamsIndexRoute
   '/desk/reports/$slug': typeof AppDeskReportsSlugRoute
@@ -243,6 +259,7 @@ export interface FileRoutesById {
   '/_app/desk/new': typeof AppDeskNewRoute
   '/_app/desk/people': typeof AppDeskPeopleRoute
   '/_app/desk/pool': typeof AppDeskPoolRoute
+  '/_app/offers/$offerId': typeof AppOffersOfferIdRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/_app/system/database': typeof AppSystemDatabaseRoute
   '/_app/system/logs': typeof AppSystemLogsRoute
@@ -251,6 +268,7 @@ export interface FileRoutesById {
   '/_app/teams/$teamId': typeof AppTeamsTeamIdRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/desk/': typeof AppDeskIndexRoute
+  '/_app/offers/': typeof AppOffersIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/_app/teams/': typeof AppTeamsIndexRoute
   '/_app/desk/reports/$slug': typeof AppDeskReportsSlugRoute
@@ -273,6 +291,7 @@ export interface FileRouteTypes {
     | '/desk/new'
     | '/desk/people'
     | '/desk/pool'
+    | '/offers/$offerId'
     | '/projects/$projectId'
     | '/system/database'
     | '/system/logs'
@@ -281,6 +300,7 @@ export interface FileRouteTypes {
     | '/teams/$teamId'
     | '/clients/'
     | '/desk/'
+    | '/offers/'
     | '/projects/'
     | '/teams/'
     | '/desk/reports/$slug'
@@ -301,6 +321,7 @@ export interface FileRouteTypes {
     | '/desk/new'
     | '/desk/people'
     | '/desk/pool'
+    | '/offers/$offerId'
     | '/projects/$projectId'
     | '/system/database'
     | '/system/logs'
@@ -309,6 +330,7 @@ export interface FileRouteTypes {
     | '/teams/$teamId'
     | '/clients'
     | '/desk'
+    | '/offers'
     | '/projects'
     | '/teams'
     | '/desk/reports/$slug'
@@ -330,6 +352,7 @@ export interface FileRouteTypes {
     | '/_app/desk/new'
     | '/_app/desk/people'
     | '/_app/desk/pool'
+    | '/_app/offers/$offerId'
     | '/_app/projects/$projectId'
     | '/_app/system/database'
     | '/_app/system/logs'
@@ -338,6 +361,7 @@ export interface FileRouteTypes {
     | '/_app/teams/$teamId'
     | '/_app/clients/'
     | '/_app/desk/'
+    | '/_app/offers/'
     | '/_app/projects/'
     | '/_app/teams/'
     | '/_app/desk/reports/$slug'
@@ -459,6 +483,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDeskPoolRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/offers/': {
+      id: '/_app/offers/'
+      path: '/offers'
+      fullPath: '/offers/'
+      preLoaderRoute: typeof AppOffersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/offers/$offerId': {
+      id: '/_app/offers/$offerId'
+      path: '/offers/$offerId'
+      fullPath: '/offers/$offerId'
+      preLoaderRoute: typeof AppOffersOfferIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/projects/': {
       id: '/_app/projects/'
       path: '/projects'
@@ -557,6 +595,7 @@ interface AppRouteChildren {
   AppDeskNewRoute: typeof AppDeskNewRoute
   AppDeskPeopleRoute: typeof AppDeskPeopleRoute
   AppDeskPoolRoute: typeof AppDeskPoolRoute
+  AppOffersOfferIdRoute: typeof AppOffersOfferIdRoute
   AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
   AppSystemDatabaseRoute: typeof AppSystemDatabaseRoute
   AppSystemLogsRoute: typeof AppSystemLogsRoute
@@ -565,6 +604,7 @@ interface AppRouteChildren {
   AppTeamsTeamIdRoute: typeof AppTeamsTeamIdRoute
   AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppDeskIndexRoute: typeof AppDeskIndexRoute
+  AppOffersIndexRoute: typeof AppOffersIndexRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
   AppTeamsIndexRoute: typeof AppTeamsIndexRoute
   AppDeskReportsSlugRoute: typeof AppDeskReportsSlugRoute
@@ -584,6 +624,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDeskNewRoute: AppDeskNewRoute,
   AppDeskPeopleRoute: AppDeskPeopleRoute,
   AppDeskPoolRoute: AppDeskPoolRoute,
+  AppOffersOfferIdRoute: AppOffersOfferIdRoute,
   AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,
   AppSystemDatabaseRoute: AppSystemDatabaseRoute,
   AppSystemLogsRoute: AppSystemLogsRoute,
@@ -592,6 +633,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeamsTeamIdRoute: AppTeamsTeamIdRoute,
   AppClientsIndexRoute: AppClientsIndexRoute,
   AppDeskIndexRoute: AppDeskIndexRoute,
+  AppOffersIndexRoute: AppOffersIndexRoute,
   AppProjectsIndexRoute: AppProjectsIndexRoute,
   AppTeamsIndexRoute: AppTeamsIndexRoute,
   AppDeskReportsSlugRoute: AppDeskReportsSlugRoute,

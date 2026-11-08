@@ -41,7 +41,8 @@ class SystemHttpTest : IntegrationTest() {
         assertTrue(status["summary"]["total"].asLong() >= 2)
         assertTrue(status["summary"]["notFound"].asLong() >= 1)
         assertTrue(status["codes"].list().any { it["status"].asInt() == 404 })
-        assertTrue(status["failing"].list().any { it["status"].asInt() == 404 })
+        // The top ten failures depend on what other tests did before: only that they are failures.
+        assertTrue(status["failing"].list().isNotEmpty() && status["failing"].list().all { it["status"].asInt() >= 400 })
         assertEquals("UP", status["database"].asString())
         assertEquals("UP", status["storage"].asString())
         assertTrue(status["settings"].list().any { it["variable"].asString() == "CRM_MONITORING_RETENTION" })

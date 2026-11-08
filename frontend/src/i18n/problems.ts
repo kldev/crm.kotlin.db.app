@@ -98,6 +98,24 @@ const CRM: Record<number, Text | Text[]> = {
 };
 
 const DESK: Record<number, Text> = {
+	// Offers (ADR-0013).
+	51170: { pl: "Tytuł oferty jest wymagany (najwyżej 200 znaków)." },
+	51171: { pl: "Wybierz szablon z listy." },
+	51172: { pl: "Oferta musi być ważna od dziś do najwyżej roku." },
+	51173: {
+		pl: "Pozycja $1: opis (do 400 znaków), jednostka, ilość większa od 0, cena z najwyżej 2 miejscami po przecinku i VAT 0, 5, 8 lub 23%.",
+		match: /Line (\d+)/,
+	},
+	51174: { pl: "Waluta musi być PLN, EUR albo USD." },
+	51175: { pl: "Wstęp może mieć najwyżej 2000 znaków, a warunki 4000." },
+	51176: { pl: "Oferta musi mieć co najmniej jedną pozycję, zanim zostanie wysłana." },
+	51177: {
+		pl: "Nieprawidłowe dane kontaktowe (stanowisko do 100 znaków, telefon 6-30 cyfr, poprawny e-mail).",
+	},
+	51178: { pl: "Nieprawidłowy filtr statusu." },
+	51405: { pl: "Nie znaleziono oferty." },
+	51906: { pl: "Tylko szkic oferty można edytować albo usunąć." },
+	51907: { pl: "Ta zmiana statusu oferty nie jest dozwolona." },
 	51100: { pl: "Pole „Tytuł” jest wymagane." },
 	51101: { pl: "Pole „Tytuł” może mieć najwyżej 200 znaków." },
 	51102: { pl: "Pole „Opis” jest wymagane." },

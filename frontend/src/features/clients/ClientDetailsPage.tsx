@@ -22,6 +22,8 @@ import {
 	TableSkeleton,
 } from "#/components/ui";
 import { can, useMe } from "#/features/auth/session";
+import { ClientOffers } from "#/features/offers/ClientOffers";
+import { type NewOfferCommand, NewOfferDialog } from "#/features/offers/NewOfferDialog";
 import { projectsCountQuery, projectsQuery } from "#/features/projects/hooks";
 import { type ProjectFormCommand, ProjectFormDrawer } from "#/features/projects/ProjectFormDrawer";
 import { ProjectsTable } from "#/features/projects/ProjectsTable";
@@ -44,6 +46,7 @@ export function ClientDetailsPage() {
 	const projectsTotal = useOnDemandTotal(projectsCountQuery({ clientId }));
 	const clientDrawer = useRef<ClientFormCommand>(null);
 	const projectDrawer = useRef<ProjectFormCommand>(null);
+	const offerDialog = useRef<NewOfferCommand>(null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const remove = useDeleteClient(() => {
 		toast.success(t("Usunięto klienta", "Client deleted"));
@@ -194,6 +197,15 @@ export function ClientDetailsPage() {
 				)}
 			</Card>
 
+			<ClientOffers
+				clientId={c.id}
+				onNew={() => offerDialog.current?.open({ id: c.id, name: c.name })}
+			/>
+
+			<NewOfferDialog
+				ref={offerDialog}
+				onCreated={(o) => void navigate({ to: "/offers/$offerId", params: { offerId: o.id } })}
+			/>
 			<ClientFormDrawer
 				ref={clientDrawer}
 				onSaved={() => toast.success(t("Zapisano klienta", "Client saved"))}

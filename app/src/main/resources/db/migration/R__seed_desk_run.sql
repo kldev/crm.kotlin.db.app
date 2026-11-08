@@ -30,6 +30,21 @@ BEGIN
             ('krzysztof.dabrowski', N'Krzysztof Dąbrowski')) AS a (login, display_name)
     WHERE NOT EXISTS (SELECT 1 FROM crm.users AS u WHERE u.login = a.login);
 
+    -- Their contact closes the offers they write (ADR-0013); only filled in where nobody set one.
+    UPDATE u
+    SET job_title = ISNULL(u.job_title, N'Doradca handlowy'), phone = ISNULL(u.phone, a.phone), email = ISNULL(u.email, a.email)
+    FROM crm.users AS u
+    JOIN (VALUES ('anna.nowak', '+48 600 100 101', 'anna.nowak@company.io'),
+            ('piotr.kowalski', '+48 600 100 102', 'piotr.kowalski@company.io'),
+            ('katarzyna.wisniewska', '+48 600 100 103', 'katarzyna.wisniewska@company.io'),
+            ('tomasz.wojcik', '+48 600 100 104', 'tomasz.wojcik@company.io'),
+            ('magdalena.kaminska', '+48 600 100 105', 'magdalena.kaminska@company.io'),
+            ('michal.lewandowski', '+48 600 100 106', 'michal.lewandowski@company.io'),
+            ('agnieszka.zielinska', '+48 600 100 107', 'agnieszka.zielinska@company.io'),
+            ('pawel.szymanski', '+48 600 100 108', 'pawel.szymanski@company.io'),
+            ('joanna.wozniak', '+48 600 100 109', 'joanna.wozniak@company.io'),
+            ('krzysztof.dabrowski', '+48 600 100 110', 'krzysztof.dabrowski@company.io')) AS a (login, phone, email) ON a.login = u.login;
+
     INSERT crm.people (first_name, last_name, department, email, phone)
     SELECT p.first_name, p.last_name, p.department, p.email, p.phone
     FROM (VALUES (N'Adam', N'Mazur', N'Sprzedaż', 'adam.mazur@company.io', '+48 600 200 201'),

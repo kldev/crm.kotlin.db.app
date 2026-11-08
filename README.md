@@ -31,6 +31,9 @@ served by the same Spring Boot application: open <http://127.0.0.1:8088/> after 
   agents and a weekday x hour heatmap, each with a table view; reports and charts use the whole screen width.
 - System pages for administrators (ADR-0012): status with HTTP answers per hour or day, codes and failures, the log,
   the database (sessions with blocking, tables, the event store) and the monitoring queues with "run now".
+- Offers (ADR-0013): for a client from three templates (Sales Budownictwo, Sales IT, Sales Outsourcing), edited as a
+  draft with lines and VAT, sent, accepted or rejected, printed as a Halycon Inc. PDF in the Obsidian look that closes
+  with the salesperson's phone and e-mail ("My contact" in the account menu).
 - Polish and English with a PL / EN switch (ADR-0008); Polish is the default.
 - The Docker image builds the app in a Node stage; for work on the front end see
   [Local development](#local-development).
@@ -172,6 +175,8 @@ curl -s -b j "$B/api/projects?overdue=true&size=5"
 | `GET /api/desk/reports/categories/{slug}[/export.{csv,xlsx,pdf}]`, `GET /api/desk/reports/agents[/export.…]` | `desk_report_category`, `desk_report_agents`, `desk_report_period_list` | all |
 | `GET /api/desk/charts?range=DAYS_7\|DAYS_30\|WEEKS_12&categoryKey=` | `desk_chart_tickets` | all |
 | `GET /api/system/status`, `/requests`, `/logs`, `/database`, `/queues`, `POST /api/system/jobs/{name}/run` | `monitoring_http_*`, `monitoring_request_list`, `monitoring_log_list`, `monitoring_db_*` (signed) | ADMIN |
+| `GET/POST /api/offers`, `/count`, `/templates`, `GET/PUT/DELETE /api/offers/{id}`, `/items`, `POST …/status`, `GET …/pdf` | `offer_search`, `offer_count`, `offer_template_list`, `offer_get`, `offer_create`, `offer_update`, `offer_delete`, `offer_item_list`, `offer_change_status` | all (SALES: offers of own clients) |
+| `GET/PUT /api/auth/me/contact`, `/api/users/{id}/contact` | `user_contact_get`, `user_contact_update` | own; others: ADMIN (read: MANAGER too) |
 | `GET /api/desk/agents`, `/people` | `desk_agent_list`, `desk_person_list` | all |
 | `GET /api/public/desk/catalog`, `/people`, `POST /api/public/desk/tickets` | `desk_catalog_list`, `desk_public_person_list`, `desk_ticket_report_public` | anyone (public form, 30 tickets/min) |
 
@@ -199,11 +204,14 @@ Procedures `THROW` these numbers; the API returns them as RFC 9457 ProblemDetail
 | 51130-51146 | report data: field of another subcategory, required, length, date, e-mail, amount, IBAN, count, multi-choice, choice, ticket number, identity document and PESEL rules, no report data | 400 |
 | 51150 | report period: from <= to, at most a year | 400 |
 | 51160 | monitoring cleanup: cutoff and batch size | 400 |
+| 51170-51178 | offer: title, template, validity, lines, currency, texts, no lines to send, contact, status filter | 400 |
 | 51310-51313 | only the agent working on the ticket can hand it over, return it, resolve it, name its handler | 403 |
 | 51410-51413 | ticket, person, agent, attachment not found | 404 |
+| 51405 | offer not found (or not visible) | 404 |
 | 51910 | ticket already in progress with another agent (someone was faster) | 409 |
 | 51911, 51912 | ticket already resolved / still in the pool (take it first) | 409 |
 | 51913 | the ticket's stream changed meanwhile | 409 |
+| 51906, 51907 | offer: only a draft is edited or deleted / status move not allowed | 409 |
 | 51301 | role not allowed | 403 |
 | 51302 | own account not active | 403 |
 | 51303 | sales user works only on own clients | 403 |
@@ -279,7 +287,8 @@ lockout (`CRM_LOGIN_MAX_FAILED`, `CRM_LOGIN_LOCK_MINUTES`), first admin (`CRM_AD
 (`CRM_DEV_LOGIN`), public desk form limit (`CRM_DESK_PUBLIC_REPORTS_PER_MINUTE`), attachments bucket (`CRM_S3_ENDPOINT`,
 `CRM_S3_ACCESS_KEY`, `CRM_S3_SECRET_KEY`, `CRM_S3_BUCKET`, `CRM_S3_REGION`), monitoring (`CRM_MONITORING_ENABLED`,
 `_QUEUE_CAPACITY`, `_FLUSH_INTERVAL`, `_WRITE_BATCH_SIZE`, `_RETENTION`, `_CLEANUP_INTERVAL`, `_CLEANUP_BATCH_SIZE`,
-`_LOG_LEVEL`).
+`_LOG_LEVEL`), the company on offer PDFs (`CRM_OFFER_COMPANY_NAME` - "Halycon Inc." - `_ADDRESS`, `_PHONE`, `_EMAIL`,
+`_WEBSITE`, `_TAX_ID`).
 
 ## Build
 

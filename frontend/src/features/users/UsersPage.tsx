@@ -1,7 +1,15 @@
 import { Button, Card, Chip, Dropdown, Label, Table, toast } from "@heroui/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { EllipsisVertical, KeyRound, Plus, ShieldCheck, UserCheck, UserX } from "lucide-react";
+import {
+	Contact,
+	EllipsisVertical,
+	KeyRound,
+	Plus,
+	ShieldCheck,
+	UserCheck,
+	UserX,
+} from "lucide-react";
 import { useRef } from "react";
 import type { UserResponse } from "#/api/models";
 import { PageHeader } from "#/components/layout/AppLayout";
@@ -14,6 +22,7 @@ import {
 	UserAvatar,
 } from "#/components/ui";
 import { can, useMe } from "#/features/auth/session";
+import { type ContactCommand, ContactDrawer } from "#/features/offers/ContactDrawer";
 import { ROLES, type RoleName, roleColor, roleLabel } from "#/features/types";
 import { useI18n } from "#/i18n";
 import { problemText } from "#/i18n/problems";
@@ -32,6 +41,7 @@ export function UsersPage() {
 	const query = useInfiniteQuery(usersQuery(search.role));
 	const users = query.data?.pages.flatMap((p) => p.items) ?? [];
 	const drawer = useRef<UserDrawerCommand>(null);
+	const contactDrawer = useRef<ContactCommand>(null);
 	const admin = can.manageUsers(me.role);
 	const setActive = useSetUserActive((u) =>
 		toast.success(
@@ -141,6 +151,7 @@ export function UsersPage() {
 																<Dropdown.Menu
 																	onAction={(key) => {
 																		if (key === "edit") drawer.current?.edit(u);
+																		if (key === "contact") contactDrawer.current?.open(u.id);
 																		if (key === "password") drawer.current?.resetPassword(u);
 																		if (key === "toggle")
 																			setActive.mutate(
@@ -155,6 +166,13 @@ export function UsersPage() {
 																	>
 																		<ShieldCheck className="size-4" />
 																		<Label>{t("Zmień rolę", "Change role")}</Label>
+																	</Dropdown.Item>
+																	<Dropdown.Item
+																		id="contact"
+																		textValue={t("Kontakt do ofert", "Contact for offers")}
+																	>
+																		<Contact className="size-4" />
+																		<Label>{t("Kontakt do ofert", "Contact for offers")}</Label>
 																	</Dropdown.Item>
 																	<Dropdown.Item
 																		id="password"
@@ -207,6 +225,7 @@ export function UsersPage() {
 				)}
 			</Card>
 			<UserDrawer ref={drawer} />
+			<ContactDrawer ref={contactDrawer} />
 		</>
 	);
 }

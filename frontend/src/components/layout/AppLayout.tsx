@@ -8,6 +8,7 @@ import {
 	ChartColumn,
 	Contact,
 	Database,
+	FileSignature,
 	FileSpreadsheet,
 	Headset,
 	Inbox,
@@ -32,6 +33,7 @@ import {
 } from "#/features/auth/ChangePasswordDrawer";
 import { can, type Role, useForgetSession, useMe } from "#/features/auth/session";
 import { DeskCounters } from "#/features/desk/components/DeskCounters";
+import { type ContactCommand, ContactDrawer } from "#/features/offers/ContactDrawer";
 import { roleLabel } from "#/features/types";
 import { type I18n, useI18n } from "#/i18n";
 import { LanguageSwitch } from "#/i18n/LanguageSwitch";
@@ -41,6 +43,7 @@ interface NavItem {
 		| "/"
 		| "/clients"
 		| "/projects"
+		| "/offers"
 		| "/teams"
 		| "/users"
 		| "/desk/pool"
@@ -67,6 +70,7 @@ const NAV: { section: (t: I18n["t"]) => string; items: NavItem[] }[] = [
 			{ to: "/", label: (t) => t("Przegląd", "Overview"), icon: LayoutDashboard },
 			{ to: "/clients", label: (t) => t("Klienci", "Clients"), icon: Building2 },
 			{ to: "/projects", label: (t) => t("Projekty", "Projects"), icon: BriefcaseBusiness },
+			{ to: "/offers", label: (t) => t("Oferty", "Offers"), icon: FileSignature },
 			{ to: "/teams", label: (t) => t("Zespoły", "Teams"), icon: UsersRound },
 			{
 				to: "/users",
@@ -183,7 +187,13 @@ function NavLinks({
 	);
 }
 
-function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
+function UserMenu({
+	onChangePassword,
+	onContact,
+}: {
+	onChangePassword: () => void;
+	onContact: () => void;
+}) {
 	const { t } = useI18n();
 	const me = useMe();
 	const navigate = useNavigate();
@@ -215,6 +225,7 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 				<Dropdown.Menu
 					onAction={(key) => {
 						if (key === "password") onChangePassword();
+						if (key === "contact") onContact();
 						if (key === "logout") logout.mutate();
 					}}
 				>
@@ -225,6 +236,10 @@ function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
 						</Chip>
 					</Dropdown.Item>
 					<Separator />
+					<Dropdown.Item id="contact" textValue={t("Mój kontakt", "My contact")}>
+						<Contact className="size-4" />
+						<Label>{t("Mój kontakt (do ofert)", "My contact (for offers)")}</Label>
+					</Dropdown.Item>
 					<Dropdown.Item id="password" textValue={t("Zmień hasło", "Change password")}>
 						<KeyRound className="size-4" />
 						<Label>{t("Zmień hasło", "Change password")}</Label>
@@ -246,6 +261,7 @@ export function AppLayout() {
 	const me = useMe();
 	const [mobileNav, setMobileNav] = useState(false);
 	const passwordDrawer = useRef<ChangePasswordCommand>(null);
+	const contactDrawer = useRef<ContactCommand>(null);
 
 	return (
 		<div className="min-h-screen bg-background lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
@@ -285,7 +301,10 @@ export function AppLayout() {
 					<DeskCounters />
 					<div className="ml-auto flex items-center gap-3">
 						<LanguageSwitch />
-						<UserMenu onChangePassword={() => passwordDrawer.current?.open()} />
+						<UserMenu
+							onChangePassword={() => passwordDrawer.current?.open()}
+							onContact={() => contactDrawer.current?.open()}
+						/>
 					</div>
 				</header>
 				<main
@@ -295,6 +314,7 @@ export function AppLayout() {
 				</main>
 			</div>
 
+			<ContactDrawer ref={contactDrawer} />
 			<ChangePasswordDrawer
 				ref={passwordDrawer}
 				onSuccess={() => toast.success(t("Hasło zmienione", "Password changed"))}

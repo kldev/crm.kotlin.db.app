@@ -54,6 +54,14 @@ crm:
     access-key: ${CRM_S3_ACCESS_KEY:}
     secret-key: ${CRM_S3_SECRET_KEY:}
     bucket: ${CRM_S3_BUCKET:crm-attachments}
+  # The company on the offer PDFs (ADR-0013).
+  offer:
+    company-name: ${CRM_OFFER_COMPANY_NAME:Halycon Inc.}
+    company-address: ${CRM_OFFER_COMPANY_ADDRESS:ul. Obsydianowa 12, 00-950 Warszawa}
+    company-phone: ${CRM_OFFER_COMPANY_PHONE:+48 22 100 20 30}
+    company-email: ${CRM_OFFER_COMPANY_EMAIL:oferty@halycon.example}
+    company-website: ${CRM_OFFER_COMPANY_WEBSITE:halycon.example}
+    company-tax-id: ${CRM_OFFER_COMPANY_TAX_ID:NIP 525-000-00-00}
   # The application reports on itself (ADR-0012): HTTP answers and the log, written from bounded queues.
   monitoring:
     enabled: ${CRM_MONITORING_ENABLED:true}

@@ -84,3 +84,15 @@ export const systemKeys = {
 	database: () => [...systemKeys.all, "database"] as const,
 	queues: () => [...systemKeys.all, "queues"] as const,
 };
+
+/** Offers (ADR-0013). A write invalidates the area; clients show their offers, so they are not touched. */
+export const offerKeys = {
+	all: ["offers"] as const,
+	templates: () => [...offerKeys.all, "templates"] as const,
+	list: (filters: object) => [...offerKeys.all, "list", filters] as const,
+	count: (filters: object) => [...offerKeys.all, "count", filters] as const,
+	detail: (id: number) => [...offerKeys.all, "detail", id] as const,
+	items: (id: number) => [...offerKeys.all, "items", id] as const,
+	myContact: () => [...offerKeys.all, "my-contact"] as const,
+	contact: (userId: number) => [...offerKeys.all, "contact", userId] as const,
+};
